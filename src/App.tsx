@@ -2,6 +2,7 @@ import { useState } from 'react'
 import './App.css'
 import AddCardForm from './AddCardForm'
 import { DndContext } from '@dnd-kit/core'
+import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import Card from './Card'
 
 type Card = {
@@ -65,10 +66,15 @@ function App() {
                     <div className = "column" key ={column.id}>
                         <h2>{column.title}</h2>
                         <div className = "cards">
-                            {/* visualizes all the cards inside a column, react requires a key */}
+                            <SortableContext
+                                items={column.cards.map((card) => card.id)}
+                                strategy={verticalListSortingStrategy}
+                            >
+                                {/* visualizes all the cards inside a column, react requires a key */}
                             {column.cards.map((card)=> (
-                                <Card key={card.id} title={card.title} />
+                                <Card key={card.id} id={card.id} title={card.title} />
                             ))}
+                            </SortableContext>
                         </div>
                         <AddCardForm onAdd={(title) => addCard(column.id, title)}/>
                         </div>
