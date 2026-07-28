@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import './App.css'
 import AddCardForm from './AddCardForm'
-import { DndContext } from '@dnd-kit/core'
-import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
+import { DndContext, type DragEndEvent } from '@dnd-kit/core'
+import { SortableContext, verticalListSortingStrategy, arrayMove } from '@dnd-kit/sortable'
 import Card from './Card'
 
 type Card = {
@@ -56,10 +56,29 @@ function App() {
         )
     }
 
+    function handleDragEnd(event: DragEndEvent) {
+        const {active, over} = event
+
+        if( !over ) return;
+        if(active.id === over.id) return;
+
+        setColumns((prevColumns) =>
+            prevColumns.map((column) => {
+                const oldIndex = column.cards.findIndex((c) => c.id === active.id)
+                const newIndex = column.cards.findIndex((c) => c.id === over.id)
+
+                if (oldIndex === -1 || newIndex === -1) return column
+
+                return {...column, cards: arrayMove(column.cards, oldIndex, newIndex)}
+            })
+        )
+
+    }
+
     return (
         <div className="app">
             <h1>Kanban Board</h1>
-            <DndContext>
+            <DndContext onDragEnd={handleDragEnd}>
             <div className="board">
                 {/* function to map a column to its visualization, react requires a key*/}
                 {columns.map((column)=> (
