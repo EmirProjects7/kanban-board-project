@@ -1,9 +1,8 @@
 import { useState } from 'react'
 import './App.css'
-import AddCardForm from './AddCardForm'
 import { DndContext, type DragEndEvent } from '@dnd-kit/core'
-import { SortableContext, verticalListSortingStrategy, arrayMove } from '@dnd-kit/sortable'
-import Card from './Card'
+import { arrayMove } from '@dnd-kit/sortable'
+import Column from './Column'
 
 type Card = {
     id: string
@@ -113,22 +112,8 @@ function App() {
             <DndContext onDragEnd={handleDragEnd}>
             <div className="board">
                 {/* function to map a column to its visualization, react requires a key*/}
-                {columns.map((column)=> (
-                    <div className = "column" key ={column.id}>
-                        <h2>{column.title}</h2>
-                        <div className = "cards">
-                            <SortableContext
-                                items={column.cards.map((card) => card.id)}
-                                strategy={verticalListSortingStrategy}
-                            >
-                                {/* visualizes all the cards inside a column, react requires a key */}
-                            {column.cards.map((card)=> (
-                                <Card key={card.id} id={card.id} title={card.title} />
-                            ))}
-                            </SortableContext>
-                        </div>
-                        <AddCardForm onAdd={(title) => addCard(column.id, title)}/>
-                        </div>
+                {columns.map((column) => (
+                    <Column key={column.id} column={column} onAddCard={addCard} />
                 ))}
             </div>
             </DndContext>
