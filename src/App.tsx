@@ -57,6 +57,7 @@ function App() {
 
     function handleDragEnd(event: DragEndEvent) {
         const {active, over} = event
+        console.log('over.id:', over?.id)
 
         if (!over) return;
         if (active.id === over.id) return;
@@ -66,7 +67,7 @@ function App() {
             col.cards.some((c) => c.id === active.id))
 
         const overColumn = columns.find((col) =>
-            col.cards.some((c) => c.id === over.id))
+            col.cards.some((c) => c.id === over.id) || col.id === over.id)
 
         if (!activeColumn || !overColumn) return
 

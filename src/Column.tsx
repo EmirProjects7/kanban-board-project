@@ -1,6 +1,7 @@
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import Card from './Card'
 import AddCardForm from './AddCardForm'
+import {useDroppable} from '@dnd-kit/core'
 
 type CardType = {
     id: string
@@ -19,8 +20,9 @@ type ColumnProps = {
 }
 
 function Column({ column, onAddCard }: ColumnProps) {
+    const {setNodeRef } = useDroppable ({id: column.id})
     return (
-        <div className="column">
+        <div className="column" ref = {setNodeRef}>
             <h2>{column.title}</h2>
             <div className="cards">
                 <SortableContext
