@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import './App.css'
-import { DndContext, type DragEndEvent } from '@dnd-kit/core'
+import { DndContext, DragOverlay, type DragEndEvent, type DragStartEvent } from '@dnd-kit/core'
 import { arrayMove } from '@dnd-kit/sortable'
 import Column from './Column'
 
@@ -43,6 +43,8 @@ function App() {
         },
     ])
 
+    const [activeCard, setActiveCard] = useState<Card | null>(null)
+
     function addCard(columnId: string, title: string) {
         const newCard: Card = {
             id: crypto.randomUUID(),
@@ -55,9 +57,21 @@ function App() {
         )
     }
 
+    function handleDragStart(event: DragStartEvent) {
+        const {active} = event
+        for (const column of columns) {
+            const card = column.cards.find((card) => card.id === active.id)
+            if(card) {
+                setActiveCard(card)
+                return
+            }
+        }
+    }
+
     function handleDragEnd(event: DragEndEvent) {
         const {active, over} = event
-        console.log('over.id:', over?.id)
+
+        setActiveCard(null)
 
         if (!over) return;
         if (active.id === over.id) return;
@@ -110,13 +124,19 @@ function App() {
     return (
         <div className="app">
             <h1>Kanban Board</h1>
-            <DndContext onDragEnd={handleDragEnd}>
+            <DndContext onDragStart={handleDragStart} onDragEnd={handleDragEnd} >
             <div className="board">
                 {/* function to map a column to its visualization, react requires a key*/}
                 {columns.map((column) => (
                     <Column key={column.id} column={column} onAddCard={addCard} />
                 ))}
             </div>
+
+                <DragOverlay>
+                    {activeCard ? (
+                        <div className="card">{activeCard.title}</div>
+                    ) : null}
+                </DragOverlay>
             </DndContext>
         </div>
     )
