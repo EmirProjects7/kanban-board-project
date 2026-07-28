@@ -59,20 +59,52 @@ function App() {
     function handleDragEnd(event: DragEndEvent) {
         const {active, over} = event
 
-        if( !over ) return;
-        if(active.id === over.id) return;
+        if (!over) return;
+        if (active.id === over.id) return;
 
-        setColumns((prevColumns) =>
-            prevColumns.map((column) => {
-                const oldIndex = column.cards.findIndex((c) => c.id === active.id)
-                const newIndex = column.cards.findIndex((c) => c.id === over.id)
+        // Find columns of the dragged card and the target
+        const activeColumn = columns.find((col) =>
+            col.cards.some((c) => c.id === active.id))
 
-                if (oldIndex === -1 || newIndex === -1) return column
+        const overColumn = columns.find((col) =>
+            col.cards.some((c) => c.id === over.id))
 
-                return {...column, cards: arrayMove(column.cards, oldIndex, newIndex)}
+        if (!activeColumn || !overColumn) return
+
+
+        //inside same column
+        if (activeColumn.id === overColumn.id) {
+            setColumns((prevColumns) =>
+                prevColumns.map((column) => {
+                    if (column.id !== activeColumn.id) return column
+                    const oldIndex = column.cards.findIndex((c) => c.id === active.id)
+                    const newIndex = column.cards.findIndex((c) => c.id === over.id)
+                    return {...column, cards: arrayMove(column.cards, oldIndex, newIndex)}
+                })
+            )
+            return
+        }
+
+
+        //here implements the logic to move cards between boxes
+        //removes from the source + adds to the target
+        setColumns((prevColumns) => {
+            const activeCard = activeColumn.cards.find((c) => c.id === active.id)
+            if (!activeCard) return prevColumns
+
+            return prevColumns.map((column) => {
+                if (column.id === activeColumn.id) {
+                    return {...column, cards: column.cards.filter((c) => c.id !== active.id)}
+                }
+                if (column.id === overColumn.id) {
+                    const overIndex = column.cards.findIndex((c) => c.id === over.id)
+                    const newCards = [...column.cards]
+                    newCards.splice(overIndex, 0, activeCard)
+                    return {...column, cards: newCards}
+                }
+                return column
             })
-        )
-
+        })
     }
 
     return (
