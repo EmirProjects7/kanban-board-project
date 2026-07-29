@@ -15,10 +15,10 @@ function AddCardForm({onAdd}: AddCardFormProps) {
 
     return (
         <div className="add-card">
-            <input type ="text"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder="New card..."
+            <input type="text"
+                   value={title}
+                   onChange={(e) => setTitle(e.target.value)}
+                   placeholder="New card..."
             />
             <button onClick={handleAdd}>+ Add</button>
         </div>

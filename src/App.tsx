@@ -1,11 +1,13 @@
 import './App.css'
 import {DndContext, DragOverlay} from '@dnd-kit/core'
-import {useBoard} from './useBoard';
-import Column from './Column'
+import {useBoard} from './hooks/useBoard';
+import Column from './components/Column'
+import {useDragAndDrop} from "./hooks/useDragDrop.ts";
 
 
 function App() {
-    const {columns, activeCard, addCard, deleteCard, handleDragStart, handleDragOver, handleDragEnd} = useBoard()
+    const {columns, setColumns, addCard, deleteCard} = useBoard()
+    const {activeCard, handleDragStart, handleDragOver, handleDragEnd} = useDragAndDrop(columns, setColumns)
 
     return (
         <div className="app">
