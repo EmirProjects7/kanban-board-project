@@ -43,16 +43,22 @@ export function useBoard() {
     const [columns, setColumns] = useState<Column[]>(initialColumns)
     const [activeCard, setActiveCard] = useState<Card | null>(null)
 
-    function addCard (columnId: string, title: string) {
+    function addCard(columnId: string, title: string) {
         const newCard: Card = {
             id: crypto.randomUUID(),
             title: title
         }
         setColumns(
             columns.map((column) =>
-                column.id === columnId ? {...column, cards: [...column.cards,newCard]} : column
+                column.id === columnId ? {...column, cards: [...column.cards, newCard]} : column
             )
         )
+    }
+
+    function deleteCard(cardId: string) {
+        setColumns(columns.map((column) => ({
+            ...column, cards: column.cards.filter((c) => c.id !== cardId)
+        })))
     }
 
     //puts the dragged card into the state
@@ -60,7 +66,7 @@ export function useBoard() {
         const {active} = event
         for (const column of columns) {
             const card = column.cards.find((c) => c.id === active.id)
-            if(card) {
+            if (card) {
                 setActiveCard(card)
                 return
             }
@@ -68,7 +74,7 @@ export function useBoard() {
     }
 
     function handleDragOver(event: DragOverEvent) {
-        const { active, over } = event
+        const {active, over} = event
 
         if (!over) return
 
@@ -87,14 +93,14 @@ export function useBoard() {
 
             return prevColumns.map((column) => {
                 if (column.id === activeColumn.id) {
-                    return { ...column, cards: column.cards.filter((c) => c.id !== active.id) }
+                    return {...column, cards: column.cards.filter((c) => c.id !== active.id)}
                 }
                 if (column.id === overColumn.id) {
                     const overIndex = column.cards.findIndex((c) => c.id === over.id)
                     const insertIndex = overIndex >= 0 ? overIndex : column.cards.length
                     const newCards = [...column.cards]
                     newCards.splice(insertIndex, 0, cardToMove)
-                    return { ...column, cards: newCards }
+                    return {...column, cards: newCards}
                 }
                 return column
             })
@@ -158,6 +164,7 @@ export function useBoard() {
         columns,
         activeCard,
         addCard,
+        deleteCard,
         handleDragStart,
         handleDragOver,
         handleDragEnd
