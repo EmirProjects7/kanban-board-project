@@ -2,17 +2,8 @@ import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import Card from './Card'
 import AddCardForm from './AddCardForm'
 import {useDroppable} from '@dnd-kit/core'
+import type {Column as ColumnType} from './useBoard'
 
-type CardType = {
-    id: string
-    title: string
-}
-
-type ColumnType = {
-    id: string
-    title: string
-    cards: CardType[]
-}
 
 type ColumnProps = {
     column: ColumnType
