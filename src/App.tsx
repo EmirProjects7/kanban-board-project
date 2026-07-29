@@ -1,22 +1,22 @@
 import './App.css'
-import { DndContext, DragOverlay } from '@dnd-kit/core'
+import {DndContext, DragOverlay} from '@dnd-kit/core'
 import {useBoard} from './useBoard';
 import Column from './Column'
 
 
 function App() {
-    const {columns, activeCard, addCard, handleDragStart, handleDragOver, handleDragEnd} = useBoard()
+    const {columns, activeCard, addCard, deleteCard, handleDragStart, handleDragOver, handleDragEnd} = useBoard()
 
     return (
         <div className="app">
             <h1>Kanban Board</h1>
-            <DndContext onDragStart={handleDragStart} onDragOver ={handleDragOver} onDragEnd={handleDragEnd} >
-            <div className="board">
-                {/* function to map a column to its visualization, react requires a key*/}
-                {columns.map((column) => (
-                    <Column key={column.id} column={column} onAddCard={addCard} />
-                ))}
-            </div>
+            <DndContext onDragStart={handleDragStart} onDragOver={handleDragOver} onDragEnd={handleDragEnd}>
+                <div className="board">
+                    {/* function to map a column to its visualization, react requires a key*/}
+                    {columns.map((column) => (
+                        <Column key={column.id} column={column} onAddCard={addCard} onDeleteCard={deleteCard}/>
+                    ))}
+                </div>
 
                 <DragOverlay>
                     {activeCard ? (
