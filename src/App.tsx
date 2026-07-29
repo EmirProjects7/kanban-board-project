@@ -5,12 +5,12 @@ import Column from './Column'
 
 
 function App() {
-    const {columns, activeCard, addCard, handleDragStart, handleDragEnd} = useBoard()
+    const {columns, activeCard, addCard, handleDragStart, handleDragOver, handleDragEnd} = useBoard()
 
     return (
         <div className="app">
             <h1>Kanban Board</h1>
-            <DndContext onDragStart={handleDragStart} onDragEnd={handleDragEnd} >
+            <DndContext onDragStart={handleDragStart} onDragOver ={handleDragOver} onDragEnd={handleDragEnd} >
             <div className="board">
                 {/* function to map a column to its visualization, react requires a key*/}
                 {columns.map((column) => (
