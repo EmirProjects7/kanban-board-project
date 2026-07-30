@@ -4,15 +4,30 @@ import {useBoard} from './hooks/useBoard';
 import Column from './components/Column'
 import {useDragAndDrop} from "./hooks/useDragDrop.ts";
 import AddColumnForm from "./components/AddColumnForm.tsx";
+import {useState, useEffect} from 'react'
 
 
 function App() {
     const {columns, setColumns, addCard, deleteCard, editCard, addColumn, deleteColumn} = useBoard()
     const {activeCard, handleDragStart, handleDragOver, handleDragEnd} = useDragAndDrop(columns, setColumns)
     const sensors = useSensors(useSensor(PointerSensor, {activationConstraint: {distance: 5}}))
+    const [theme, setTheme] = useState<'light' | 'dark'>('light')
+
+    useEffect(() => {
+        document.documentElement.setAttribute('data-theme', theme)
+    }, [theme])
+
     return (
         <div className="app">
-            <h1>Kanban Board</h1>
+            <div className="app-header">
+                <h1>Kanban Board</h1>
+                <button
+                    className="theme-toggle"
+                    onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
+                >
+                    {theme === 'light' ? 'Dark Mode' : 'Light Mode'}
+                </button>
+            </div>
             <DndContext sensors={sensors} onDragStart={handleDragStart} onDragOver={handleDragOver}
                         onDragEnd={handleDragEnd}>
                 <div className="board">
