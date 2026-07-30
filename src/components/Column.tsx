@@ -30,6 +30,8 @@ function Column({column, onAddCard, onDeleteCard, onEditCard, onDeleteColumn}: C
                         <Card key={card.id} id={card.id} title={card.title} onDelete={onDeleteCard}
                               onEdit={onEditCard}/>
                     ))}
+                    {column.cards.length === 0 && (<p className="empty-column">No cards yet</p>
+                    )}
                 </SortableContext>
             </div>
             <AddCardForm onAdd={(title) => onAddCard(column.id, title)}/>

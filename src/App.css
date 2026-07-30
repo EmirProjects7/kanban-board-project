@@ -1,6 +1,41 @@
+:root {
+    --bg: #f4f5f7;
+    --column-bg: #e9ebf0;
+    --column-title: #5b21b6;
+    --card-bg: #ffffff;
+    --card-text: #333333;
+    --muted: #a0a0a0;
+    --accent: #c084fc;
+    --shadow: rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="dark"] {
+    --bg: #1a1a2e;
+    --column-bg: #6b6375;
+    --column-title: #c084fc;
+    --card-bg: #2a2a3e;
+    --card-text: #e0e0e0;
+    --muted: #888888;
+    --accent: #c084fc;
+    --shadow: rgba(0, 0, 0, 0.4);
+}
+
 .app {
     padding: 24px;
     font-family: sans-serif;
+    background: var(--bg);
+    color: var(--card-text);
+    min-height: 100vh;
+}
+
+.app-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.app h1 {
+    color: var(--card-text);
 }
 
 .board {
@@ -10,7 +45,7 @@
 }
 
 .column {
-    background: #6b6375;
+    background: var(--column-bg);
     border-radius: 8px;
     padding: 12px;
     width: 260px;
@@ -20,7 +55,7 @@
 .column h2 {
     font-size: 20px;
     margin: 0 0 12px 0;
-    color: #c084fc;
+    color: var(--column-title);
 }
 
 .cards {
@@ -30,11 +65,12 @@
 }
 
 .card {
-    background: white;
+    background: var(--card-bg);
+    color: var(--card-text);
     border-radius: 6px;
     padding: 10px 12px;
     font-size: 14px;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 1px 2px var(--shadow);
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -44,7 +80,7 @@
 .delete-button {
     background: none;
     border: none;
-    color: #999;
+    color: var(--muted);
     cursor: pointer;
     font-size: 18px;
     line-height: 1;
@@ -52,7 +88,7 @@
 }
 
 .delete-button:hover {
-    color: #c084fc;
+    color: var(--accent);
 }
 
 .card-edit-input {
@@ -63,7 +99,7 @@
     font-size: 14px;
     font-family: inherit;
     line-height: inherit;
-    color: #333;
+    color: var(--card-text);
     background: transparent;
     padding: 0;
     margin: 0;
@@ -74,4 +110,24 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
+}
+
+.empty-column {
+    color: var(--muted);
+    font-size: 13px;
+    text-align: center;
+    padding: 12px 0;
+    margin: 0;
+    font-style: italic;
+}
+
+.theme-toggle {
+    background: var(--column-bg);
+    color: var(--card-text);
+    border: none;
+    border-radius: 6px;
+    padding: 8px 12px;
+    cursor: pointer;
+    margin-bottom: 16px;
+    font-size: 14px;
 }
