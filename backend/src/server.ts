@@ -1,5 +1,6 @@
 import 'dotenv/config'
 import express from 'express'
+import type { Request, Response, NextFunction } from 'express'
 import cors from 'cors'
 import {PrismaClient} from './generated/prisma/client'
 import {PrismaPg} from '@prisma/adapter-pg'
@@ -9,6 +10,23 @@ import jwt from 'jsonwebtoken'
 const adapter = new PrismaPg({connectionString: process.env.DATABASE_URL})
 const prisma = new PrismaClient({adapter})
 
+function authenticate(req: Request, res: Response, next: NextFunction) {
+    const authHeader = req.headers.authorization
+
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(401).json({ error: 'No token provided' })
+    }
+
+    const token = authHeader.split(' ')[1]
+
+    try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { userId: string }
+        ;(req as any).userId = decoded.userId
+        next()
+    } catch (error) {
+        return res.status(401).json({ error: 'Invalid token' })
+    }
+}
 
 const app = express()
 app.use(cors({origin: 'http://localhost:5173'}))
@@ -61,26 +79,26 @@ app.post('/api/auth/login', async (req, res) => {
     res.json({token: token, user: {id: user.id, email: user.email}})
 })
 
-app.get('/api/columns', async (req, res) => {
+app.get('/api/columns', authenticate, async (req, res) => {
     const columns = await prisma.column.findMany({
         include: {cards: true}
     })
     res.json(columns)
 })
 
-app.post('/api/columns/:columnId/cards', async (req, res) => {
+app.post('/api/columns/:columnId/cards', authenticate, async (req, res) => {
     const {columnId} = req.params
     const {title} = req.body
     const newCard = await prisma.card.create({
         data: {
             title: title,
-            columnId: columnId
+            columnId: columnId as string,
         }
     })
     res.status(201).json(newCard)
 })
 
-app.post('/api/columns', async (req, res) => {
+app.post('/api/columns', authenticate, async (req, res) => {
     const {title} = req.body
     const newColumn = await prisma.column.create({
         data: {title: title},
@@ -89,33 +107,33 @@ app.post('/api/columns', async (req, res) => {
     res.status(201).json(newColumn)
 })
 
-app.delete('/api/cards/:cardId', async (req, res) => {
+app.delete('/api/cards/:cardId', authenticate, async (req, res) => {
     const {cardId} = req.params
     await prisma.card.delete({
-        where: {id: cardId}
+        where: {id: cardId as string},
     })
     res.status(204).end()
 })
 
-app.delete('/api/columns/:columnId', async (req, res) => {
+app.delete('/api/columns/:columnId', authenticate, async (req, res) => {
     const {columnId} = req.params
     await prisma.column.delete({
-        where: {id: columnId}
+        where: {id: columnId as string},
     })
     res.status(204).end()
 })
 
-app.put('/api/cards/:cardId', async (req, res) => {
+app.put('/api/cards/:cardId', authenticate, async (req, res) => {
     const {cardId} = req.params
     const {title} = req.body
     const updatedCard = await prisma.card.update({
-        where: {id: cardId},
+        where: {id: cardId as string},
         data: {title: title}
     })
     res.status(200).json({updatedCard})
 })
 
-app.put('/api/columns', async (req, res) => {
+app.put('/api/columns', authenticate, async (req, res) => {
     const updatedColumns = req.body
 
     for (const column of updatedColumns) {
