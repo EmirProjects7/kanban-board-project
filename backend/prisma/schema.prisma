@@ -24,3 +24,10 @@ model Card {
   columnId String
   column   Column @relation(fields: [columnId], references: [id], onDelete: Cascade)
 }
+
+
+model User {
+  id       String @id @default(uuid())
+  email    String @unique
+  password String
+}
