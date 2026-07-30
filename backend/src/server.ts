@@ -63,9 +63,31 @@ app.post('/api/columns/:columnId/cards', (req, res) => {
     res.status(201).json(newCard)
 })
 
+app.post('/api/columns', (req, res) => {
+    const {title} = req.body
+
+    const newColumn: Column = {
+        id: crypto.randomUUID(),
+        title: title,
+        cards: [],
+    }
+
+    columns = [...columns, newColumn]
+
+    res.status(201).json(newColumn)
+})
+
 app.delete('/api/cards/:cardId', (req, res) => {
     const {cardId} = req.params
     columns = columns.map((column) => ({...column, cards: column.cards.filter((card) => card.id !== cardId)}))
+    res.status(204).end()
+})
+
+app.delete('/api/columns/:columnId', (req, res) => {
+    const {columnId} = req.params
+
+    columns = columns.filter((column) => column.id !== columnId)
+
     res.status(204).end()
 })
 

@@ -26,7 +26,7 @@ export function useBoard() {
             {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({title:title})
+                body: JSON.stringify({title: title})
             })
 
         const newCard: Card = await response.json()
@@ -39,7 +39,7 @@ export function useBoard() {
     }
 
     async function deleteCard(cardId: string) {
-        await fetch(`http://localhost:3000/api/cards/${cardId}`,{method: 'DELETE'})
+        await fetch(`http://localhost:3000/api/cards/${cardId}`, {method: 'DELETE'})
 
         setColumns(columns.map((column) => ({
             ...column, cards: column.cards.filter((c) => c.id !== cardId)
@@ -50,23 +50,28 @@ export function useBoard() {
         await fetch(`http://localhost:3000/api/cards/${cardId}`, {
             method: 'PUT',
             headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({title:newTitle})
+            body: JSON.stringify({title: newTitle})
         })
 
         setColumns(columns.map((column) =>
             ({...column, cards: column.cards.map((c) => c.id === cardId ? {...c, title: newTitle} : c)})))
     }
 
-    function addColumn(title: string) {
-        const newColumn: Column = {
-            id: crypto.randomUUID(),
-            title: title,
-            cards: []
-        }
+    async function addColumn(title: string) {
+        const response = await fetch('http://localhost:3000/api/columns', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({title: title})
+        })
+
+        const newColumn: Column = await response.json()
+
         setColumns([...columns, newColumn])
     }
 
-    function deleteColumn(columnId: string) {
+    async function deleteColumn(columnId: string) {
+        await fetch(`http://localhost:3000/api/columns/${columnId}`, {method: 'DELETE'})
+
         setColumns(columns.filter((column) => column.id !== columnId))
     }
 
