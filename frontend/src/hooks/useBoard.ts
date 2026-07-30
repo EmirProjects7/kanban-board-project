@@ -75,6 +75,14 @@ export function useBoard() {
         setColumns(columns.filter((column) => column.id !== columnId))
     }
 
+    async function saveBoard(updatedColumns: Column[]) {
+        await fetch('http://localhost:3000/api/columns', {
+            method: 'PUT',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(updatedColumns),
+        })
+    }
+
     return {
         columns,
         setColumns,
@@ -83,6 +91,7 @@ export function useBoard() {
         editCard,
         addColumn,
         deleteColumn,
+        saveBoard
     }
 
 }

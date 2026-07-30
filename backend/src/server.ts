@@ -103,6 +103,11 @@ app.put('/api/cards/:cardId', (req, res) => {
     res.status(200).json({id: cardId, title: title})
 })
 
+app.put('/api/columns', (req, res) => {
+    columns = req.body
+    res.status(200).json(columns)
+})
+
 app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`)
 })

@@ -8,8 +8,8 @@ import {useState, useEffect} from 'react'
 
 
 function App() {
-    const {columns, setColumns, addCard, deleteCard, editCard, addColumn, deleteColumn} = useBoard()
-    const {activeCard, handleDragStart, handleDragOver, handleDragEnd} = useDragAndDrop(columns, setColumns)
+    const {columns, setColumns, addCard, deleteCard, editCard, addColumn, deleteColumn, saveBoard} = useBoard()
+    const {activeCard, handleDragStart, handleDragOver, handleDragEnd} = useDragAndDrop(columns, setColumns, saveBoard)
     const sensors = useSensors(useSensor(PointerSensor, {activationConstraint: {distance: 5}}))
     const [theme, setTheme] = useState<'light' | 'dark'>('light')
 

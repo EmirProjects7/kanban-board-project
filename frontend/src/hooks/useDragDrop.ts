@@ -5,8 +5,17 @@ import type {Card, Column} from './useBoard'
 
 export function useDragAndDrop(
     columns: Column[],
-    setColumns: React.Dispatch<React.SetStateAction<Column[]>>) {
+    setColumns: React.Dispatch<React.SetStateAction<Column[]>>,
+    saveBoard: (columns: Column[]) => void) {
     const [activeCard, setActiveCard] = useState<Card | null>(null)
+
+    function findColumns(activeId: string, overId: string) {
+        const activeColumn = columns.find((col) => col.cards.some((c) => c.id === activeId))
+        const overColumn = columns.find((col) =>
+            col.cards.some((c) => c.id === overId) || col.id === overId)
+        return {activeColumn, overColumn}
+    }
+
 
     function handleDragStart(event: DragStartEvent) {
         const {active} = event
@@ -23,11 +32,7 @@ export function useDragAndDrop(
         const {active, over} = event
         if (!over) return
 
-        const activeColumn = columns.find((col) =>
-            col.cards.some((c) => c.id === active.id))
-        const overColumn = columns.find((col) =>
-            col.cards.some((c) => c.id === over.id) || col.id === over.id)
-
+        const {activeColumn, overColumn} = findColumns(active.id as string, over.id as string)
         if (!activeColumn || !overColumn) return
         if (activeColumn.id === overColumn.id) return
 
@@ -53,27 +58,44 @@ export function useDragAndDrop(
 
     function handleDragEnd(event: DragEndEvent) {
         const {active, over} = event
+        console.log('handleDragEnd çalıştı. over:', over)
         setActiveCard(null)
 
         if (!over) return
-        if (active.id === over.id) return
+
+        const activeId = active.id as string
+        const overId = over.id as string
 
         const activeColumn = columns.find((col) =>
-            col.cards.some((c) => c.id === active.id))
+            col.cards.some((c) => c.id === activeId))
         const overColumn = columns.find((col) =>
-            col.cards.some((c) => c.id === over.id) || col.id === over.id)
+            col.id === overId || col.cards.some((c) => c.id === overId))
 
-        if (!activeColumn || !overColumn) return
-        if (activeColumn.id !== overColumn.id) return
+        if (!activeColumn || !overColumn) {
+            saveBoard(columns)
+            return
+        }
 
-        setColumns((prevColumns) =>
-            prevColumns.map((column) => {
-                if (column.id !== activeColumn.id) return column
-                const oldIndex = column.cards.findIndex((c) => c.id === active.id)
-                const newIndex = column.cards.findIndex((c) => c.id === over.id)
-                return {...column, cards: arrayMove(column.cards, oldIndex, newIndex)}
+        if (activeColumn.id === overColumn.id) {
+
+            setColumns((prevColumns) => {
+                const newColumns = prevColumns.map((column) => {
+                    if (column.id !== activeColumn.id) return column
+                    const oldIndex = column.cards.findIndex((c) => c.id === active.id)
+                    const newIndex = column.cards.findIndex((c) => c.id === over.id)
+                    if (oldIndex === -1 || newIndex === -1 || oldIndex === newIndex) return column
+                    return {...column, cards: arrayMove(column.cards, oldIndex, newIndex)}
+                })
+                saveBoard(newColumns)
+                return newColumns
             })
-        )
+        } else {
+            setColumns((prevColumns) => {
+                console.log('Saving board (cross-column):', prevColumns)
+                saveBoard(prevColumns)
+                return prevColumns
+            })
+        }
     }
 
     return {activeCard, handleDragStart, handleDragOver, handleDragEnd}
