@@ -63,6 +63,12 @@ app.post('/api/columns/:columnId/cards', (req, res) => {
     res.status(201).json(newCard)
 })
 
+app.delete('/api/cards/:cardId', (req, res) => {
+    const {cardId} = req.params
+    columns = columns.map((column) => ({...column, cards: column.cards.filter((card) => card.id !== cardId)}))
+    res.status(204).end()
+})
+
 app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`)
 })

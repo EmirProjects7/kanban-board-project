@@ -30,7 +30,7 @@ export function useBoard() {
             })
 
         const newCard: Card = await response.json()
-        
+
         setColumns(
             columns.map((column) =>
                 column.id === columnId ? {...column, cards: [...column.cards, newCard]} : column
@@ -38,7 +38,9 @@ export function useBoard() {
         )
     }
 
-    function deleteCard(cardId: string) {
+    async function deleteCard(cardId: string) {
+        await fetch(`http://localhost:3000/api/cards/${cardId}`,{method: 'DELETE'})
+
         setColumns(columns.map((column) => ({
             ...column, cards: column.cards.filter((c) => c.id !== cardId)
         })))
