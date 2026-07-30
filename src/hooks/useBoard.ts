@@ -63,12 +63,27 @@ export function useBoard() {
             ({...column, cards:column.cards.map((c) => c.id === cardId ? {...c, title: newTitle} : c)})))
     }
 
+    function addColumn(title: string) {
+        const newColumn: Column = {
+            id: crypto.randomUUID(),
+            title: title,
+            cards: []
+        }
+        setColumns([...columns, newColumn])
+    }
+
+    function deleteColumn(columnId: string) {
+        setColumns(columns.filter((column) => column.id !== columnId))
+    }
+
     return {
         columns,
         setColumns,
         addCard,
         deleteCard,
         editCard,
+        addColumn,
+        deleteColumn,
     }
 
 }

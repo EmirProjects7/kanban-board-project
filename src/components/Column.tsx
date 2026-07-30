@@ -10,20 +10,25 @@ type ColumnProps = {
     onAddCard: (columnId: string, title: string) => void
     onDeleteCard: (cardId: string) => void
     onEditCard: (cardId: string, newTitle: string) => void
+    onDeleteColumn: (columnId: string) => void
 }
 
-function Column({column, onAddCard, onDeleteCard, onEditCard}: ColumnProps) {
+function Column({column, onAddCard, onDeleteCard, onEditCard, onDeleteColumn}: ColumnProps) {
     const {setNodeRef} = useDroppable({id: column.id})
     return (
         <div className="column" ref={setNodeRef}>
-            <h2>{column.title}</h2>
+            <div className="column-header">
+                <h2>{column.title}</h2>
+                <button className="delete-column-button" onClick={() => onDeleteColumn(column.id)}> ×</button>
+            </div>
             <div className="cards">
                 <SortableContext
                     items={column.cards.map((card) => card.id)}
                     strategy={verticalListSortingStrategy}
                 >
                     {column.cards.map((card) => (
-                        <Card key={card.id} id={card.id} title={card.title} onDelete={onDeleteCard} onEdit={onEditCard}/>
+                        <Card key={card.id} id={card.id} title={card.title} onDelete={onDeleteCard}
+                              onEdit={onEditCard}/>
                     ))}
                 </SortableContext>
             </div>
