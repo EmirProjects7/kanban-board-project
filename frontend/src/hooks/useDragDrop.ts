@@ -58,7 +58,6 @@ export function useDragAndDrop(
 
     function handleDragEnd(event: DragEndEvent) {
         const {active, over} = event
-        console.log('handleDragEnd çalıştı. over:', over)
         setActiveCard(null)
 
         if (!over) return
@@ -91,7 +90,6 @@ export function useDragAndDrop(
             })
         } else {
             setColumns((prevColumns) => {
-                console.log('Saving board (cross-column):', prevColumns)
                 saveBoard(prevColumns)
                 return prevColumns
             })
