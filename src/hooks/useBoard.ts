@@ -58,11 +58,17 @@ export function useBoard() {
         })))
     }
 
+    function editCard(cardId:string, newTitle: string) {
+        setColumns(columns.map((column) =>
+            ({...column, cards:column.cards.map((c) => c.id === cardId ? {...c, title: newTitle} : c)})))
+    }
+
     return {
         columns,
         setColumns,
         addCard,
         deleteCard,
+        editCard,
     }
 
 }
