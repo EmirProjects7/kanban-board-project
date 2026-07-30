@@ -46,7 +46,13 @@ export function useBoard() {
         })))
     }
 
-    function editCard(cardId: string, newTitle: string) {
+    async function editCard(cardId: string, newTitle: string) {
+        await fetch(`http://localhost:3000/api/cards/${cardId}`, {
+            method: 'PUT',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({title:newTitle})
+        })
+
         setColumns(columns.map((column) =>
             ({...column, cards: column.cards.map((c) => c.id === cardId ? {...c, title: newTitle} : c)})))
     }

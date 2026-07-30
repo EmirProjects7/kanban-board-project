@@ -69,6 +69,18 @@ app.delete('/api/cards/:cardId', (req, res) => {
     res.status(204).end()
 })
 
+app.put('/api/cards/:cardId', (req, res) => {
+    const {cardId} = req.params
+    const {title} = req.body
+
+    columns = columns.map((column) => ({
+        ...column,
+        cards: column.cards.map((card) =>
+            card.id === cardId ? {...card, title: title} : card)
+    }))
+    res.status(200).json({id: cardId, title: title})
+})
+
 app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`)
 })
