@@ -3,4 +3,10 @@ dist
 .env
 *.log
 
+.agents
+.claude
+.windsurf
+skills-lock.json
+prisma/generated
+
 /src/generated/prisma
