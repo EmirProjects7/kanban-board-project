@@ -17,18 +17,20 @@ export function useBoard() {
     useEffect(() => {
         fetch('http://localhost:3000/api/columns')
             .then((res) => res.json())
-            .then((data) => {
-                console.log('Fetched data:', data)
-                setColumns(data)
-            })
+            .then((data) => setColumns(data))
             .catch((error) => console.log('Fetch error:', error))
     }, [])
 
-    function addCard(columnId: string, title: string) {
-        const newCard: Card = {
-            id: crypto.randomUUID(),
-            title: title
-        }
+    async function addCard(columnId: string, title: string) {
+        const response = await fetch(`http://localhost:3000/api/columns/${columnId}/cards`,
+            {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({title:title})
+            })
+
+        const newCard: Card = await response.json()
+        
         setColumns(
             columns.map((column) =>
                 column.id === columnId ? {...column, cards: [...column.cards, newCard]} : column
