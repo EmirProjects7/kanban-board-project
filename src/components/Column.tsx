@@ -9,9 +9,10 @@ type ColumnProps = {
     column: ColumnType
     onAddCard: (columnId: string, title: string) => void
     onDeleteCard: (cardId: string) => void
+    onEditCard: (cardId: string, newTitle: string) => void
 }
 
-function Column({column, onAddCard, onDeleteCard}: ColumnProps) {
+function Column({column, onAddCard, onDeleteCard, onEditCard}: ColumnProps) {
     const {setNodeRef} = useDroppable({id: column.id})
     return (
         <div className="column" ref={setNodeRef}>
@@ -22,7 +23,7 @@ function Column({column, onAddCard, onDeleteCard}: ColumnProps) {
                     strategy={verticalListSortingStrategy}
                 >
                     {column.cards.map((card) => (
-                        <Card key={card.id} id={card.id} title={card.title} onDelete={onDeleteCard}/>
+                        <Card key={card.id} id={card.id} title={card.title} onDelete={onDeleteCard} onEdit={onEditCard}/>
                     ))}
                 </SortableContext>
             </div>

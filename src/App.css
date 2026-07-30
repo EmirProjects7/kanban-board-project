@@ -55,6 +55,17 @@
     color: #c084fc;
 }
 
-.add-card {
-    
+.card-edit-input {
+    width: 100%;
+    box-sizing: border-box;
+    border: none;
+    outline: none;
+    font-size: 14px;
+    font-family: inherit;
+    line-height: inherit;
+    color: #333;
+    background: transparent;
+    padding: 0;
+    margin: 0;
+    display: block;
 }
