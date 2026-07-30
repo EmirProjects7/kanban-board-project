@@ -1,4 +1,4 @@
-:root {
+[data-theme="light"] {
     --bg: #f4f5f7;
     --column-bg: #e9ebf0;
     --column-title: #5b21b6;
@@ -9,7 +9,7 @@
     --shadow: rgba(0, 0, 0, 0.1);
 }
 
-[data-theme="dark"] {
+:root {
     --bg: #1a1a2e;
     --column-bg: #6b6375;
     --column-title: #c084fc;
