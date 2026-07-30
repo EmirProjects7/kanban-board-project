@@ -1,40 +1,12 @@
+import 'dotenv/config'
 import express from 'express'
 import cors from 'cors'
+import {PrismaClient} from './generated/prisma/client'
+import {PrismaPg} from '@prisma/adapter-pg'
 
-type Card = {
-    id: string
-    title: string
-}
+const adapter = new PrismaPg({connectionString: process.env.DATABASE_URL})
+const prisma = new PrismaClient({adapter})
 
-type Column = {
-    id: string
-    title: string
-    cards: Card[]
-}
-
-let columns: Column[] = [
-    {
-        id: 'col-1',
-        title: 'To Do',
-        cards: [
-            {id: 'card-1', title: 'Create Project'},
-            {id: 'card-2', title: 'Generate Kanban'},
-        ],
-    },
-    {
-        id: 'col-2',
-        title: 'In Progress',
-        cards: [{id: 'card-3', title: 'Draw columns'}],
-    },
-    {
-        id: 'col-3',
-        title: 'Done',
-        cards: [
-            {id: 'card-4', title: 'Load Node.js'},
-            {id: 'card-5', title: 'Generate project'},
-        ],
-    },
-]
 
 const app = express()
 app.use(cors({origin: 'http://localhost:5173'}))
@@ -45,66 +17,75 @@ app.get('/health', (req, res) => {
     res.json({status: 'ok', message: 'Backend is running'})
 })
 
-app.get('/api/columns', (req, res) => {
+app.get('/api/columns', async (req, res) => {
+    const columns = await prisma.column.findMany({
+        include: {cards: true}
+    })
     res.json(columns)
 })
 
-app.post('/api/columns/:columnId/cards', (req, res) => {
+app.post('/api/columns/:columnId/cards', async (req, res) => {
     const {columnId} = req.params
     const {title} = req.body
-
-    const newCard: Card = {
-        id: crypto.randomUUID(),
-        title: title
-    }
-    columns = columns.map((column) =>
-        column.id === columnId ? {...column, cards: [...column.cards, newCard]} : column
-    )
+    const newCard = await prisma.card.create({
+        data: {
+            title: title,
+            columnId: columnId
+        }
+    })
     res.status(201).json(newCard)
 })
 
-app.post('/api/columns', (req, res) => {
+app.post('/api/columns', async (req, res) => {
     const {title} = req.body
-
-    const newColumn: Column = {
-        id: crypto.randomUUID(),
-        title: title,
-        cards: [],
-    }
-
-    columns = [...columns, newColumn]
-
+    const newColumn = await prisma.column.create({
+        data: {title: title},
+        include: {cards: true}
+    })
     res.status(201).json(newColumn)
 })
 
-app.delete('/api/cards/:cardId', (req, res) => {
+app.delete('/api/cards/:cardId', async (req, res) => {
     const {cardId} = req.params
-    columns = columns.map((column) => ({...column, cards: column.cards.filter((card) => card.id !== cardId)}))
+    await prisma.card.delete({
+        where: {id: cardId}
+    })
     res.status(204).end()
 })
 
-app.delete('/api/columns/:columnId', (req, res) => {
+app.delete('/api/columns/:columnId', async (req, res) => {
     const {columnId} = req.params
-
-    columns = columns.filter((column) => column.id !== columnId)
-
+    await prisma.column.delete({
+        where: {id: columnId}
+    })
     res.status(204).end()
 })
 
-app.put('/api/cards/:cardId', (req, res) => {
+app.put('/api/cards/:cardId', async (req, res) => {
     const {cardId} = req.params
     const {title} = req.body
-
-    columns = columns.map((column) => ({
-        ...column,
-        cards: column.cards.map((card) =>
-            card.id === cardId ? {...card, title: title} : card)
-    }))
-    res.status(200).json({id: cardId, title: title})
+    const updatedCard = await prisma.card.update({
+        where: {id: cardId},
+        data: {title: title}
+    })
+    res.status(200).json({updatedCard})
 })
 
-app.put('/api/columns', (req, res) => {
-    columns = req.body
+app.put('/api/columns', async (req, res) => {
+    const updatedColumns = req.body
+
+    for (const column of updatedColumns) {
+        for (const card of column.cards) {
+            await prisma.card.update({
+                where: {id: card.id},
+                data: {columnId: column.id}
+            })
+        }
+    }
+
+    const columns = await prisma.column.findMany({
+        include: {cards: true}
+    })
     res.status(200).json(columns)
 })
 
