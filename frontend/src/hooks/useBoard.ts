@@ -1,0 +1,97 @@
+import {useState, useEffect} from 'react'
+
+export type Card = {
+    id: string
+    title: string
+}
+
+export type Column = {
+    id: string
+    title: string
+    cards: Card[]
+}
+
+export function useBoard() {
+    const [columns, setColumns] = useState<Column[]>([])
+
+    useEffect(() => {
+        fetch('http://localhost:3000/api/columns')
+            .then((res) => res.json())
+            .then((data) => setColumns(data))
+            .catch((error) => console.log('Fetch error:', error))
+    }, [])
+
+    async function addCard(columnId: string, title: string) {
+        const response = await fetch(`http://localhost:3000/api/columns/${columnId}/cards`,
+            {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({title: title})
+            })
+
+        const newCard: Card = await response.json()
+
+        setColumns(
+            columns.map((column) =>
+                column.id === columnId ? {...column, cards: [...column.cards, newCard]} : column
+            )
+        )
+    }
+
+    async function deleteCard(cardId: string) {
+        await fetch(`http://localhost:3000/api/cards/${cardId}`, {method: 'DELETE'})
+
+        setColumns(columns.map((column) => ({
+            ...column, cards: column.cards.filter((c) => c.id !== cardId)
+        })))
+    }
+
+    async function editCard(cardId: string, newTitle: string) {
+        await fetch(`http://localhost:3000/api/cards/${cardId}`, {
+            method: 'PUT',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({title: newTitle})
+        })
+
+        setColumns(columns.map((column) =>
+            ({...column, cards: column.cards.map((c) => c.id === cardId ? {...c, title: newTitle} : c)})))
+    }
+
+    async function addColumn(title: string) {
+        const response = await fetch('http://localhost:3000/api/columns', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({title: title})
+        })
+
+        const newColumn: Column = await response.json()
+
+        setColumns([...columns, newColumn])
+    }
+
+    async function deleteColumn(columnId: string) {
+        await fetch(`http://localhost:3000/api/columns/${columnId}`, {method: 'DELETE'})
+
+        setColumns(columns.filter((column) => column.id !== columnId))
+    }
+
+    async function saveBoard(updatedColumns: Column[]) {
+        await fetch('http://localhost:3000/api/columns', {
+            method: 'PUT',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(updatedColumns),
+        })
+    }
+
+    return {
+        columns,
+        setColumns,
+        addCard,
+        deleteCard,
+        editCard,
+        addColumn,
+        deleteColumn,
+        saveBoard
+    }
+
+}
