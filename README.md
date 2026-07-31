@@ -13,11 +13,11 @@ A full-stack, real-time Kanban board with secure authentication and personal boa
 
 ## Tech Stack
 
-**Frontend:** React, TypeScript, Vite, dnd-kit, Socket.IO client
-**Backend:** Node.js, Express, TypeScript, Socket.IO
-**Database:** PostgreSQL, Prisma ORM
-**Auth:** JWT, bcrypt
-**Infrastructure:** Docker (PostgreSQL), monorepo with unified dev tooling
+- **Frontend:** React, TypeScript, Vite, dnd-kit, Socket.IO client
+- **Backend:** Node.js, Express, TypeScript, Socket.IO
+- **Database:** PostgreSQL, Prisma ORM
+- **Auth:** JWT, bcrypt
+- **Infrastructure:** Docker (PostgreSQL), monorepo with unified dev tooling
 
 ## Security
 
@@ -32,12 +32,14 @@ A full-stack, real-time Kanban board with secure authentication and personal boa
 ## Getting Started
 
 ### Prerequisites
+
 - Node.js
 - Docker Desktop
 
 ### Setup
 
 1. Clone and install:
+
 ```bash
    git clone https://github.com/EmirProjects7/kanban-board-project.git
    cd kanban-board-project
@@ -52,6 +54,7 @@ A full-stack, real-time Kanban board with secure authentication and personal boa
 ```
 
 4. Start everything with one command:
+
 ```bash
    npm run dev
 ```
