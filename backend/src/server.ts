@@ -89,12 +89,20 @@ app.get('/api/columns', authenticate, async (req, res) => {
 })
 
 app.post('/api/columns/:columnId/cards', authenticate, async (req, res) => {
-    const {columnId} = req.params
+    const userId = (req as any).userId
+    const columnId = req.params.columnId as string
     const {title} = req.body
+
+    const column = await prisma.column.findFirst({
+        where: {id: userId, userId: userId},
+    })
+    if (!column) {
+        return res.status(401).json({error: 'Not allowed!'})
+    }
     const newCard = await prisma.card.create({
         data: {
             title: title,
-            columnId: columnId as string,
+            columnId: columnId,
         }
     })
     res.status(201).json(newCard)
@@ -111,7 +119,17 @@ app.post('/api/columns', authenticate, async (req, res) => {
 })
 
 app.delete('/api/cards/:cardId', authenticate, async (req, res) => {
-    const {cardId} = req.params
+    const userId = (req as any).userId
+    const cardId = req.params.cardId as string
+
+    const card = await prisma.card.findFirst({
+        where: {id: cardId, column: {userId: userId}},
+    })
+
+    if (!card) {
+        return res.status(401).json({error: 'Not allowed!'})
+    }
+
     await prisma.card.delete({
         where: {id: cardId as string},
     })
@@ -119,7 +137,18 @@ app.delete('/api/cards/:cardId', authenticate, async (req, res) => {
 })
 
 app.delete('/api/columns/:columnId', authenticate, async (req, res) => {
-    const {columnId} = req.params
+    const userId = (req as any).userId
+    const columnId = req.params.columnId as string
+
+    const column = await prisma.column.findFirst({
+        
+        where: {id: columnId, userId: userId},
+    })
+
+    if (!column) {
+        return res.status(401).json({error: 'Not allowed!'})
+    }
+
     await prisma.column.delete({
         where: {id: columnId as string},
     })
@@ -127,8 +156,18 @@ app.delete('/api/columns/:columnId', authenticate, async (req, res) => {
 })
 
 app.put('/api/cards/:cardId', authenticate, async (req, res) => {
-    const {cardId} = req.params
+    const userId = (req as any).userId
+    const cardId = req.params.cardId as string
     const {title} = req.body
+
+    const card = await prisma.card.findFirst({
+        where: {id: cardId, column: {userId: userId}}
+    })
+
+    if (!card) {
+        return res.status(401).json({error: 'Not allowed!'})
+    }
+
     const updatedCard = await prisma.card.update({
         where: {id: cardId as string},
         data: {title: title}
