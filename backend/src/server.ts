@@ -1,6 +1,6 @@
 import 'dotenv/config'
 import express from 'express'
-import type { Request, Response, NextFunction } from 'express'
+import type {Request, Response, NextFunction} from 'express'
 import cors from 'cors'
 import {PrismaClient} from './generated/prisma/client'
 import {PrismaPg} from '@prisma/adapter-pg'
@@ -14,7 +14,7 @@ function authenticate(req: Request, res: Response, next: NextFunction) {
     const authHeader = req.headers.authorization
 
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-        return res.status(401).json({ error: 'No token provided' })
+        return res.status(401).json({error: 'No token provided'})
     }
 
     const token = authHeader.split(' ')[1]
@@ -24,7 +24,7 @@ function authenticate(req: Request, res: Response, next: NextFunction) {
         ;(req as any).userId = decoded.userId
         next()
     } catch (error) {
-        return res.status(401).json({ error: 'Invalid token' })
+        return res.status(401).json({error: 'Invalid token'})
     }
 }
 
@@ -80,7 +80,9 @@ app.post('/api/auth/login', async (req, res) => {
 })
 
 app.get('/api/columns', authenticate, async (req, res) => {
+    const userId = (req as any).userId
     const columns = await prisma.column.findMany({
+        where: {userId: userId},
         include: {cards: true}
     })
     res.json(columns)
@@ -99,9 +101,10 @@ app.post('/api/columns/:columnId/cards', authenticate, async (req, res) => {
 })
 
 app.post('/api/columns', authenticate, async (req, res) => {
+    const userId = (req as any).userId
     const {title} = req.body
     const newColumn = await prisma.column.create({
-        data: {title: title},
+        data: {title: title, userId: userId},
         include: {cards: true}
     })
     res.status(201).json(newColumn)
