@@ -19,7 +19,7 @@ function Column({column, onAddCard, onDeleteCard, onEditCard, onDeleteColumn}: C
         <div className="column" ref={setNodeRef}>
             <div className="column-header">
                 <h2>{column.title}</h2>
-                <button className="delete-column-button" onClick={() => onDeleteColumn(column.id)}> ×</button>
+                <button className="delete-column-button" onClick={() => onDeleteColumn(column.id)} aria-label = "Delete column"> ×</button>
             </div>
             <div className="cards">
                 <SortableContext

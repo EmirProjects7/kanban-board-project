@@ -1,5 +1,5 @@
 import './App.css'
-import {DndContext, DragOverlay, PointerSensor, useSensor, useSensors} from '@dnd-kit/core'
+import {DndContext, DragOverlay, PointerSensor, KeyboardSensor, useSensor, useSensors} from '@dnd-kit/core'
 import {useBoard} from './hooks/useBoard';
 import Column from './components/Column'
 import {useDragAndDrop} from "./hooks/useDragDrop.ts";
@@ -8,6 +8,7 @@ import {useState, useEffect} from 'react'
 import {clearToken, getToken} from "./api.ts";
 import {AuthForm} from "./components/AuthForm.tsx";
 import {disconnectSocket} from "./socket.ts";
+import {sortableKeyboardCoordinates} from '@dnd-kit/sortable'
 
 
 function App() {
@@ -23,7 +24,7 @@ function App() {
         saveBoard
     } = useBoard(isAuthenticated)
     const {activeCard, handleDragStart, handleDragOver, handleDragEnd} = useDragAndDrop(columns, setColumns, saveBoard)
-    const sensors = useSensors(useSensor(PointerSensor, {activationConstraint: {distance: 5}}))
+    const sensors = useSensors(useSensor(PointerSensor, {activationConstraint: {distance: 5}}), useSensor(KeyboardSensor, {coordinateGetter: sortableKeyboardCoordinates}))
     const [theme, setTheme] = useState<'light' | 'dark'>('dark')
 
     useEffect(() => {
