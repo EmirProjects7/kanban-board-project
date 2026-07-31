@@ -7,11 +7,21 @@ import AddColumnForm from "./components/AddColumnForm.tsx";
 import {useState, useEffect} from 'react'
 import {clearToken, getToken} from "./api.ts";
 import {AuthForm} from "./components/AuthForm.tsx";
+import {disconnectSocket} from "./socket.ts";
 
 
 function App() {
     const [isAuthenticated, setIsAuthenticated] = useState(!!getToken())
-    const {columns, setColumns, addCard, deleteCard, editCard, addColumn, deleteColumn, saveBoard} = useBoard(isAuthenticated)
+    const {
+        columns,
+        setColumns,
+        addCard,
+        deleteCard,
+        editCard,
+        addColumn,
+        deleteColumn,
+        saveBoard
+    } = useBoard(isAuthenticated)
     const {activeCard, handleDragStart, handleDragOver, handleDragEnd} = useDragAndDrop(columns, setColumns, saveBoard)
     const sensors = useSensors(useSensor(PointerSensor, {activationConstraint: {distance: 5}}))
     const [theme, setTheme] = useState<'light' | 'dark'>('dark')
@@ -22,6 +32,7 @@ function App() {
 
     function handleLogout() {
         clearToken()
+        disconnectSocket()
         setIsAuthenticated(false)
     }
 

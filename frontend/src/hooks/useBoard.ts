@@ -1,5 +1,6 @@
 import {useState, useEffect} from 'react'
 import * as api from '../api'
+import {connectSocket} from '../socket'
 
 export type Card = {
     id: string
@@ -16,12 +17,28 @@ export function useBoard(isAuthenticated: boolean) {
     const [columns, setColumns] = useState<Column[]>([])
 
     useEffect(() => {
-        if(!isAuthenticated){
+        if (!isAuthenticated) {
             return
         }
         api.fetchColumns()
             .then((data) => setColumns(data))
             .catch((error) => console.log('Fetch error:', error))
+    }, [isAuthenticated])
+
+    useEffect(() => {
+        if (!isAuthenticated) {
+            return
+        }
+        const socket = connectSocket()
+        socket.on('connect', () => console.log('socket connected'))
+        socket.on('connect_error', (err) => console.log('socket error:', err.message))
+        socket.on('board:updated', (data: Column[]) => {
+            console.log('board:updated received')
+            setColumns(data)
+        })
+        return () => {
+            socket.off('board:updated')
+        }
     }, [isAuthenticated])
 
     async function addCard(columnId: string, title: string) {
