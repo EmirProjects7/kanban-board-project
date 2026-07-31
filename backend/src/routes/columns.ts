@@ -57,9 +57,20 @@ router.delete('/:columnId', authenticate, async (req, res) => {
 })
 
 router.put('/', authenticate, async (req, res) => {
+    const userId = (req as any).userId
     const updatedColumns = req.body
 
+    const userColumns = await prisma.column.findMany({
+        where: { id: userId },
+        select: {id: true}
+    })
+
+    const ownedIds = new Set(userColumns.map(column => column.id))
+
     for (const column of updatedColumns) {
+        if(!ownedIds.has(column.id)) {
+            return res.status(403).json({ error: 'Not allowed' })
+        }
         for (const card of column.cards) {
             await prisma.card.update({
                 where: { id: card.id },
@@ -69,6 +80,7 @@ router.put('/', authenticate, async (req, res) => {
     }
 
     const columns = await prisma.column.findMany({
+        where: { userId: userId },
         include: { cards: true },
     })
     res.status(200).json(columns)
