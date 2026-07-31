@@ -8,13 +8,14 @@ import authRouter from './routes/auth'
 import columnsRouter from './routes/columns'
 import cardsRouter from './routes/cards'
 import { initSocket } from './socket'
+import { authLimiter, apiLimiter } from './middleware/rateLimit'
 
 const app = express()
 app.use(cors({origin: 'http://localhost:5173'}))
 app.use(express.json())
-app.use('/api/auth', authRouter)
-app.use('/api/columns', columnsRouter)
-app.use('/api/cards', cardsRouter)
+app.use('/api/auth', authLimiter, authRouter)
+app.use('/api/columns', apiLimiter, columnsRouter)
+app.use('/api/cards', apiLimiter, cardsRouter)
 const PORT = 3000
 
 app.get('/health', (req, res) => {
