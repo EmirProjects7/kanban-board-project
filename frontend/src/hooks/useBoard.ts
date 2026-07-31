@@ -12,14 +12,17 @@ export type Column = {
     cards: Card[]
 }
 
-export function useBoard() {
+export function useBoard(isAuthenticated: boolean) {
     const [columns, setColumns] = useState<Column[]>([])
 
     useEffect(() => {
+        if(!isAuthenticated){
+            return
+        }
         api.fetchColumns()
             .then((data) => setColumns(data))
             .catch((error) => console.log('Fetch error:', error))
-    }, [])
+    }, [isAuthenticated])
 
     async function addCard(columnId: string, title: string) {
         const newCard: Card = await api.createCard(columnId, title)
