@@ -1,3 +1,14 @@
+:root {
+    --bg: #1a1a2e;
+    --column-bg: #6b6375;
+    --column-title: #c084fc;
+    --card-bg: #2a2a3e;
+    --card-text: #e0e0e0;
+    --muted: #888888;
+    --accent: #c084fc;
+    --shadow: rgba(0, 0, 0, 0.4);
+}
+
 [data-theme="light"] {
     --bg: #f4f5f7;
     --column-bg: #e9ebf0;
@@ -9,15 +20,9 @@
     --shadow: rgba(0, 0, 0, 0.1);
 }
 
-:root, [data-theme="dark"] {
-    --bg: #1a1a2e;
-    --column-bg: #6b6375;
-    --column-title: #c084fc;
-    --card-bg: #2a2a3e;
-    --card-text: #e0e0e0;
-    --muted: #888888;
-    --accent: #c084fc;
-    --shadow: rgba(0, 0, 0, 0.4);
+body {
+    margin: 0;
+    background: var(--bg);
 }
 
 .app {
