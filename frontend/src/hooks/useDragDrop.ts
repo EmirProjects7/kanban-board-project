@@ -6,7 +6,8 @@ import type {Card, Column} from './useBoard'
 export function useDragAndDrop(
     columns: Column[],
     setColumns: React.Dispatch<React.SetStateAction<Column[]>>,
-    saveBoard: (columns: Column[]) => void) {
+    saveBoard: (columns: Column[]) => void,
+    isDraggingRef: React.MutableRefObject<boolean>){
     const [activeCard, setActiveCard] = useState<Card | null>(null)
 
     function findColumns(activeId: string, overId: string) {
@@ -18,6 +19,7 @@ export function useDragAndDrop(
 
 
     function handleDragStart(event: DragStartEvent) {
+        isDraggingRef.current = true
         const {active} = event
         for (const column of columns) {
             const card = column.cards.find((c) => c.id === active.id)
@@ -57,6 +59,7 @@ export function useDragAndDrop(
     }
 
     function handleDragEnd(event: DragEndEvent) {
+        isDraggingRef.current = false
         const {active, over} = event
         setActiveCard(null)
 

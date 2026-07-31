@@ -9,7 +9,7 @@ const router = Router()
 async function emitBoard(userId: string) {
     const columns = await prisma.column.findMany({
         where: {userId: userId},
-        include: {cards: true},
+        include: {cards: {orderBy: {order: 'asc'}}},
     })
     io.to(userId).emit('board:updated', columns)
 }
@@ -18,7 +18,7 @@ router.get('/', authenticate, async (req, res) => {
     const userId = (req as any).userId
     const columns = await prisma.column.findMany({
         where: {userId: userId},
-        include: {cards: true},
+        include: {cards: {orderBy: {order: 'asc'}}},
     })
     res.json(columns)
 })
@@ -28,7 +28,7 @@ router.post('/', authenticate, async (req, res) => {
     const {title} = req.body
     const newColumn = await prisma.column.create({
         data: {title: title, userId: userId},
-        include: {cards: true},
+        include: {cards: {orderBy: {order: 'asc'}}},
     })
     res.status(201).json(newColumn)
     await emitBoard(userId)
@@ -46,8 +46,9 @@ router.post('/:columnId/cards', authenticate, async (req, res) => {
         return res.status(403).json({error: 'Not allowed'})
     }
 
+    const count = await prisma.card.count({where: {columnId: columnId}})
     const newCard = await prisma.card.create({
-        data: {title: title, columnId: columnId},
+        data: {title: title, columnId: columnId, order: count},
     })
     res.status(201).json(newCard)
     await emitBoard(userId)
@@ -84,17 +85,18 @@ router.put('/', authenticate, async (req, res) => {
         if (!ownedIds.has(column.id)) {
             return res.status(403).json({error: 'Not allowed'})
         }
-        for (const card of column.cards) {
+        for (let i = 0; i < column.cards.length; i++) {
+            const card = column.cards[i]
             await prisma.card.update({
                 where: {id: card.id},
-                data: {columnId: column.id},
+                data: {columnId: column.id, order: i}
             })
         }
     }
 
     const columns = await prisma.column.findMany({
         where: {userId: userId},
-        include: {cards: true},
+        include: {cards: {orderBy: {order: 'asc'}}},
     })
     res.status(200).json(columns)
     await emitBoard(userId)
