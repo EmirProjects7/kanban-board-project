@@ -1,7 +1,7 @@
 import {Router} from 'express'
 import {prisma} from '../prisma'
 import {authenticate} from '../middleware/authenticate'
-import {io} from '../server'
+import {io} from '../socket'
 
 const router = Router()
 

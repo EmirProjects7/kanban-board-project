@@ -7,6 +7,7 @@ import jwt from 'jsonwebtoken'
 import authRouter from './routes/auth'
 import columnsRouter from './routes/columns'
 import cardsRouter from './routes/cards'
+import { initSocket } from './socket'
 
 const app = express()
 app.use(cors({origin: 'http://localhost:5173'}))
@@ -23,6 +24,8 @@ app.get('/health', (req, res) => {
 const httpServer = createServer(app)
 
 const io = new Server(httpServer, {cors: {origin: 'http://localhost:5173'}})
+
+initSocket(io)
 
 io.use((socket, next) => {
     const token = socket.handshake.auth.token
@@ -45,8 +48,6 @@ io.on('connection', (socket) => {
     socket.on('disconnect', () => {
     })
 })
-
-export {io}
 
 httpServer.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`)
