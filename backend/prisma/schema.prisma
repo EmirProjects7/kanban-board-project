@@ -16,6 +16,8 @@ model Column {
   id    String @id @default(uuid())
   title String
   cards Card[]
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Card {
@@ -23,4 +25,12 @@ model Card {
   title    String
   columnId String
   column   Column @relation(fields: [columnId], references: [id], onDelete: Cascade)
+}
+
+
+model User {
+  id       String @id @default(uuid())
+  email    String @unique
+  password String
+  columns Column[]
 }
