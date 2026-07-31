@@ -30,16 +30,8 @@ function Card({id, title, onDelete, onEdit}: CardProps) {
     }
 
     return (
-        <div ref={setNodeRef} style={style} className="card" onDoubleClick={() => setIsEditing(true)}>
-            <button
-                className="drag-handle"
-                {...attributes}
-                {...listeners}
-                aria-label="Drag card"
-            >
-                ⠿
-            </button>
-
+        <div ref={setNodeRef} style={style} {...attributes} {...listeners} className="card" tabIndex={0}
+             onDoubleClick={() => setIsEditing(true)}>
             {isEditing ? (
                 <input
                     className="card-edit-input"
@@ -51,14 +43,15 @@ function Card({id, title, onDelete, onEdit}: CardProps) {
                         if (e.key === 'Escape') setIsEditing(false)
                     }}
                     autoFocus
+                    onPointerDown={(e) => e.stopPropagation()}
                 />
             ) : (
-                <span className="card-title">{title}</span>
+                <span>{title}</span>
             )}
-
             <button
                 className="delete-button"
                 onClick={() => onDelete(id)}
+                onPointerDown={(e) => e.stopPropagation()}
                 aria-label="Delete card"
             >
                 ×

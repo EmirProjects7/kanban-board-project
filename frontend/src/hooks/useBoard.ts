@@ -1,4 +1,4 @@
-import {useState, useEffect} from 'react'
+import {useState, useEffect, useRef} from 'react'
 import * as api from '../api'
 import {connectSocket} from '../socket'
 
@@ -15,6 +15,7 @@ export type Column = {
 
 export function useBoard(isAuthenticated: boolean) {
     const [columns, setColumns] = useState<Column[]>([])
+    const isDraggingRef = useRef(false)
 
     useEffect(() => {
         if (!isAuthenticated) {
@@ -30,10 +31,8 @@ export function useBoard(isAuthenticated: boolean) {
             return
         }
         const socket = connectSocket()
-        socket.on('connect', () => console.log('socket connected'))
-        socket.on('connect_error', (err) => console.log('socket error:', err.message))
         socket.on('board:updated', (data: Column[]) => {
-            console.log('board:updated received')
+            if (isDraggingRef.current) return
             setColumns(data)
         })
         return () => {
@@ -85,7 +84,8 @@ export function useBoard(isAuthenticated: boolean) {
         editCard,
         addColumn,
         deleteColumn,
-        saveBoard
+        saveBoard,
+        isDraggingRef
     }
 
 }

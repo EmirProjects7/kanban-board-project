@@ -21,9 +21,10 @@ function App() {
         editCard,
         addColumn,
         deleteColumn,
-        saveBoard
+        saveBoard,
+        isDraggingRef
     } = useBoard(isAuthenticated)
-    const {activeCard, handleDragStart, handleDragOver, handleDragEnd} = useDragAndDrop(columns, setColumns, saveBoard)
+    const {activeCard, handleDragStart, handleDragOver, handleDragEnd} = useDragAndDrop(columns, setColumns, saveBoard, isDraggingRef)
     const sensors = useSensors(useSensor(PointerSensor, {activationConstraint: {distance: 5}}), useSensor(KeyboardSensor, {coordinateGetter: sortableKeyboardCoordinates}))
     const [theme, setTheme] = useState<'light' | 'dark'>('dark')
 
