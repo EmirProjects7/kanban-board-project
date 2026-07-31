@@ -1,0 +1,77 @@
+import { Router } from 'express'
+import { prisma } from '../prisma'
+import { authenticate } from '../middleware/authenticate'
+
+const router = Router()
+
+router.get('/', authenticate, async (req, res) => {
+    const userId = (req as any).userId
+    const columns = await prisma.column.findMany({
+        where: { userId: userId },
+        include: { cards: true },
+    })
+    res.json(columns)
+})
+
+router.post('/', authenticate, async (req, res) => {
+    const userId = (req as any).userId
+    const { title } = req.body
+    const newColumn = await prisma.column.create({
+        data: { title: title, userId: userId },
+        include: { cards: true },
+    })
+    res.status(201).json(newColumn)
+})
+
+router.post('/:columnId/cards', authenticate, async (req, res) => {
+    const userId = (req as any).userId
+    const columnId = req.params.columnId as string
+    const { title } = req.body
+
+    const column = await prisma.column.findFirst({
+        where: { id: columnId, userId: userId },
+    })
+    if (!column) {
+        return res.status(403).json({ error: 'Not allowed' })
+    }
+
+    const newCard = await prisma.card.create({
+        data: { title: title, columnId: columnId },
+    })
+    res.status(201).json(newCard)
+})
+
+router.delete('/:columnId', authenticate, async (req, res) => {
+    const userId = (req as any).userId
+    const columnId = req.params.columnId as string
+
+    const column = await prisma.column.findFirst({
+        where: { id: columnId, userId: userId },
+    })
+    if (!column) {
+        return res.status(403).json({ error: 'Not allowed' })
+    }
+
+    await prisma.column.delete({ where: { id: columnId } })
+    res.status(204).end()
+})
+
+router.put('/', authenticate, async (req, res) => {
+    const updatedColumns = req.body
+
+    for (const column of updatedColumns) {
+        for (const card of column.cards) {
+            await prisma.card.update({
+                where: { id: card.id },
+                data: { columnId: column.id },
+            })
+        }
+    }
+
+    const columns = await prisma.column.findMany({
+        include: { cards: true },
+    })
+    res.status(200).json(columns)
+})
+
+export default router
