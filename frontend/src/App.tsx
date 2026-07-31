@@ -5,17 +5,29 @@ import Column from './components/Column'
 import {useDragAndDrop} from "./hooks/useDragDrop.ts";
 import AddColumnForm from "./components/AddColumnForm.tsx";
 import {useState, useEffect} from 'react'
+import {clearToken, getToken} from "./api.ts";
+import {AuthForm} from "./components/AuthForm.tsx";
 
 
 function App() {
-    const {columns, setColumns, addCard, deleteCard, editCard, addColumn, deleteColumn, saveBoard} = useBoard()
+    const [isAuthenticated, setIsAuthenticated] = useState(!!getToken())
+    const {columns, setColumns, addCard, deleteCard, editCard, addColumn, deleteColumn, saveBoard} = useBoard(isAuthenticated)
     const {activeCard, handleDragStart, handleDragOver, handleDragEnd} = useDragAndDrop(columns, setColumns, saveBoard)
     const sensors = useSensors(useSensor(PointerSensor, {activationConstraint: {distance: 5}}))
-    const [theme, setTheme] = useState<'light' | 'dark'>('light')
+    const [theme, setTheme] = useState<'light' | 'dark'>('dark')
 
     useEffect(() => {
         document.documentElement.setAttribute('data-theme', theme)
     }, [theme])
+
+    function handleLogout() {
+        clearToken()
+        setIsAuthenticated(false)
+    }
+
+    if (!isAuthenticated) {
+        return <AuthForm onAuthSuccess={() => setIsAuthenticated(true)}/>
+    }
 
     return (
         <div className="app">
@@ -26,6 +38,9 @@ function App() {
                     onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
                 >
                     {theme === 'light' ? 'Dark Mode' : 'Light Mode'}
+                </button>
+                <button className="logout-button" onClick={handleLogout}>
+                    Logout
                 </button>
             </div>
             <DndContext sensors={sensors} onDragStart={handleDragStart} onDragOver={handleDragOver}
