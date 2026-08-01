@@ -16,6 +16,14 @@ export function AuthForm({ onAuthSuccess }: AuthFormProps) {
         // managers recognise it. preventDefault stops the page reloading.
         event.preventDefault()
         setError('')
+
+        // Caught here rather than sent on, so an incomplete form does not
+        // spend one of the ten auth attempts the server allows per window.
+        if (!email.trim() || !password) {
+            setError('Enter your email and password.')
+            return
+        }
+
         try {
             if (isLogin) {
                 const data = await login(email, password)
@@ -33,7 +41,10 @@ export function AuthForm({ onAuthSuccess }: AuthFormProps) {
     }
 
     return (
-        <form className="auth-form" onSubmit={handleSubmit}>
+        // noValidate: the browser's own validation blocks the submit and just
+        // moves focus, so the form would fail silently. Every message the user
+        // sees comes from the block below instead.
+        <form className="auth-form" onSubmit={handleSubmit} noValidate>
             <h2>{isLogin ? 'Login' : 'Register'}</h2>
 
             <input
