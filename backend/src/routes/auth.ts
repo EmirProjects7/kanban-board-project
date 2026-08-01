@@ -3,6 +3,7 @@ import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
 import {z} from 'zod'
 import {prisma} from '../prisma'
+import {Prisma} from '../generated/prisma/client'
 
 const router = Router()
 
@@ -26,7 +27,11 @@ router.post('/register', async (req, res) => {
         })
         res.status(201).json({id: user.id, email: user.email})
     } catch (error) {
-        res.status(400).json({error: 'Email already in use'})
+        if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+            return res.status(409).json({error: 'Email already in use'})
+        }
+        console.error(error)
+        res.status(500).json({error: 'Internal server error'})
     }
 })
 
