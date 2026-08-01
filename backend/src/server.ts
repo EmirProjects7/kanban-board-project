@@ -18,7 +18,9 @@ if (missingEnvVars.length > 0) {
     process.exit(1)
 }
 
-const PORT = Number(process.env.PORT) || 3000
+// Deliberately not PORT: one `npm run dev` starts both apps, so a generic
+// PORT in the environment would be picked up by the frontend dev server too.
+const PORT = Number(process.env.BACKEND_PORT) || 3000
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173'
 
 const app = express()
