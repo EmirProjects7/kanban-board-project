@@ -23,6 +23,8 @@ function App() {
         editColumn,
         deleteColumn,
         saveBoard,
+        error,
+        dismissError,
         isDraggingRef
     } = useBoard(isAuthenticated)
     const {activeCard, activeColumn, handleDragStart, handleDragOver, handleDragEnd} = useDragAndDrop(columns, setColumns, saveBoard, isDraggingRef)
@@ -70,6 +72,14 @@ function App() {
                     Logout
                 </button>
             </div>
+            {error && (
+                <div className="board-error" role="alert">
+                    <span>{error}</span>
+                    <button onClick={dismissError} aria-label="Dismiss error">
+                        ×
+                    </button>
+                </div>
+            )}
             <DndContext sensors={sensors} onDragStart={handleDragStart} onDragOver={handleDragOver}
                         onDragEnd={handleDragEnd}>
                 <div className="board">
