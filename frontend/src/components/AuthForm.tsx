@@ -23,8 +23,9 @@ export function AuthForm({ onAuthSuccess }: AuthFormProps) {
                 setToken(data.token)
             }
             onAuthSuccess()
-        } catch {
-            setError(isLogin ? 'Login failed' : 'Registration failed')
+        } catch (err) {
+            const fallback = isLogin ? 'Login failed' : 'Registration failed'
+            setError(err instanceof Error && err.message ? err.message : fallback)
         }
     }
 
