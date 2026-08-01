@@ -2,61 +2,180 @@
 
 A full-stack, real-time Kanban board with secure authentication and personal boards.
 
+Every user signs in and sees only their own board. Cards and columns are dragged
+into place, and changes appear in any other open session straight away.
+
 ## Features
 
-- **Drag-and-drop board** — move cards between columns (dnd-kit)
-- **Secure authentication** — register/login with hashed passwords (bcrypt) and JWT sessions
+- **Drag and drop** — reorder cards inside a column, move them between columns, and drag whole columns into a new order (dnd-kit)
+- **Inline editing** — double click a card or a column title to rename it
+- **Secure authentication** — register and log in with hashed passwords (bcrypt) and JWT sessions
 - **Personal boards** — each user sees and edits only their own board
-- **Real-time sync** — changes appear instantly across sessions via WebSockets (Socket.IO)
+- **Real-time sync** — changes appear instantly across sessions over WebSockets (Socket.IO)
 - **Persistent storage** — PostgreSQL with Prisma ORM
-- **Light / dark theme** toggle
+- **Light and dark theme**, remembered between visits
 
-## Tech Stack
+## Tech stack
 
-- **Frontend:** React, TypeScript, Vite, dnd-kit, Socket.IO client
-- **Backend:** Node.js, Express, TypeScript, Socket.IO
-- **Database:** PostgreSQL, Prisma ORM
-- **Auth:** JWT, bcrypt
-- **Infrastructure:** Docker (PostgreSQL), monorepo with unified dev tooling
+| Layer | Choice |
+| --- | --- |
+| Frontend | React, TypeScript, Vite, dnd-kit, Socket.IO client |
+| Backend | Node.js, Express, TypeScript, Socket.IO |
+| Database | PostgreSQL, Prisma ORM |
+| Auth | JWT, bcrypt |
+| Validation | Zod |
+| Tests | Vitest, Testing Library, Supertest |
+| Infrastructure | Docker (PostgreSQL), monorepo with a single dev command |
 
 ## Security
 
-- Passwords hashed with bcrypt (never stored in plaintext)
-- JWT authentication for protected REST and WebSocket connections
-- Per-user data isolation with ownership checks on every endpoint (prevents IDOR)
-- SQL injection prevented via Prisma's parameterized queries
-- Rate limiting on auth endpoints (brute-force protection)
-- Input validation with Zod
-- Secrets managed through environment variables
+- Passwords are hashed with bcrypt and never stored in plaintext
+- JWT authentication on both the REST endpoints and the WebSocket connection
+- Ownership is checked on every write, including the individual cards in a board
+  reorder, so one user cannot move another user's card into their own column
+- A board reorder is applied in a single transaction, so a rejected request
+  cannot leave the board half-updated
+- SQL injection is prevented by Prisma's parameterised queries
+- Rate limiting on the auth endpoints for brute-force protection
+- Request bodies are validated with Zod
+- Secrets come from environment variables and are never committed
 
-## Getting Started
+## Getting started
 
 ### Prerequisites
 
 - Node.js
 - Docker Desktop
 
-### Setup
-
-1. Clone and install:
+### 1. Clone and install
 
 ```bash
-   git clone https://github.com/EmirProjects7/kanban-board-project.git
-   cd kanban-board-project
-   npm install && npm install --prefix backend && npm install --prefix frontend
-
-2. Create `backend/.env`:
-
-
-3. Run migrations:
-```bash
-   cd backend && npx prisma migrate dev && cd ..
+git clone https://github.com/EmirProjects7/kanban-board-project.git
 ```
 
-4. Start everything with one command:
-
 ```bash
-   npm run dev
+cd kanban-board-project && npm install && npm install --prefix backend && npm install --prefix frontend
 ```
 
-App runs at `http://localhost:5173`.
+### 2. Configure the environment
+
+Copy the template and fill in your own values:
+
+```bash
+cp backend/.env.example backend/.env
+```
+
+`backend/.env` is gitignored and must never be committed. The template lists
+every variable; the required ones are:
+
+| Variable | Purpose |
+| --- | --- |
+| `DATABASE_URL` | Postgres connection string, e.g. `postgresql://USER:PASSWORD@localhost:5432/DATABASE` |
+| `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB` | Credentials Docker creates the database with. They must match `DATABASE_URL`. |
+| `JWT_SECRET` | Key used to sign session tokens |
+
+Optional, with the defaults shown:
+
+| Variable | Default | When to change it |
+| --- | --- | --- |
+| `BACKEND_PORT` | `3000` | The API port |
+| `FRONTEND_URL` | `http://localhost:5173` | The origin allowed by CORS |
+| `POSTGRES_PORT` | `5432` | If another project already uses 5432 on your machine. Change the port in `DATABASE_URL` to match. |
+
+Generate a strong `JWT_SECRET` rather than inventing one:
+
+```bash
+openssl rand -base64 32
+```
+
+Choose your own database password too. Do not reuse a password from anywhere
+else, and do not paste real values into issues, pull requests or screenshots.
+
+The frontend talks to `http://localhost:3000` by default. To point it elsewhere,
+create `frontend/.env` from `frontend/.env.example` and set `VITE_API_URL`.
+
+### 3. Create the database schema
+
+```bash
+npm run db
+```
+
+```bash
+cd backend && npx prisma migrate dev && cd ..
+```
+
+### 4. Run it
+
+```bash
+npm run dev
+```
+
+This starts Postgres in Docker, the API and the frontend together.
+
+- App — http://localhost:5173
+- API — http://localhost:3000 (returns the endpoint list and whether the database is reachable)
+
+## Scripts
+
+From the repository root:
+
+| Command | What it does |
+| --- | --- |
+| `npm run dev` | Database, API and frontend together |
+| `npm run db` | Just the Postgres container |
+
+Per workspace:
+
+| Command | What it does |
+| --- | --- |
+| `npm test --prefix backend` | Backend test suite |
+| `npm test --prefix frontend` | Frontend test suite |
+| `npm run build --prefix backend` | Type-check and compile the API |
+| `npm run build --prefix frontend` | Production build of the frontend |
+| `npm run lint --prefix frontend` | ESLint |
+
+Inspect the data with Prisma Studio:
+
+```bash
+cd backend && npx prisma studio
+```
+
+## API
+
+All board endpoints require an `Authorization: Bearer <token>` header. The token
+comes from the login response.
+
+| Method | Path | Purpose |
+| --- | --- | --- |
+| `POST` | `/api/auth/register` | Create an account |
+| `POST` | `/api/auth/login` | Exchange credentials for a token |
+| `GET` | `/api/columns` | The signed-in user's board |
+| `POST` | `/api/columns` | Create a column |
+| `PUT` | `/api/columns` | Persist the whole board's ordering |
+| `PUT` | `/api/columns/:columnId` | Rename a column |
+| `DELETE` | `/api/columns/:columnId` | Delete a column |
+| `POST` | `/api/columns/:columnId/cards` | Add a card |
+| `PUT` | `/api/cards/:cardId` | Rename a card |
+| `DELETE` | `/api/cards/:cardId` | Delete a card |
+
+Clients also receive a `board:updated` event over Socket.IO whenever their board
+changes.
+
+## Project structure
+
+```
+backend/
+  prisma/           schema and migrations
+  src/
+    routes/         auth, columns and cards endpoints
+    middleware/     authentication and rate limiting
+    test/           backend test suite
+    app.ts          express app
+    server.ts       listening and socket wiring
+frontend/
+  src/
+    components/     board UI
+    hooks/          board state and drag and drop
+    test/           frontend test suite
+    api.ts          API client
+```
