@@ -30,6 +30,29 @@ app.use('/api/auth', authLimiter, authRouter)
 app.use('/api/columns', apiLimiter, columnsRouter)
 app.use('/api/cards', apiLimiter, cardsRouter)
 
+// Opening the API host in a browser used to hit Express's "Cannot GET /".
+// This lists what the API actually serves instead.
+app.get('/', (req, res) => {
+    res.json({
+        name: 'kanban-board-api',
+        status: 'ok',
+        endpoints: {
+            health: '/health',
+            auth: ['POST /api/auth/register', 'POST /api/auth/login'],
+            columns: [
+                'GET /api/columns',
+                'POST /api/columns',
+                'PUT /api/columns',
+                'PUT /api/columns/:columnId',
+                'DELETE /api/columns/:columnId',
+                'POST /api/columns/:columnId/cards',
+            ],
+            cards: ['PUT /api/cards/:cardId', 'DELETE /api/cards/:cardId'],
+        },
+        note: 'Board endpoints require an Authorization: Bearer <token> header.',
+    })
+})
+
 app.get('/health', (req, res) => {
     res.json({status: 'ok', message: 'Backend is running'})
 })
