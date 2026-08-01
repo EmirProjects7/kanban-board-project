@@ -176,3 +176,64 @@ describe('submitting with Enter', () => {
         expect(apiMock.register).not.toHaveBeenCalled()
     })
 })
+
+describe('errors always reach the user', () => {
+    function submit() {
+        fireEvent.submit(screen.getByPlaceholderText('Password').closest('form')!)
+    }
+
+    it('reports a malformed email instead of failing silently', async () => {
+        // The browser would otherwise block this submit and only move focus,
+        // so the form must opt out of native validation.
+        apiMock.login.mockRejectedValue(new Error('Invalid credentials'))
+        render(<AuthForm onAuthSuccess={() => {}} />)
+
+        fillCredentials('notanemail', 'secret123')
+        submit()
+
+        await waitFor(() =>
+            expect(screen.getByText('Invalid credentials')).toBeInTheDocument()
+        )
+    })
+
+    it('opts out of the browser validation that would swallow the submit', () => {
+        render(<AuthForm onAuthSuccess={() => {}} />)
+        const form = screen.getByPlaceholderText('Password').closest('form')!
+        expect(form).toHaveAttribute('novalidate')
+    })
+
+    it('asks for the missing fields without calling the api', async () => {
+        render(<AuthForm onAuthSuccess={() => {}} />)
+
+        submit()
+
+        await waitFor(() =>
+            expect(screen.getByText('Enter your email and password.')).toBeInTheDocument()
+        )
+        expect(apiMock.login).not.toHaveBeenCalled()
+    })
+
+    it('does not spend an attempt when only the password is missing', async () => {
+        render(<AuthForm onAuthSuccess={() => {}} />)
+
+        fillCredentials('a@b.com', '')
+        submit()
+
+        await waitFor(() =>
+            expect(screen.getByText('Enter your email and password.')).toBeInTheDocument()
+        )
+        expect(apiMock.login).not.toHaveBeenCalled()
+    })
+
+    it('treats a whitespace-only email as missing', async () => {
+        render(<AuthForm onAuthSuccess={() => {}} />)
+
+        fillCredentials('   ', 'secret123')
+        submit()
+
+        await waitFor(() =>
+            expect(screen.getByText('Enter your email and password.')).toBeInTheDocument()
+        )
+        expect(apiMock.login).not.toHaveBeenCalled()
+    })
+})
