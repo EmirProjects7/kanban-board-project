@@ -7,7 +7,7 @@ import {useDragAndDrop} from './hooks/useDragDrop'
 import Column from './components/Column'
 import AddColumnForm from './components/AddColumnForm'
 import {AuthForm} from './components/AuthForm'
-import {clearToken, getToken} from './api'
+import {clearToken, getToken, setUnauthorizedHandler} from './api'
 import {disconnectSocket} from './socket'
 
 
@@ -41,6 +41,16 @@ function App() {
         disconnectSocket()
         setIsAuthenticated(false)
     }
+
+    // An expired session should land on the login screen rather than on a
+    // board whose every write quietly fails.
+    useEffect(() => {
+        setUnauthorizedHandler(() => {
+            disconnectSocket()
+            setIsAuthenticated(false)
+        })
+        return () => setUnauthorizedHandler(null)
+    }, [])
 
     if (!isAuthenticated) {
         return <AuthForm onAuthSuccess={() => setIsAuthenticated(true)}/>

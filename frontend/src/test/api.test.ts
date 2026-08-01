@@ -18,6 +18,74 @@ beforeEach(() => {
 
 afterEach(() => {
     vi.unstubAllGlobals()
+    api.setUnauthorizedHandler(null)
+})
+
+describe('expired session', () => {
+    it('clears the stored token when a board request comes back 401', async () => {
+        api.setToken('expired-token')
+        mockFetch({ok: false, status: 401})
+
+        await expect(api.fetchColumns()).rejects.toThrow()
+
+        expect(api.getToken()).toBeNull()
+    })
+
+    it('notifies the app so it can return to the login screen', async () => {
+        api.setToken('expired-token')
+        const onUnauthorized = vi.fn()
+        api.setUnauthorizedHandler(onUnauthorized)
+        mockFetch({ok: false, status: 401})
+
+        await expect(api.fetchColumns()).rejects.toThrow()
+
+        expect(onUnauthorized).toHaveBeenCalledOnce()
+    })
+
+    it('fires on a write as well as a read', async () => {
+        api.setToken('expired-token')
+        const onUnauthorized = vi.fn()
+        api.setUnauthorizedHandler(onUnauthorized)
+        mockFetch({ok: false, status: 401})
+
+        await expect(api.createColumn('Todo')).rejects.toThrow()
+
+        expect(onUnauthorized).toHaveBeenCalledOnce()
+    })
+
+    it('leaves the session alone for other failures', async () => {
+        api.setToken('good-token')
+        const onUnauthorized = vi.fn()
+        api.setUnauthorizedHandler(onUnauthorized)
+        mockFetch({ok: false, status: 500})
+
+        await expect(api.fetchColumns()).rejects.toThrow()
+
+        expect(api.getToken()).toBe('good-token')
+        expect(onUnauthorized).not.toHaveBeenCalled()
+    })
+
+    it('does not log the user out when login itself is rejected', async () => {
+        const onUnauthorized = vi.fn()
+        api.setUnauthorizedHandler(onUnauthorized)
+        mockFetch({ok: false, status: 401})
+
+        await expect(api.login('a@b.com', 'wrong')).rejects.toThrow('Login failed')
+
+        expect(onUnauthorized).not.toHaveBeenCalled()
+    })
+
+    it('stops calling a handler once it is removed', async () => {
+        api.setToken('expired-token')
+        const onUnauthorized = vi.fn()
+        api.setUnauthorizedHandler(onUnauthorized)
+        api.setUnauthorizedHandler(null)
+        mockFetch({ok: false, status: 401})
+
+        await expect(api.fetchColumns()).rejects.toThrow()
+
+        expect(onUnauthorized).not.toHaveBeenCalled()
+    })
 })
 
 describe('token storage', () => {
