@@ -116,26 +116,12 @@ body {
     justify-content: space-between;
     align-items: center;
     gap: 6px;
-}
-
-.column-drag-handle {
-    border: none;
-    background: transparent;
-    color: var(--muted);
-    font-size: 16px;
-    line-height: 1;
-    padding: 0 2px;
-    margin: 0 0 12px 0;
     cursor: grab;
     touch-action: none;
 }
 
-.column-drag-handle:active {
+.column-header:active {
     cursor: grabbing;
-}
-
-.column-drag-handle:hover {
-    color: var(--column-title);
 }
 
 .column-drag-preview {

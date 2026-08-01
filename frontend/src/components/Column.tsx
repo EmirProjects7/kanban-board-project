@@ -46,17 +46,14 @@ function Column({column, onAddCard, onDeleteCard, onEditCard, onEditColumn, onDe
 
     return (
         <div className="column" ref={setNodeRef} style={style}>
-            <div className="column-header">
-                {/* Dragging is limited to this handle so that editing the
-                    title and dragging cards inside the column still work. */}
-                <button
-                    className="column-drag-handle"
-                    aria-label={`Reorder column ${column.title}`}
-                    {...attributes}
-                    {...listeners}
-                >
-                    ⠿
-                </button>
+            {/* The whole header is the drag handle. The controls inside it
+                stop the pointer event so renaming and deleting still work. */}
+            <div
+                className="column-header"
+                aria-label={`Reorder column ${column.title}`}
+                {...attributes}
+                {...listeners}
+            >
                 {isEditing ? (
                     <input
                         className="column-title-input"
@@ -67,13 +64,21 @@ function Column({column, onAddCard, onDeleteCard, onEditCard, onEditColumn, onDe
                             if (e.key === 'Enter') handleSave()
                             if (e.key === 'Escape') setIsEditing(false)
                         }}
+                        onPointerDown={(e) => e.stopPropagation()}
                         autoFocus
                         aria-label="Column title"
                     />
                 ) : (
                     <h2 onDoubleClick={startEditing}>{column.title}</h2>
                 )}
-                <button className="delete-column-button" onClick={() => onDeleteColumn(column.id)} aria-label = "Delete column"> ×</button>
+                <button
+                    className="delete-column-button"
+                    onClick={() => onDeleteColumn(column.id)}
+                    onPointerDown={(e) => e.stopPropagation()}
+                    aria-label="Delete column"
+                >
+                    ×
+                </button>
             </div>
             <div className="cards">
                 <SortableContext
