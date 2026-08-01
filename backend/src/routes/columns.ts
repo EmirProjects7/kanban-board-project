@@ -2,13 +2,10 @@ import {Router} from 'express'
 import {z} from 'zod'
 import {prisma} from '../prisma'
 import {authenticate} from '../middleware/authenticate'
-import {io} from '../socket'
+import {emitBoard} from '../board'
+import {titleSchema} from '../validation'
 
 const router = Router()
-
-const titleSchema = z.object({
-    title: z.string().trim().min(1).max(255),
-})
 
 const reorderSchema = z.array(
     z.object({
@@ -16,14 +13,6 @@ const reorderSchema = z.array(
         cards: z.array(z.object({id: z.string()})),
     })
 )
-
-async function emitBoard(userId: string) {
-    const columns = await prisma.column.findMany({
-        where: {userId: userId},
-        include: {cards: {orderBy: {order: 'asc'}}},
-    })
-    io.to(userId).emit('board:updated', columns)
-}
 
 router.get('/', authenticate, async (req, res) => {
     const userId = req.userId
