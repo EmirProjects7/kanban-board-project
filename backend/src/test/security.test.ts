@@ -50,8 +50,7 @@ describe('SQL injection', () => {
         })
     })
 
-    it('never uses Prisma raw query escape hatches anywhere in src', () => {
-        const unsafeApis = ['$queryRawUnsafe', '$executeRawUnsafe', '$queryRaw', '$executeRaw']
+    function collectOffenders(isOffending: (contents: string) => boolean) {
         const offenders: string[] = []
 
         function walk(dir: string) {
@@ -63,13 +62,32 @@ describe('SQL injection', () => {
                     continue
                 }
                 if (!entry.name.endsWith('.ts')) continue
-                const contents = readFileSync(full, 'utf8')
-                if (unsafeApis.some((api) => contents.includes(api))) {
+                if (isOffending(readFileSync(full, 'utf8'))) {
                     offenders.push(full)
                 }
             }
         }
         walk(join(__dirname, '..'))
+
+        return offenders
+    }
+
+    it('never uses the unsafe Prisma raw query APIs anywhere in src', () => {
+        const unsafeApis = ['$queryRawUnsafe', '$executeRawUnsafe']
+
+        const offenders = collectOffenders((contents) =>
+            unsafeApis.some((api) => contents.includes(api))
+        )
+
+        expect(offenders).toEqual([])
+    })
+
+    it('only ever uses $queryRaw/$executeRaw in their tagged template form', () => {
+        // Prisma parameterises the tagged form, so `$queryRaw`SELECT 1`` is safe.
+        // The call form `$queryRaw(someString)` takes a prebuilt string and is not.
+        const callForm = /\$(?:queryRaw|executeRaw)\s*\(/
+
+        const offenders = collectOffenders((contents) => callForm.test(contents))
 
         expect(offenders).toEqual([])
     })
