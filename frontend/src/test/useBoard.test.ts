@@ -9,6 +9,7 @@ const {apiMock, socketMock} = vi.hoisted(() => ({
         deleteCard: vi.fn(),
         updateCard: vi.fn(),
         createColumn: vi.fn(),
+        updateColumn: vi.fn(),
         deleteColumn: vi.fn(),
         saveBoard: vi.fn(),
     },
@@ -171,5 +172,111 @@ describe('realtime board updates', () => {
         const {unmount} = renderHook(() => useBoard(true))
         unmount()
         expect(socketMock.off).toHaveBeenCalledWith('board:updated')
+    })
+})
+
+describe('failed requests', () => {
+    it('starts with no error', async () => {
+        const {result} = renderHook(() => useBoard(true))
+        await waitFor(() => expect(result.current.columns).toEqual(board))
+        expect(result.current.error).toBeNull()
+    })
+
+    it('reports a board that fails to load', async () => {
+        apiMock.fetchColumns.mockRejectedValue(new Error('boom'))
+        const {result} = renderHook(() => useBoard(true))
+        await waitFor(() => expect(result.current.error).toBe('Could not load the board.'))
+    })
+
+    it('reports a card that fails to be added', async () => {
+        apiMock.createCard.mockRejectedValue(new Error('boom'))
+        const {result} = renderHook(() => useBoard(true))
+        await waitFor(() => expect(result.current.columns).toEqual(board))
+
+        await act(async () => {
+            await result.current.addCard('col-1', 'New')
+        })
+
+        expect(result.current.error).toBe('Could not add the card.')
+    })
+
+    it('does not reject out of the handler when a request fails', async () => {
+        apiMock.createCard.mockRejectedValue(new Error('boom'))
+        const {result} = renderHook(() => useBoard(true))
+        await waitFor(() => expect(result.current.columns).toEqual(board))
+
+        await expect(
+            act(async () => {
+                await result.current.addCard('col-1', 'New')
+            })
+        ).resolves.toBeUndefined()
+    })
+
+    it('leaves the board untouched when a delete fails', async () => {
+        apiMock.deleteCard.mockRejectedValue(new Error('boom'))
+        const {result} = renderHook(() => useBoard(true))
+        await waitFor(() => expect(result.current.columns).toEqual(board))
+
+        await act(async () => {
+            await result.current.deleteCard('card-1')
+        })
+
+        expect(result.current.columns).toEqual(board)
+        expect(result.current.error).toBe('Could not delete the card.')
+    })
+
+    it('reports a rename that fails', async () => {
+        apiMock.updateColumn.mockRejectedValue(new Error('boom'))
+        const {result} = renderHook(() => useBoard(true))
+        await waitFor(() => expect(result.current.columns).toEqual(board))
+
+        await act(async () => {
+            await result.current.editColumn('col-1', 'Renamed')
+        })
+
+        expect(result.current.error).toBe('Could not rename the column.')
+    })
+
+    it('reports an order that fails to save', async () => {
+        apiMock.saveBoard.mockRejectedValue(new Error('boom'))
+        const {result} = renderHook(() => useBoard(true))
+        await waitFor(() => expect(result.current.columns).toEqual(board))
+
+        await act(async () => {
+            await result.current.saveBoard(board)
+        })
+
+        expect(result.current.error).toBe('Could not save the new order.')
+    })
+
+    it('clears the error once an action succeeds', async () => {
+        apiMock.createCard.mockRejectedValueOnce(new Error('boom'))
+        apiMock.createCard.mockResolvedValueOnce({id: 'card-2', title: 'New'})
+        const {result} = renderHook(() => useBoard(true))
+        await waitFor(() => expect(result.current.columns).toEqual(board))
+
+        await act(async () => {
+            await result.current.addCard('col-1', 'New')
+        })
+        expect(result.current.error).not.toBeNull()
+
+        await act(async () => {
+            await result.current.addCard('col-1', 'New')
+        })
+        expect(result.current.error).toBeNull()
+    })
+
+    it('can be dismissed', async () => {
+        apiMock.createCard.mockRejectedValue(new Error('boom'))
+        const {result} = renderHook(() => useBoard(true))
+        await waitFor(() => expect(result.current.columns).toEqual(board))
+
+        await act(async () => {
+            await result.current.addCard('col-1', 'New')
+        })
+        expect(result.current.error).not.toBeNull()
+
+        act(() => result.current.dismissError())
+        expect(result.current.error).toBeNull()
     })
 })

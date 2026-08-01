@@ -7,7 +7,7 @@ import {useDragAndDrop} from './hooks/useDragDrop'
 import Column from './components/Column'
 import AddColumnForm from './components/AddColumnForm'
 import {AuthForm} from './components/AuthForm'
-import {clearToken, getToken} from './api'
+import {clearToken, getToken, setUnauthorizedHandler} from './api'
 import {disconnectSocket} from './socket'
 
 
@@ -23,6 +23,8 @@ function App() {
         editColumn,
         deleteColumn,
         saveBoard,
+        error,
+        dismissError,
         isDraggingRef
     } = useBoard(isAuthenticated)
     const {activeCard, activeColumn, handleDragStart, handleDragOver, handleDragEnd} = useDragAndDrop(columns, setColumns, saveBoard, isDraggingRef)
@@ -42,6 +44,16 @@ function App() {
         setIsAuthenticated(false)
     }
 
+    // An expired session should land on the login screen rather than on a
+    // board whose every write quietly fails.
+    useEffect(() => {
+        setUnauthorizedHandler(() => {
+            disconnectSocket()
+            setIsAuthenticated(false)
+        })
+        return () => setUnauthorizedHandler(null)
+    }, [])
+
     if (!isAuthenticated) {
         return <AuthForm onAuthSuccess={() => setIsAuthenticated(true)}/>
     }
@@ -60,6 +72,14 @@ function App() {
                     Logout
                 </button>
             </div>
+            {error && (
+                <div className="board-error" role="alert">
+                    <span>{error}</span>
+                    <button onClick={dismissError} aria-label="Dismiss error">
+                        ×
+                    </button>
+                </div>
+            )}
             <DndContext sensors={sensors} onDragStart={handleDragStart} onDragOver={handleDragOver}
                         onDragEnd={handleDragEnd}>
                 <div className="board">

@@ -108,6 +108,36 @@ body {
     border-color: var(--border-strong);
 }
 
+.board-error {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin: 16px 24px 0;
+    padding: 10px 14px;
+    font-size: 13px;
+    color: var(--danger);
+    background: color-mix(in srgb, var(--danger) 10%, transparent);
+    border: 1px solid color-mix(in srgb, var(--danger) 35%, transparent);
+    border-radius: 8px;
+}
+
+.board-error button {
+    flex-shrink: 0;
+    padding: 0 4px;
+    font-size: 16px;
+    line-height: 1;
+    color: inherit;
+    background: none;
+    border: none;
+    border-radius: 4px;
+}
+
+.board-error button:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 1px;
+}
+
 /* Board -------------------------------------------------------------- */
 
 .board {

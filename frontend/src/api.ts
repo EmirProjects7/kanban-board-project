@@ -14,10 +14,23 @@ export function clearToken(): void {
     localStorage.removeItem('token')
 }
 
-// Every mutating request goes through here so a failed request (403, 500, etc.)
+// Sessions last a week. Once the token expires every board request comes back
+// 401, so the app needs to hear about it and send the user back to the login
+// screen instead of leaving them on a board that silently refuses to save.
+let onUnauthorized: (() => void) | null = null
+
+export function setUnauthorizedHandler(handler: (() => void) | null): void {
+    onUnauthorized = handler
+}
+
+// Every board request goes through here so a failure (401, 403, 500, ...)
 // throws instead of silently returning an error body as if it were the payload.
 async function request(url: string, options: RequestInit = {}): Promise<Response> {
     const res = await fetch(url, {...options, headers: authHeaders()})
+    if (res.status === 401) {
+        clearToken()
+        onUnauthorized?.()
+    }
     if (!res.ok) {
         throw new Error(`Request to ${url} failed with status ${res.status}`)
     }
