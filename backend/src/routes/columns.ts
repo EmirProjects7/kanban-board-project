@@ -3,6 +3,7 @@ import {z} from 'zod'
 import {prisma} from '../prisma'
 import {authenticate} from '../middleware/authenticate'
 import {emitBoard} from '../board'
+import {boardQuery} from '../queries'
 import {titleSchema} from '../validation'
 
 const router = Router()
@@ -16,10 +17,7 @@ const reorderSchema = z.array(
 
 router.get('/', authenticate, async (req, res) => {
     const userId = req.userId
-    const columns = await prisma.column.findMany({
-        where: {userId: userId},
-        include: {cards: {orderBy: {order: 'asc'}}},
-    })
+    const columns = await prisma.column.findMany(boardQuery(userId))
     res.json(columns)
 })
 
@@ -31,8 +29,9 @@ router.post('/', authenticate, async (req, res) => {
         return res.status(400).json({error: 'Invalid title'})
     }
 
+    const count = await prisma.column.count({where: {userId: userId}})
     const newColumn = await prisma.column.create({
-        data: {title: parsed.data.title, userId: userId},
+        data: {title: parsed.data.title, userId: userId, order: count},
         include: {cards: {orderBy: {order: 'asc'}}},
     })
     res.status(201).json(newColumn)
@@ -133,23 +132,27 @@ router.put('/', authenticate, async (req, res) => {
         }
     }
 
-    // Applied as a single transaction so a mid-batch failure can't leave cards
-    // partially reassigned.
-    await prisma.$transaction(
-        updatedColumns.flatMap((column) =>
+    // The position of a column in the payload is its new order, same as the
+    // position of a card within a column. Applied as a single transaction so a
+    // mid-batch failure can't leave the board partially reordered.
+    await prisma.$transaction([
+        ...updatedColumns.map((column, index) =>
+            prisma.column.update({
+                where: {id: column.id},
+                data: {order: index},
+            })
+        ),
+        ...updatedColumns.flatMap((column) =>
             column.cards.map((card, index) =>
                 prisma.card.update({
                     where: {id: card.id},
                     data: {columnId: column.id, order: index},
                 })
             )
-        )
-    )
+        ),
+    ])
 
-    const columns = await prisma.column.findMany({
-        where: {userId: userId},
-        include: {cards: {orderBy: {order: 'asc'}}},
-    })
+    const columns = await prisma.column.findMany(boardQuery(userId))
     res.status(200).json(columns)
     await emitBoard(userId)
 })
