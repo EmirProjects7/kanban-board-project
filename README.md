@@ -132,7 +132,11 @@ Per workspace:
 | `npm test --prefix frontend` | Frontend test suite |
 | `npm run build --prefix backend` | Type-check and compile the API |
 | `npm run build --prefix frontend` | Production build of the frontend |
-| `npm run lint --prefix frontend` | ESLint |
+| `npm run lint --prefix backend` | ESLint on the API |
+| `npm run lint --prefix frontend` | ESLint on the frontend |
+
+Every pull request runs the lint, type check, tests and build for both
+workspaces through GitHub Actions.
 
 Inspect the data with Prisma Studio:
 
