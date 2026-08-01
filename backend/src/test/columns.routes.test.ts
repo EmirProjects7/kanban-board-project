@@ -9,6 +9,7 @@ const {columnMock, cardMock, transactionMock, emitBoardMock} = vi.hoisted(() => 
         findMany: vi.fn(),
         findFirst: vi.fn(),
         create: vi.fn(),
+        update: vi.fn(),
         delete: vi.fn(),
     },
     cardMock: {
@@ -124,6 +125,63 @@ describe('POST /api/columns/:columnId/cards', () => {
 
         expect(res.status).toBe(400)
         expect(cardMock.create).not.toHaveBeenCalled()
+    })
+})
+
+describe('PUT /api/columns/:columnId (rename)', () => {
+    it('requires authentication', async () => {
+        const res = await request(app).put('/api/columns/col-1').send({title: 'Renamed'})
+        expect(res.status).toBe(401)
+    })
+
+    it('renames a column the user owns', async () => {
+        columnMock.findFirst.mockResolvedValue({id: 'col-1'})
+        columnMock.update.mockResolvedValue({id: 'col-1', title: 'Renamed'})
+
+        const res = await request(app)
+            .put('/api/columns/col-1')
+            .set('Authorization', auth)
+            .send({title: 'Renamed'})
+
+        expect(res.status).toBe(200)
+        expect(columnMock.update).toHaveBeenCalledWith({
+            where: {id: 'col-1'},
+            data: {title: 'Renamed'},
+        })
+    })
+
+    it('refuses to rename a column the user does not own', async () => {
+        columnMock.findFirst.mockResolvedValue(null)
+
+        const res = await request(app)
+            .put('/api/columns/other-col')
+            .set('Authorization', auth)
+            .send({title: 'Hijacked'})
+
+        expect(res.status).toBe(403)
+        expect(columnMock.update).not.toHaveBeenCalled()
+    })
+
+    it('rejects an empty title', async () => {
+        const res = await request(app)
+            .put('/api/columns/col-1')
+            .set('Authorization', auth)
+            .send({title: '   '})
+
+        expect(res.status).toBe(400)
+        expect(columnMock.update).not.toHaveBeenCalled()
+    })
+
+    it('broadcasts the change to the user', async () => {
+        columnMock.findFirst.mockResolvedValue({id: 'col-1'})
+        columnMock.update.mockResolvedValue({id: 'col-1', title: 'Renamed'})
+
+        await request(app)
+            .put('/api/columns/col-1')
+            .set('Authorization', auth)
+            .send({title: 'Renamed'})
+
+        expect(emitBoardMock).toHaveBeenCalledWith('user-1')
     })
 })
 
