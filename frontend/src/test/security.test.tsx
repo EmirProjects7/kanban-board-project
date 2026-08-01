@@ -59,6 +59,7 @@ describe('stored XSS in column titles', () => {
                     onAddCard={() => {}}
                     onDeleteCard={() => {}}
                     onEditCard={() => {}}
+                    onEditColumn={() => {}}
                     onDeleteColumn={() => {}}
                 />
             </DndContext>

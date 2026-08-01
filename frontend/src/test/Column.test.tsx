@@ -18,6 +18,7 @@ function renderColumn(override: Partial<ColumnType> = {}) {
         onAddCard: vi.fn(),
         onDeleteCard: vi.fn(),
         onEditCard: vi.fn(),
+        onEditColumn: vi.fn(),
         onDeleteColumn: vi.fn(),
     }
     render(
@@ -69,5 +70,78 @@ describe('Column', () => {
         const {onDeleteCard} = renderColumn()
         fireEvent.click(screen.getAllByLabelText('Delete card')[0])
         expect(onDeleteCard).toHaveBeenCalledWith('card-1')
+    })
+})
+
+describe('Column renaming', () => {
+    function startEditing() {
+        fireEvent.doubleClick(screen.getByRole('heading', {name: 'Todo'}))
+        return screen.getByLabelText('Column title')
+    }
+
+    it('does not show the title input until the heading is double clicked', () => {
+        renderColumn()
+        expect(screen.queryByLabelText('Column title')).not.toBeInTheDocument()
+    })
+
+    it('opens an input holding the current title on double click', () => {
+        renderColumn()
+        expect(startEditing()).toHaveValue('Todo')
+    })
+
+    it('saves the new title on Enter', () => {
+        const {onEditColumn} = renderColumn()
+        const input = startEditing()
+        fireEvent.change(input, {target: {value: 'In Progress'}})
+        fireEvent.keyDown(input, {key: 'Enter'})
+        expect(onEditColumn).toHaveBeenCalledWith('col-1', 'In Progress')
+    })
+
+    it('saves the new title on blur', () => {
+        const {onEditColumn} = renderColumn()
+        const input = startEditing()
+        fireEvent.change(input, {target: {value: 'Done'}})
+        fireEvent.blur(input)
+        expect(onEditColumn).toHaveBeenCalledWith('col-1', 'Done')
+    })
+
+    it('trims whitespace around the new title', () => {
+        const {onEditColumn} = renderColumn()
+        const input = startEditing()
+        fireEvent.change(input, {target: {value: '  Done  '}})
+        fireEvent.keyDown(input, {key: 'Enter'})
+        expect(onEditColumn).toHaveBeenCalledWith('col-1', 'Done')
+    })
+
+    it('discards the edit on Escape', () => {
+        const {onEditColumn} = renderColumn()
+        const input = startEditing()
+        fireEvent.change(input, {target: {value: 'Discarded'}})
+        fireEvent.keyDown(input, {key: 'Escape'})
+        expect(onEditColumn).not.toHaveBeenCalled()
+        expect(screen.getByRole('heading', {name: 'Todo'})).toBeInTheDocument()
+    })
+
+    it('ignores an empty title', () => {
+        const {onEditColumn} = renderColumn()
+        const input = startEditing()
+        fireEvent.change(input, {target: {value: '   '}})
+        fireEvent.keyDown(input, {key: 'Enter'})
+        expect(onEditColumn).not.toHaveBeenCalled()
+    })
+
+    it('does not call the handler when the title is unchanged', () => {
+        const {onEditColumn} = renderColumn()
+        const input = startEditing()
+        fireEvent.keyDown(input, {key: 'Enter'})
+        expect(onEditColumn).not.toHaveBeenCalled()
+    })
+
+    it('leaves edit mode after saving', () => {
+        renderColumn()
+        const input = startEditing()
+        fireEvent.change(input, {target: {value: 'In Progress'}})
+        fireEvent.keyDown(input, {key: 'Enter'})
+        expect(screen.queryByLabelText('Column title')).not.toBeInTheDocument()
     })
 })
