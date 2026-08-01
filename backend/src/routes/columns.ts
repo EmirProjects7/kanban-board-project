@@ -1,10 +1,21 @@
 import {Router} from 'express'
+import {z} from 'zod'
 import {prisma} from '../prisma'
 import {authenticate} from '../middleware/authenticate'
 import {io} from '../socket'
 
 const router = Router()
 
+const titleSchema = z.object({
+    title: z.string().trim().min(1).max(255),
+})
+
+const reorderSchema = z.array(
+    z.object({
+        id: z.string(),
+        cards: z.array(z.object({id: z.string()})),
+    })
+)
 
 async function emitBoard(userId: string) {
     const columns = await prisma.column.findMany({
@@ -15,7 +26,7 @@ async function emitBoard(userId: string) {
 }
 
 router.get('/', authenticate, async (req, res) => {
-    const userId = (req as any).userId
+    const userId = req.userId
     const columns = await prisma.column.findMany({
         where: {userId: userId},
         include: {cards: {orderBy: {order: 'asc'}}},
@@ -24,10 +35,15 @@ router.get('/', authenticate, async (req, res) => {
 })
 
 router.post('/', authenticate, async (req, res) => {
-    const userId = (req as any).userId
-    const {title} = req.body
+    const userId = req.userId
+
+    const parsed = titleSchema.safeParse(req.body)
+    if (!parsed.success) {
+        return res.status(400).json({error: 'Invalid title'})
+    }
+
     const newColumn = await prisma.column.create({
-        data: {title: title, userId: userId},
+        data: {title: parsed.data.title, userId: userId},
         include: {cards: {orderBy: {order: 'asc'}}},
     })
     res.status(201).json(newColumn)
@@ -35,9 +51,13 @@ router.post('/', authenticate, async (req, res) => {
 })
 
 router.post('/:columnId/cards', authenticate, async (req, res) => {
-    const userId = (req as any).userId
+    const userId = req.userId
     const columnId = req.params.columnId as string
-    const {title} = req.body
+
+    const parsed = titleSchema.safeParse(req.body)
+    if (!parsed.success) {
+        return res.status(400).json({error: 'Invalid title'})
+    }
 
     const column = await prisma.column.findFirst({
         where: {id: columnId, userId: userId},
@@ -48,14 +68,14 @@ router.post('/:columnId/cards', authenticate, async (req, res) => {
 
     const count = await prisma.card.count({where: {columnId: columnId}})
     const newCard = await prisma.card.create({
-        data: {title: title, columnId: columnId, order: count},
+        data: {title: parsed.data.title, columnId: columnId, order: count},
     })
     res.status(201).json(newCard)
     await emitBoard(userId)
 })
 
 router.delete('/:columnId', authenticate, async (req, res) => {
-    const userId = (req as any).userId
+    const userId = req.userId
     const columnId = req.params.columnId as string
 
     const column = await prisma.column.findFirst({
@@ -71,28 +91,47 @@ router.delete('/:columnId', authenticate, async (req, res) => {
 })
 
 router.put('/', authenticate, async (req, res) => {
-    const userId = (req as any).userId
-    const updatedColumns = req.body
+    const userId = req.userId
 
-    const userColumns = await prisma.column.findMany({
-        where: {userId: userId},
-        select: {id: true}
-    })
+    const parsed = reorderSchema.safeParse(req.body)
+    if (!parsed.success) {
+        return res.status(400).json({error: 'Invalid board payload'})
+    }
+    const updatedColumns = parsed.data
 
-    const ownedIds = new Set(userColumns.map(column => column.id))
+    // Ownership must be checked for both columns AND the individual cards being
+    // reassigned into them, otherwise a user could move another user's card
+    // into their own column by id (IDOR).
+    const [userColumns, userCards] = await Promise.all([
+        prisma.column.findMany({where: {userId: userId}, select: {id: true}}),
+        prisma.card.findMany({where: {column: {userId: userId}}, select: {id: true}}),
+    ])
+    const ownedColumnIds = new Set(userColumns.map((column) => column.id))
+    const ownedCardIds = new Set(userCards.map((card) => card.id))
 
     for (const column of updatedColumns) {
-        if (!ownedIds.has(column.id)) {
+        if (!ownedColumnIds.has(column.id)) {
             return res.status(403).json({error: 'Not allowed'})
         }
-        for (let i = 0; i < column.cards.length; i++) {
-            const card = column.cards[i]
-            await prisma.card.update({
-                where: {id: card.id},
-                data: {columnId: column.id, order: i}
-            })
+        for (const card of column.cards) {
+            if (!ownedCardIds.has(card.id)) {
+                return res.status(403).json({error: 'Not allowed'})
+            }
         }
     }
+
+    // Applied as a single transaction so a mid-batch failure can't leave cards
+    // partially reassigned.
+    await prisma.$transaction(
+        updatedColumns.flatMap((column) =>
+            column.cards.map((card, index) =>
+                prisma.card.update({
+                    where: {id: card.id},
+                    data: {columnId: column.id, order: index},
+                })
+            )
+        )
+    )
 
     const columns = await prisma.column.findMany({
         where: {userId: userId},
