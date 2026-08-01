@@ -1,7 +1,7 @@
 import './App.css'
 import {useState, useEffect} from 'react'
 import {DndContext, DragOverlay, PointerSensor, KeyboardSensor, useSensor, useSensors} from '@dnd-kit/core'
-import {sortableKeyboardCoordinates} from '@dnd-kit/sortable'
+import {SortableContext, horizontalListSortingStrategy, sortableKeyboardCoordinates} from '@dnd-kit/sortable'
 import {useBoard} from './hooks/useBoard'
 import {useDragAndDrop} from './hooks/useDragDrop'
 import Column from './components/Column'
@@ -25,7 +25,7 @@ function App() {
         saveBoard,
         isDraggingRef
     } = useBoard(isAuthenticated)
-    const {activeCard, handleDragStart, handleDragOver, handleDragEnd} = useDragAndDrop(columns, setColumns, saveBoard, isDraggingRef)
+    const {activeCard, activeColumn, handleDragStart, handleDragOver, handleDragEnd} = useDragAndDrop(columns, setColumns, saveBoard, isDraggingRef)
     const sensors = useSensors(useSensor(PointerSensor, {activationConstraint: {distance: 5}}), useSensor(KeyboardSensor, {coordinateGetter: sortableKeyboardCoordinates}))
     const [theme, setTheme] = useState<'light' | 'dark'>('dark')
 
@@ -61,16 +61,27 @@ function App() {
                         onDragEnd={handleDragEnd}>
                 <div className="board">
                     {/* function to map a column to its visualization, react requires a key*/}
-                    {columns.map((column) => (
-                        <Column key={column.id} column={column} onAddCard={addCard}
-                                onDeleteCard={deleteCard} onEditCard={editCard}
-                                onEditColumn={editColumn} onDeleteColumn={deleteColumn}/>
-                    ))}
+                    <SortableContext
+                        items={columns.map((column) => column.id)}
+                        strategy={horizontalListSortingStrategy}
+                    >
+                        {columns.map((column) => (
+                            <Column key={column.id} column={column} onAddCard={addCard}
+                                    onDeleteCard={deleteCard} onEditCard={editCard}
+                                    onEditColumn={editColumn} onDeleteColumn={deleteColumn}/>
+                        ))}
+                    </SortableContext>
                     <AddColumnForm onAdd={addColumn}/>
                 </div>
 
                 <DragOverlay>
-                    {activeCard ? (
+                    {activeColumn ? (
+                        <div className="column column-drag-preview">
+                            <div className="column-header">
+                                <h2>{activeColumn.title}</h2>
+                            </div>
+                        </div>
+                    ) : activeCard ? (
                         <div className="card">{activeCard.title}</div>
                     ) : null}
                 </DragOverlay>

@@ -10,7 +10,10 @@ type CardProps = {
 }
 
 function Card({id, title, onDelete, onEdit}: CardProps) {
-    const {attributes, listeners, setNodeRef, transform, transition, isDragging} = useSortable({id: id})
+    const {attributes, listeners, setNodeRef, transform, transition, isDragging} = useSortable({
+        id: id,
+        data: {type: 'card'},
+    })
 
     const [isEditing, setIsEditing] = useState(false)
     const [editValue, setEditValue] = useState(title)

@@ -1,8 +1,8 @@
 import {useState} from 'react'
-import {SortableContext, verticalListSortingStrategy} from '@dnd-kit/sortable'
+import {SortableContext, useSortable, verticalListSortingStrategy} from '@dnd-kit/sortable'
+import {CSS} from '@dnd-kit/utilities'
 import Card from './Card'
 import AddCardForm from './AddCardForm'
-import {useDroppable} from '@dnd-kit/core'
 import type {Column as ColumnType} from '../types'
 
 
@@ -16,9 +16,20 @@ type ColumnProps = {
 }
 
 function Column({column, onAddCard, onDeleteCard, onEditCard, onEditColumn, onDeleteColumn}: ColumnProps) {
-    const {setNodeRef} = useDroppable({id: column.id})
+    // useSortable also registers the column as a drop target, so cards can
+    // still be dropped into it, including while it is empty.
+    const {attributes, listeners, setNodeRef, transform, transition, isDragging} = useSortable({
+        id: column.id,
+        data: {type: 'column'},
+    })
     const [isEditing, setIsEditing] = useState(false)
     const [editValue, setEditValue] = useState(column.title)
+
+    const style = {
+        transform: CSS.Transform.toString(transform),
+        transition: transition,
+        opacity: isDragging ? 0.4 : 1,
+    }
 
     function handleSave() {
         const trimmed = editValue.trim()
@@ -34,8 +45,15 @@ function Column({column, onAddCard, onDeleteCard, onEditCard, onEditColumn, onDe
     }
 
     return (
-        <div className="column" ref={setNodeRef}>
-            <div className="column-header">
+        <div className="column" ref={setNodeRef} style={style}>
+            {/* The whole header is the drag handle. The controls inside it
+                stop the pointer event so renaming and deleting still work. */}
+            <div
+                className="column-header"
+                aria-label={`Reorder column ${column.title}`}
+                {...attributes}
+                {...listeners}
+            >
                 {isEditing ? (
                     <input
                         className="column-title-input"
@@ -46,13 +64,21 @@ function Column({column, onAddCard, onDeleteCard, onEditCard, onEditColumn, onDe
                             if (e.key === 'Enter') handleSave()
                             if (e.key === 'Escape') setIsEditing(false)
                         }}
+                        onPointerDown={(e) => e.stopPropagation()}
                         autoFocus
                         aria-label="Column title"
                     />
                 ) : (
                     <h2 onDoubleClick={startEditing}>{column.title}</h2>
                 )}
-                <button className="delete-column-button" onClick={() => onDeleteColumn(column.id)} aria-label = "Delete column"> ×</button>
+                <button
+                    className="delete-column-button"
+                    onClick={() => onDeleteColumn(column.id)}
+                    onPointerDown={(e) => e.stopPropagation()}
+                    aria-label="Delete column"
+                >
+                    ×
+                </button>
             </div>
             <div className="cards">
                 <SortableContext

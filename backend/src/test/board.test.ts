@@ -35,6 +35,7 @@ describe('emitBoard', () => {
 
         expect(findManyMock).toHaveBeenCalledWith({
             where: {userId: 'user-1'},
+            orderBy: {order: 'asc'},
             include: {cards: {orderBy: {order: 'asc'}}},
         })
         expect(toMock).toHaveBeenCalledWith('user-1')
