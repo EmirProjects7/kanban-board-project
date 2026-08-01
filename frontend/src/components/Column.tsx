@@ -71,6 +71,9 @@ function Column({column, onAddCard, onDeleteCard, onEditCard, onEditColumn, onDe
                 ) : (
                     <h2 onDoubleClick={startEditing}>{column.title}</h2>
                 )}
+                <span className="column-count" aria-hidden="true">
+                    {column.cards.length}
+                </span>
                 <button
                     className="delete-column-button"
                     onClick={() => onDeleteColumn(column.id)}
