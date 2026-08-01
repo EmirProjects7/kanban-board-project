@@ -20,6 +20,7 @@ function App() {
         deleteCard,
         editCard,
         addColumn,
+        editColumn,
         deleteColumn,
         saveBoard,
         isDraggingRef
@@ -62,7 +63,8 @@ function App() {
                     {/* function to map a column to its visualization, react requires a key*/}
                     {columns.map((column) => (
                         <Column key={column.id} column={column} onAddCard={addCard}
-                                onDeleteCard={deleteCard} onEditCard={editCard} onDeleteColumn={deleteColumn}/>
+                                onDeleteCard={deleteCard} onEditCard={editCard}
+                                onEditColumn={editColumn} onDeleteColumn={deleteColumn}/>
                     ))}
                     <AddColumnForm onAdd={addColumn}/>
                 </div>

@@ -58,6 +58,13 @@ export async function createColumn(title: string): Promise<Column> {
     return res.json()
 }
 
+export async function updateColumn(columnId: string, title: string): Promise<void> {
+    await request(`${BASE_URL}/api/columns/${columnId}`, {
+        method: 'PUT',
+        body: JSON.stringify({title}),
+    })
+}
+
 export async function deleteColumn(columnId: string): Promise<void> {
     await request(`${BASE_URL}/api/columns/${columnId}`, {
         method: 'DELETE',
