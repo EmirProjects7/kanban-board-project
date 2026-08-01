@@ -7,7 +7,14 @@ import jwt from 'jsonwebtoken'
 import columnsRouter from '../routes/columns'
 
 const {columnMock, cardMock, transactionMock, emitBoardMock} = vi.hoisted(() => ({
-    columnMock: {findMany: vi.fn(), findFirst: vi.fn(), create: vi.fn(), delete: vi.fn()},
+    columnMock: {
+        findMany: vi.fn(),
+        findFirst: vi.fn(),
+        count: vi.fn(),
+        create: vi.fn(),
+        update: vi.fn(),
+        delete: vi.fn(),
+    },
     cardMock: {findMany: vi.fn(), count: vi.fn(), create: vi.fn(), update: vi.fn()},
     transactionMock: vi.fn(),
     emitBoardMock: vi.fn(),
@@ -30,6 +37,7 @@ const XSS_PAYLOAD = '<img src=x onerror="alert(1)">'
 beforeEach(() => {
     vi.clearAllMocks()
     emitBoardMock.mockResolvedValue(undefined)
+    columnMock.count.mockResolvedValue(0)
 })
 
 describe('SQL injection', () => {
@@ -45,7 +53,7 @@ describe('SQL injection', () => {
         // Prisma parameterizes queries, so the payload must arrive as a plain
         // data value rather than being interpolated into SQL.
         expect(columnMock.create).toHaveBeenCalledWith({
-            data: {title: SQL_INJECTION, userId: 'user-1'},
+            data: {title: SQL_INJECTION, userId: 'user-1', order: 0},
             include: {cards: {orderBy: {order: 'asc'}}},
         })
     })
@@ -171,7 +179,7 @@ describe('cross-user access (IDOR)', () => {
             .send({title: 'Todo', userId: 'victim'})
 
         expect(columnMock.create).toHaveBeenCalledWith({
-            data: {title: 'Todo', userId: 'user-1'},
+            data: {title: 'Todo', userId: 'user-1', order: 0},
             include: {cards: {orderBy: {order: 'asc'}}},
         })
     })

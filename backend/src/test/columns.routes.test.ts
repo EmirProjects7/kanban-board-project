@@ -8,6 +8,7 @@ const {columnMock, cardMock, transactionMock, emitBoardMock} = vi.hoisted(() => 
     columnMock: {
         findMany: vi.fn(),
         findFirst: vi.fn(),
+        count: vi.fn(),
         create: vi.fn(),
         update: vi.fn(),
         delete: vi.fn(),
@@ -38,6 +39,7 @@ beforeEach(() => {
     vi.clearAllMocks()
     emitBoardMock.mockResolvedValue(undefined)
     transactionMock.mockResolvedValue([])
+    columnMock.count.mockResolvedValue(0)
 })
 
 describe('GET /api/columns', () => {
@@ -56,6 +58,7 @@ describe('GET /api/columns', () => {
         expect(res.body).toEqual(columns)
         expect(columnMock.findMany).toHaveBeenCalledWith({
             where: {userId: 'user-1'},
+            orderBy: {order: 'asc'},
             include: {cards: {orderBy: {order: 'asc'}}},
         })
     })
@@ -72,7 +75,22 @@ describe('POST /api/columns', () => {
 
         expect(res.status).toBe(201)
         expect(columnMock.create).toHaveBeenCalledWith({
-            data: {title: 'Todo', userId: 'user-1'},
+            data: {title: 'Todo', userId: 'user-1', order: 0},
+            include: {cards: {orderBy: {order: 'asc'}}},
+        })
+    })
+
+    it('appends the new column after the ones already there', async () => {
+        columnMock.count.mockResolvedValue(3)
+        columnMock.create.mockResolvedValue({id: 'col-4', title: 'Done', cards: []})
+
+        await request(app)
+            .post('/api/columns')
+            .set('Authorization', auth)
+            .send({title: 'Done'})
+
+        expect(columnMock.create).toHaveBeenCalledWith({
+            data: {title: 'Done', userId: 'user-1', order: 3},
             include: {cards: {orderBy: {order: 'asc'}}},
         })
     })
@@ -249,6 +267,31 @@ describe('PUT /api/columns (board reorder)', () => {
         })
     })
 
+    it('persists the new column order from the payload order', async () => {
+        ownBoard()
+        columnMock.findMany
+            .mockResolvedValueOnce([{id: 'col-1'}, {id: 'col-2'}])
+            .mockResolvedValueOnce([])
+
+        const res = await request(app)
+            .put('/api/columns')
+            .set('Authorization', auth)
+            .send([
+                {id: 'col-2', cards: []},
+                {id: 'col-1', cards: []},
+            ])
+
+        expect(res.status).toBe(200)
+        expect(columnMock.update).toHaveBeenCalledWith({
+            where: {id: 'col-2'},
+            data: {order: 0},
+        })
+        expect(columnMock.update).toHaveBeenCalledWith({
+            where: {id: 'col-1'},
+            data: {order: 1},
+        })
+    })
+
     it('applies the updates as a single transaction', async () => {
         ownBoard()
         columnMock.findMany
@@ -261,6 +304,25 @@ describe('PUT /api/columns (board reorder)', () => {
             .send([{id: 'col-1', cards: [{id: 'card-1'}, {id: 'card-2'}]}])
 
         expect(transactionMock).toHaveBeenCalledOnce()
+    })
+
+    it('reorders columns and cards in the same transaction', async () => {
+        ownBoard()
+        columnMock.findMany
+            .mockResolvedValueOnce([{id: 'col-1'}, {id: 'col-2'}])
+            .mockResolvedValueOnce([])
+
+        await request(app)
+            .put('/api/columns')
+            .set('Authorization', auth)
+            .send([
+                {id: 'col-2', cards: [{id: 'card-1'}]},
+                {id: 'col-1', cards: [{id: 'card-2'}]},
+            ])
+
+        expect(transactionMock).toHaveBeenCalledOnce()
+        expect(columnMock.update).toHaveBeenCalledTimes(2)
+        expect(cardMock.update).toHaveBeenCalledTimes(2)
     })
 
     it('refuses a column the user does not own', async () => {
