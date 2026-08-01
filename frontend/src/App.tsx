@@ -27,10 +27,13 @@ function App() {
     } = useBoard(isAuthenticated)
     const {activeCard, activeColumn, handleDragStart, handleDragOver, handleDragEnd} = useDragAndDrop(columns, setColumns, saveBoard, isDraggingRef)
     const sensors = useSensors(useSensor(PointerSensor, {activationConstraint: {distance: 5}}), useSensor(KeyboardSensor, {coordinateGetter: sortableKeyboardCoordinates}))
-    const [theme, setTheme] = useState<'light' | 'dark'>('dark')
+    const [theme, setTheme] = useState<'light' | 'dark'>(
+        () => (localStorage.getItem('theme') === 'light' ? 'light' : 'dark')
+    )
 
     useEffect(() => {
         document.documentElement.setAttribute('data-theme', theme)
+        localStorage.setItem('theme', theme)
     }, [theme])
 
     function handleLogout() {
