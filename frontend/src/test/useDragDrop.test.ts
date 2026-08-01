@@ -31,14 +31,21 @@ function setup(board: Column[] = initialBoard) {
     return {hook, saveBoard, isDraggingRef, setColumns, getColumns: () => columns}
 }
 
-const dragStart = (id: string) => ({active: {id}}) as DragStartEvent
-const dragOver = (activeId: string, overId: string) =>
-    ({active: {id: activeId}, over: {id: overId}}) as DragOverEvent
-const dragEnd = (activeId: string, overId: string | null) =>
+// dnd-kit always hands the handlers a data ref carrying what was registered
+// on the sortable, which is how a column drag is told apart from a card one.
+type DragType = 'card' | 'column'
+const active = (id: string, type: DragType) => ({id, data: {current: {type}}})
+
+// These carry only the fields the hook reads, hence the cast through unknown.
+const dragStart = (id: string, type: DragType = 'card') =>
+    ({active: active(id, type)}) as unknown as DragStartEvent
+const dragOver = (activeId: string, overId: string, type: DragType = 'card') =>
+    ({active: active(activeId, type), over: {id: overId}}) as unknown as DragOverEvent
+const dragEnd = (activeId: string, overId: string | null, type: DragType = 'card') =>
     ({
-        active: {id: activeId},
+        active: active(activeId, type),
         over: overId === null ? null : {id: overId},
-    }) as DragEndEvent
+    }) as unknown as DragEndEvent
 
 beforeEach(() => {
     vi.clearAllMocks()
@@ -139,5 +146,63 @@ describe('handleDragEnd', () => {
         const {hook, getColumns} = setup()
         act(() => hook.result.current.handleDragEnd(dragEnd('card-1', 'card-1')))
         expect(getColumns()[0].cards.map((c) => c.id)).toEqual(['card-1', 'card-2'])
+    })
+})
+
+describe('dragging a column', () => {
+    it('tracks the dragged column for the overlay', () => {
+        const {hook} = setup()
+        act(() => hook.result.current.handleDragStart(dragStart('col-1', 'column')))
+        expect(hook.result.current.activeColumn?.id).toBe('col-1')
+        expect(hook.result.current.activeCard).toBeNull()
+    })
+
+    it('clears the overlay once the drag ends', () => {
+        const {hook} = setup()
+        act(() => hook.result.current.handleDragStart(dragStart('col-1', 'column')))
+        act(() => hook.result.current.handleDragEnd(dragEnd('col-1', 'col-2', 'column')))
+        expect(hook.result.current.activeColumn).toBeNull()
+    })
+
+    it('reorders the columns when dropped on another column', () => {
+        const {hook, getColumns} = setup()
+        act(() => hook.result.current.handleDragEnd(dragEnd('col-1', 'col-2', 'column')))
+        expect(getColumns().map((c) => c.id)).toEqual(['col-2', 'col-1'])
+    })
+
+    it('persists the new column order', () => {
+        const {hook, saveBoard} = setup()
+        act(() => hook.result.current.handleDragEnd(dragEnd('col-1', 'col-2', 'column')))
+        expect(saveBoard).toHaveBeenCalledOnce()
+        expect(saveBoard.mock.calls[0][0].map((c: {id: string}) => c.id)).toEqual([
+            'col-2',
+            'col-1',
+        ])
+    })
+
+    it('resolves a drop onto a card back to the column holding it', () => {
+        const {hook, getColumns} = setup()
+        act(() => hook.result.current.handleDragEnd(dragEnd('col-1', 'card-3', 'column')))
+        expect(getColumns().map((c) => c.id)).toEqual(['col-2', 'col-1'])
+    })
+
+    it('does nothing when a column is dropped on itself', () => {
+        const {hook, saveBoard, setColumns} = setup()
+        act(() => hook.result.current.handleDragEnd(dragEnd('col-1', 'col-1', 'column')))
+        expect(setColumns).not.toHaveBeenCalled()
+        expect(saveBoard).not.toHaveBeenCalled()
+    })
+
+    it('does nothing when a column is dropped outside any target', () => {
+        const {hook, saveBoard, setColumns} = setup()
+        act(() => hook.result.current.handleDragEnd(dragEnd('col-1', null, 'column')))
+        expect(setColumns).not.toHaveBeenCalled()
+        expect(saveBoard).not.toHaveBeenCalled()
+    })
+
+    it('does not move cards around while a column is dragged over another', () => {
+        const {hook, setColumns} = setup()
+        act(() => hook.result.current.handleDragOver(dragOver('col-1', 'col-2', 'column')))
+        expect(setColumns).not.toHaveBeenCalled()
     })
 })
