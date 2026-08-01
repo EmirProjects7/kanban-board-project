@@ -58,6 +58,13 @@ export async function createColumn(title: string): Promise<Column> {
     return res.json()
 }
 
+export async function updateColumn(columnId: string, title: string): Promise<void> {
+    await request(`${BASE_URL}/api/columns/${columnId}`, {
+        method: 'PUT',
+        body: JSON.stringify({title}),
+    })
+}
+
 export async function deleteColumn(columnId: string): Promise<void> {
     await request(`${BASE_URL}/api/columns/${columnId}`, {
         method: 'DELETE',
@@ -71,6 +78,17 @@ export async function saveBoard(columns: Column[]): Promise<void> {
     })
 }
 
+// The auth endpoints answer with {error} on failure. Passing that message on
+// lets the form say "Too many attempts" instead of a generic failure.
+async function readError(response: Response, fallback: string): Promise<string> {
+    try {
+        const body = await response.json()
+        return typeof body?.error === 'string' ? body.error : fallback
+    } catch {
+        return fallback
+    }
+}
+
 export async function register(email: string, password: string) {
     const response = await fetch(`${BASE_URL}/api/auth/register`, {
         method: 'POST',
@@ -78,7 +96,7 @@ export async function register(email: string, password: string) {
         body: JSON.stringify({email, password}),
     })
     if (!response.ok) {
-        throw new Error('Registration failed')
+        throw new Error(await readError(response, 'Registration failed'))
     }
     return response.json()
 }
@@ -90,7 +108,7 @@ export async function login(email: string, password: string) {
         body: JSON.stringify({email, password}),
     })
     if (!response.ok) {
-        throw new Error('Login failed')
+        throw new Error(await readError(response, 'Login failed'))
     }
     return response.json()
 }

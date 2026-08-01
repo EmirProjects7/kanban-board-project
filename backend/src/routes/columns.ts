@@ -63,6 +63,30 @@ router.post('/:columnId/cards', authenticate, async (req, res) => {
     await emitBoard(userId)
 })
 
+router.put('/:columnId', authenticate, async (req, res) => {
+    const userId = req.userId
+    const columnId = req.params.columnId as string
+
+    const parsed = titleSchema.safeParse(req.body)
+    if (!parsed.success) {
+        return res.status(400).json({error: 'Invalid title'})
+    }
+
+    const column = await prisma.column.findFirst({
+        where: {id: columnId, userId: userId},
+    })
+    if (!column) {
+        return res.status(403).json({error: 'Not allowed'})
+    }
+
+    const updatedColumn = await prisma.column.update({
+        where: {id: columnId},
+        data: {title: parsed.data.title},
+    })
+    res.status(200).json(updatedColumn)
+    await emitBoard(userId)
+})
+
 router.delete('/:columnId', authenticate, async (req, res) => {
     const userId = req.userId
     const columnId = req.params.columnId as string

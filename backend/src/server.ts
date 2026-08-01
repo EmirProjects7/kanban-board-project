@@ -1,15 +1,9 @@
 import 'dotenv/config'
-import express from 'express'
-import type {ErrorRequestHandler} from 'express'
-import cors from 'cors'
 import {createServer} from 'http'
 import {Server} from 'socket.io'
 import jwt from 'jsonwebtoken'
-import authRouter from './routes/auth'
-import columnsRouter from './routes/columns'
-import cardsRouter from './routes/cards'
-import { initSocket } from './socket'
-import { authLimiter, apiLimiter } from './middleware/rateLimit'
+import app, {FRONTEND_URL} from './app'
+import {initSocket} from './socket'
 
 const requiredEnvVars = ['DATABASE_URL', 'JWT_SECRET'] as const
 const missingEnvVars = requiredEnvVars.filter((key) => !process.env[key])
@@ -21,27 +15,6 @@ if (missingEnvVars.length > 0) {
 // Deliberately not PORT: one `npm run dev` starts both apps, so a generic
 // PORT in the environment would be picked up by the frontend dev server too.
 const PORT = Number(process.env.BACKEND_PORT) || 3000
-const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173'
-
-const app = express()
-app.use(cors({origin: FRONTEND_URL}))
-app.use(express.json())
-app.use('/api/auth', authLimiter, authRouter)
-app.use('/api/columns', apiLimiter, columnsRouter)
-app.use('/api/cards', apiLimiter, cardsRouter)
-
-app.get('/health', (req, res) => {
-    res.json({status: 'ok', message: 'Backend is running'})
-})
-
-const jsonErrorHandler: ErrorRequestHandler = (err, req, res, next) => {
-    if (res.headersSent) {
-        return next(err)
-    }
-    console.error(err)
-    res.status(500).json({error: 'Internal server error'})
-}
-app.use(jsonErrorHandler)
 
 const httpServer = createServer(app)
 

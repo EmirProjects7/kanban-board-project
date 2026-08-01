@@ -57,6 +57,12 @@ export function useBoard(isAuthenticated: boolean) {
         setColumns((prev) => [...prev, newColumn])
     }
 
+    async function editColumn(columnId: string, newTitle: string) {
+        await api.updateColumn(columnId, newTitle)
+        setColumns((prev) => prev.map((column) =>
+            column.id === columnId ? {...column, title: newTitle} : column))
+    }
+
     async function deleteColumn(columnId: string) {
         await api.deleteColumn(columnId)
         setColumns((prev) => prev.filter((column) => column.id !== columnId))
@@ -73,6 +79,7 @@ export function useBoard(isAuthenticated: boolean) {
         deleteCard,
         editCard,
         addColumn,
+        editColumn,
         deleteColumn,
         saveBoard,
         isDraggingRef

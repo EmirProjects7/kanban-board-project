@@ -17,6 +17,11 @@ dist-ssr
 .env.*
 !.env.example
 
+# Local tooling
+.claude
+.agents
+.windsurf
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
