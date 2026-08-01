@@ -11,7 +11,10 @@ export function AuthForm({ onAuthSuccess }: AuthFormProps) {
     const [password, setPassword] = useState('')
     const [error, setError] = useState('')
 
-    async function handleSubmit() {
+    async function handleSubmit(event: React.FormEvent) {
+        // A real form means Enter submits from either field, and password
+        // managers recognise it. preventDefault stops the page reloading.
+        event.preventDefault()
         setError('')
         try {
             if (isLogin) {
@@ -30,7 +33,7 @@ export function AuthForm({ onAuthSuccess }: AuthFormProps) {
     }
 
     return (
-        <div className="auth-form">
+        <form className="auth-form" onSubmit={handleSubmit}>
             <h2>{isLogin ? 'Login' : 'Register'}</h2>
 
             <input
@@ -38,26 +41,32 @@ export function AuthForm({ onAuthSuccess }: AuthFormProps) {
                 placeholder="Email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                autoComplete="email"
             />
             <input
                 type="password"
                 placeholder="Password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                autoComplete={isLogin ? 'current-password' : 'new-password'}
             />
 
             {error && <p className="auth-error">{error}</p>}
 
-            <button onClick={handleSubmit}>
+            <button type="submit">
                 {isLogin ? 'Login' : 'Register'}
             </button>
 
             <p>
                 {isLogin ? "No account?" : 'Have an account?'}{' '}
-                <button className="link-button" onClick={() => setIsLogin(!isLogin)}>
+                <button
+                    type="button"
+                    className="link-button"
+                    onClick={() => setIsLogin(!isLogin)}
+                >
                     {isLogin ? 'Register' : 'Login'}
                 </button>
             </p>
-        </div>
+        </form>
     )
 }

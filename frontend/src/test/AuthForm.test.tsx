@@ -108,3 +108,71 @@ describe('register', () => {
         await waitFor(() => expect(screen.queryByText('Login failed')).not.toBeInTheDocument())
     })
 })
+
+describe('submitting with Enter', () => {
+    // Enter inside a field submits the surrounding form, which is what the
+    // browser does for real. fireEvent.submit is the jsdom equivalent.
+    function pressEnterInPassword() {
+        fireEvent.submit(screen.getByPlaceholderText('Password').closest('form')!)
+    }
+
+    it('logs in with Enter instead of the button', async () => {
+        apiMock.login.mockResolvedValue({token: 'jwt-token'})
+        const onAuthSuccess = vi.fn()
+        render(<AuthForm onAuthSuccess={onAuthSuccess} />)
+
+        fillCredentials()
+        pressEnterInPassword()
+
+        await waitFor(() => expect(onAuthSuccess).toHaveBeenCalledOnce())
+        expect(apiMock.login).toHaveBeenCalledWith('a@b.com', 'secret123')
+    })
+
+    it('registers with Enter instead of the button', async () => {
+        apiMock.register.mockResolvedValue({id: 'user-1'})
+        apiMock.login.mockResolvedValue({token: 'jwt-token'})
+        const onAuthSuccess = vi.fn()
+        render(<AuthForm onAuthSuccess={onAuthSuccess} />)
+
+        fireEvent.click(screen.getByRole('button', {name: 'Register'}))
+        fillCredentials()
+        pressEnterInPassword()
+
+        await waitFor(() => expect(onAuthSuccess).toHaveBeenCalledOnce())
+        expect(apiMock.register).toHaveBeenCalledWith('a@b.com', 'secret123')
+    })
+
+    it('shows the error when an Enter submission fails', async () => {
+        apiMock.login.mockRejectedValue(new Error('Invalid credentials'))
+        render(<AuthForm onAuthSuccess={() => {}} />)
+
+        fillCredentials('a@b.com', 'wrong')
+        pressEnterInPassword()
+
+        await waitFor(() =>
+            expect(screen.getByText('Invalid credentials')).toBeInTheDocument()
+        )
+    })
+
+    it('submits the form rather than reloading the page', () => {
+        apiMock.login.mockResolvedValue({token: 'jwt-token'})
+        render(<AuthForm onAuthSuccess={() => {}} />)
+
+        fillCredentials()
+        const form = screen.getByPlaceholderText('Password').closest('form')!
+        const submitEvent = new Event('submit', {bubbles: true, cancelable: true})
+        form.dispatchEvent(submitEvent)
+
+        expect(submitEvent.defaultPrevented).toBe(true)
+    })
+
+    it('does not submit when the mode toggle is pressed', () => {
+        render(<AuthForm onAuthSuccess={() => {}} />)
+
+        fillCredentials()
+        fireEvent.click(screen.getByRole('button', {name: 'Register'}))
+
+        expect(apiMock.login).not.toHaveBeenCalled()
+        expect(apiMock.register).not.toHaveBeenCalled()
+    })
+})
