@@ -1,13 +1,13 @@
 import {useState} from 'react'
 import {arrayMove} from '@dnd-kit/sortable'
 import type {DragEndEvent, DragStartEvent, DragOverEvent} from '@dnd-kit/core'
-import type {Card, Column} from './useBoard'
+import type {Card, Column} from '../types'
 
 export function useDragAndDrop(
     columns: Column[],
     setColumns: React.Dispatch<React.SetStateAction<Column[]>>,
     saveBoard: (columns: Column[]) => void,
-    isDraggingRef: React.MutableRefObject<boolean>){
+    isDraggingRef: React.RefObject<boolean>){
     const [activeCard, setActiveCard] = useState<Card | null>(null)
 
     function findColumns(activeId: string, overId: string) {
@@ -92,10 +92,9 @@ export function useDragAndDrop(
                 return newColumns
             })
         } else {
-            setColumns((prevColumns) => {
-                saveBoard(prevColumns)
-                return prevColumns
-            })
+            // Cross-column moves are already reflected in `columns` by handleDragOver;
+            // just persist the current state, same as the "no valid drop target" case above.
+            saveBoard(columns)
         }
     }
 

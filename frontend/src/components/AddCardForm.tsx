@@ -22,7 +22,7 @@ function AddCardForm({onAdd}: AddCardFormProps) {
             />
             <button onClick={handleAdd}>+ Add</button>
         </div>
-    ) /*add +Add button + handle press*/
+    )
 }
 
 export default AddCardForm

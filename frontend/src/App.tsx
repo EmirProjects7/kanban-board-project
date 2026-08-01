@@ -1,14 +1,14 @@
 import './App.css'
-import {DndContext, DragOverlay, PointerSensor, KeyboardSensor, useSensor, useSensors} from '@dnd-kit/core'
-import {useBoard} from './hooks/useBoard';
-import Column from './components/Column'
-import {useDragAndDrop} from "./hooks/useDragDrop.ts";
-import AddColumnForm from "./components/AddColumnForm.tsx";
 import {useState, useEffect} from 'react'
-import {clearToken, getToken} from "./api.ts";
-import {AuthForm} from "./components/AuthForm.tsx";
-import {disconnectSocket} from "./socket.ts";
+import {DndContext, DragOverlay, PointerSensor, KeyboardSensor, useSensor, useSensors} from '@dnd-kit/core'
 import {sortableKeyboardCoordinates} from '@dnd-kit/sortable'
+import {useBoard} from './hooks/useBoard'
+import {useDragAndDrop} from './hooks/useDragDrop'
+import Column from './components/Column'
+import AddColumnForm from './components/AddColumnForm'
+import {AuthForm} from './components/AuthForm'
+import {clearToken, getToken} from './api'
+import {disconnectSocket} from './socket'
 
 
 function App() {
