@@ -1,6 +1,6 @@
-import type {Column} from './hooks/useBoard'
+import type {Card, Column} from './types'
 
-const BASE_URL = 'http://localhost:3000'
+export const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000'
 
 export function getToken(): string | null {
     return localStorage.getItem('token')
@@ -14,57 +14,59 @@ export function clearToken(): void {
     localStorage.removeItem('token')
 }
 
+// Every mutating request goes through here so a failed request (403, 500, etc.)
+// throws instead of silently returning an error body as if it were the payload.
+async function request(url: string, options: RequestInit = {}): Promise<Response> {
+    const res = await fetch(url, {...options, headers: authHeaders()})
+    if (!res.ok) {
+        throw new Error(`Request to ${url} failed with status ${res.status}`)
+    }
+    return res
+}
+
 export async function fetchColumns(): Promise<Column[]> {
-    const res = await fetch(`${BASE_URL}/api/columns`, {
-        headers: authHeaders()
-    })
+    const res = await request(`${BASE_URL}/api/columns`)
     return res.json()
 }
 
-export async function createCard(columnId: string, title: string) {
-    const res = await fetch(`${BASE_URL}/api/columns/${columnId}/cards`, {
+export async function createCard(columnId: string, title: string): Promise<Card> {
+    const res = await request(`${BASE_URL}/api/columns/${columnId}/cards`, {
         method: 'POST',
-        headers: authHeaders(),
         body: JSON.stringify({title}),
     })
     return res.json()
 }
 
-export async function deleteCard(cardId: string) {
-    await fetch(`${BASE_URL}/api/cards/${cardId}`, {
+export async function deleteCard(cardId: string): Promise<void> {
+    await request(`${BASE_URL}/api/cards/${cardId}`, {
         method: 'DELETE',
-        headers: authHeaders(),
     })
 }
 
-export async function updateCard(cardId: string, title: string) {
-    await fetch(`${BASE_URL}/api/cards/${cardId}`, {
+export async function updateCard(cardId: string, title: string): Promise<void> {
+    await request(`${BASE_URL}/api/cards/${cardId}`, {
         method: 'PUT',
-        headers: authHeaders(),
         body: JSON.stringify({title}),
     })
 }
 
 export async function createColumn(title: string): Promise<Column> {
-    const res = await fetch(`${BASE_URL}/api/columns`, {
+    const res = await request(`${BASE_URL}/api/columns`, {
         method: 'POST',
-        headers: authHeaders(),
         body: JSON.stringify({title}),
     })
     return res.json()
 }
 
-export async function deleteColumn(columnId: string) {
-    await fetch(`${BASE_URL}/api/columns/${columnId}`, {
+export async function deleteColumn(columnId: string): Promise<void> {
+    await request(`${BASE_URL}/api/columns/${columnId}`, {
         method: 'DELETE',
-        headers: authHeaders(),
     })
 }
 
-export async function saveBoard(columns: Column[]) {
-    await fetch(`${BASE_URL}/api/columns`, {
+export async function saveBoard(columns: Column[]): Promise<void> {
+    await request(`${BASE_URL}/api/columns`, {
         method: 'PUT',
-        headers: authHeaders(),
         body: JSON.stringify(columns),
     })
 }
