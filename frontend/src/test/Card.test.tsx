@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
 import { DndContext } from '@dnd-kit/core'
 import Card from '../components/Card'
@@ -35,5 +35,32 @@ describe('Card', () => {
         renderCard({ title: 'Editable' })
         fireEvent.doubleClick(screen.getByText('Editable'))
         expect(screen.getByDisplayValue('Editable')).toBeInTheDocument()
+    })
+})
+describe('what opens the editor', () => {
+    it('opens when the text itself is double clicked', () => {
+        render(<Card id="card-1" title="Editable" onDelete={vi.fn()} onEdit={vi.fn()} />)
+
+        fireEvent.doubleClick(screen.getByText('Editable'))
+
+        expect(screen.getByDisplayValue('Editable')).toBeInTheDocument()
+    })
+
+    it('stays shut when the card around the text is double clicked', () => {
+        const {container} = render(
+            <Card id="card-1" title="Editable" onDelete={vi.fn()} onEdit={vi.fn()} />
+        )
+
+        fireEvent.doubleClick(container.querySelector('.card')!)
+
+        expect(screen.queryByDisplayValue('Editable')).not.toBeInTheDocument()
+    })
+
+    it('stays shut when the delete button is double clicked', () => {
+        render(<Card id="card-1" title="Editable" onDelete={vi.fn()} onEdit={vi.fn()} />)
+
+        fireEvent.doubleClick(screen.getByLabelText('Delete card'))
+
+        expect(screen.queryByDisplayValue('Editable')).not.toBeInTheDocument()
     })
 })

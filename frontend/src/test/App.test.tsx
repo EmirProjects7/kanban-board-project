@@ -8,6 +8,10 @@ const {apiMock, socketMock, disconnectSocket} = vi.hoisted(() => ({
         setToken: vi.fn(),
         clearToken: vi.fn(),
         setUnauthorizedHandler: vi.fn(),
+        fetchBoards: vi.fn(),
+        createBoard: vi.fn(),
+        updateBoard: vi.fn(),
+        deleteBoard: vi.fn(),
         fetchColumns: vi.fn(),
         createCard: vi.fn(),
         deleteCard: vi.fn(),
@@ -26,12 +30,14 @@ const {apiMock, socketMock, disconnectSocket} = vi.hoisted(() => ({
 vi.mock('../api', () => apiMock)
 vi.mock('../socket', () => ({connectSocket: () => socketMock, disconnectSocket}))
 
+const boards = [{id: 'board-1', title: 'My Board', order: 0}]
 const board = [{id: 'col-1', title: 'Todo', cards: [{id: 'card-1', title: 'Task'}]}]
 
 beforeEach(() => {
     vi.clearAllMocks()
     localStorage.clear()
     document.documentElement.removeAttribute('data-theme')
+    apiMock.fetchBoards.mockResolvedValue(boards)
     apiMock.fetchColumns.mockResolvedValue(board)
 })
 
