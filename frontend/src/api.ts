@@ -95,10 +95,15 @@ export async function deleteCard(cardId: string): Promise<void> {
     })
 }
 
-export async function updateCard(cardId: string, title: string): Promise<void> {
+// Only the given fields are sent, so renaming a card leaves its description
+// untouched and vice versa.
+export async function updateCard(
+    cardId: string,
+    changes: {title?: string; description?: string | null}
+): Promise<void> {
     await request(`${BASE_URL}/api/cards/${cardId}`, {
         method: 'PUT',
-        body: JSON.stringify({title}),
+        body: JSON.stringify(changes),
     })
 }
 

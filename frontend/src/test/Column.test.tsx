@@ -18,6 +18,7 @@ function renderColumn(override: Partial<ColumnType> = {}) {
         onAddCard: vi.fn(),
         onDeleteCard: vi.fn(),
         onEditCard: vi.fn(),
+        onDescribeCard: vi.fn(),
         onEditColumn: vi.fn(),
         onDeleteColumn: vi.fn(),
     }
@@ -68,7 +69,7 @@ describe('Column', () => {
 
     it('forwards a card deletion by card id', () => {
         const {onDeleteCard} = renderColumn()
-        fireEvent.click(screen.getAllByLabelText('Delete card')[0])
+        fireEvent.click(screen.getByLabelText('Delete First'))
         expect(onDeleteCard).toHaveBeenCalledWith('card-1')
     })
 })

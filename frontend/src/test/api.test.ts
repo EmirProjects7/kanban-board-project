@@ -144,7 +144,7 @@ describe('response status handling', () => {
 
     it('throws when updating a card fails', async () => {
         mockFetch({ok: false, status: 500})
-        await expect(api.updateCard('card-1', 'New')).rejects.toThrow()
+        await expect(api.updateCard('card-1', {title: 'New'})).rejects.toThrow()
     })
 
     it('throws when creating a column fails', async () => {

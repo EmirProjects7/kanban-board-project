@@ -3,7 +3,7 @@ import {prisma} from '../prisma'
 import {authenticate} from '../middleware/authenticate'
 import {emitBoard} from '../board'
 import {cardOwnedBy} from '../queries'
-import {titleSchema} from '../validation'
+import {cardUpdateSchema} from '../validation'
 
 const router = Router()
 
@@ -32,9 +32,9 @@ router.put('/:cardId', authenticate, async (req, res) => {
     const userId = req.userId
     const cardId = req.params.cardId as string
 
-    const parsed = titleSchema.safeParse(req.body)
+    const parsed = cardUpdateSchema.safeParse(req.body)
     if (!parsed.success) {
-        return res.status(400).json({error: 'Invalid title'})
+        return res.status(400).json({error: 'Invalid card'})
     }
 
     const card = await prisma.card.findFirst({
@@ -45,9 +45,16 @@ router.put('/:cardId', authenticate, async (req, res) => {
         return res.status(403).json({error: 'Not allowed'})
     }
 
+    // Only the fields that were sent are written, so renaming a card does not
+    // wipe its description and vice versa.
     const updatedCard = await prisma.card.update({
         where: {id: cardId},
-        data: {title: parsed.data.title},
+        data: {
+            ...(parsed.data.title !== undefined ? {title: parsed.data.title} : {}),
+            ...(parsed.data.description !== undefined
+                ? {description: parsed.data.description}
+                : {}),
+        },
     })
     res.status(200).json(updatedCard)
     await emitBoard(userId, card.column.boardId)

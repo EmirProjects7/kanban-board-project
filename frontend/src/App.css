@@ -500,10 +500,184 @@ body {
     outline-offset: 2px;
 }
 
+.card-body {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    min-width: 0;
+    flex: 1;
+}
+
 /* Sized to its text so the double click target matches what is written,
    not the whole card. */
 .card-title {
     align-self: flex-start;
+}
+
+/* Marks a card that carries notes, so they are not hidden away unseen. */
+.card-note {
+    flex-shrink: 0;
+    font-size: 11px;
+    line-height: 1;
+    color: var(--muted);
+}
+
+.card-actions {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    flex-shrink: 0;
+}
+
+.card-open-button {
+    padding: 0 4px;
+    font-size: 13px;
+    line-height: 1.25;
+    color: var(--muted);
+    background: none;
+    border: none;
+    border-radius: 4px;
+    opacity: 0;
+    transition: opacity 0.15s, color 0.15s;
+}
+
+.card:hover .card-open-button,
+.card-open-button:focus-visible {
+    opacity: 1;
+}
+
+.card-open-button:hover {
+    color: var(--text);
+}
+
+/* Card detail ---------------------------------------------------------- */
+
+.detail-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 30;
+    background: rgba(0, 0, 0, 0.5);
+}
+
+.detail {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    z-index: 31;
+    transform: translate(-50%, -50%);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 520px;
+    max-width: calc(100vw - 32px);
+    max-height: calc(100vh - 64px);
+    padding: 20px;
+    overflow-y: auto;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    box-shadow: var(--shadow-lg);
+}
+
+.detail-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+}
+
+.detail-title {
+    flex: 1;
+    min-width: 0;
+    padding: 4px 6px;
+    margin: -4px -6px;
+    font-family: inherit;
+    font-size: 17px;
+    font-weight: 600;
+    color: var(--text);
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 7px;
+    outline: none;
+}
+
+.detail-title:hover {
+    border-color: var(--border);
+}
+
+.detail-title:focus {
+    background: var(--bg);
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.detail-close {
+    flex-shrink: 0;
+    padding: 0 4px;
+    font-size: 18px;
+    line-height: 1;
+    color: var(--muted);
+    background: none;
+    border: none;
+    border-radius: 4px;
+}
+
+.detail-close:hover {
+    color: var(--text);
+}
+
+.detail-label {
+    margin-top: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--muted);
+}
+
+.detail-description {
+    width: 100%;
+    padding: 10px 12px;
+    font-family: inherit;
+    font-size: 14px;
+    line-height: 1.55;
+    color: var(--text);
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    outline: none;
+    resize: vertical;
+    transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.detail-description::placeholder {
+    color: var(--muted);
+}
+
+.detail-description:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.detail-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 4px;
+}
+
+.detail-delete {
+    padding: 7px 12px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--danger);
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    transition: background 0.15s, border-color 0.15s;
+}
+
+.detail-delete:hover {
+    background: color-mix(in srgb, var(--danger) 12%, transparent);
+    border-color: color-mix(in srgb, var(--danger) 40%, transparent);
 }
 
 .card-edit-input {

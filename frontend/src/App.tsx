@@ -32,6 +32,7 @@ function App() {
         addCard,
         deleteCard,
         editCard,
+        describeCard,
         addColumn,
         editColumn,
         deleteColumn,
@@ -116,7 +117,7 @@ function App() {
                     <SortableContext items={columnIds} strategy={horizontalListSortingStrategy}>
                         {columns.map((column) => (
                             <Column key={column.id} column={column} onAddCard={addCard}
-                                    onDeleteCard={deleteCard} onEditCard={editCard}
+                                    onDeleteCard={deleteCard} onEditCard={editCard} onDescribeCard={describeCard}
                                     onEditColumn={editColumn} onDeleteColumn={deleteColumn}/>
                         ))}
                     </SortableContext>
