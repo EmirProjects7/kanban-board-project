@@ -56,6 +56,13 @@ export async function createBoard(title: string): Promise<Board> {
     return res.json()
 }
 
+export async function saveBoardOrder(boards: Board[]): Promise<void> {
+    await request(`${BASE_URL}/api/boards/order`, {
+        method: 'PUT',
+        body: JSON.stringify(boards.map((board) => ({id: board.id}))),
+    })
+}
+
 export async function updateBoard(boardId: string, title: string): Promise<void> {
     await request(`${BASE_URL}/api/boards/${boardId}`, {
         method: 'PUT',

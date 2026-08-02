@@ -1,5 +1,21 @@
-import {useState, useEffect} from 'react'
+import {useState, useEffect, useMemo} from 'react'
 import {createPortal} from 'react-dom'
+import {
+    DndContext,
+    PointerSensor,
+    KeyboardSensor,
+    closestCenter,
+    useSensor,
+    useSensors,
+} from '@dnd-kit/core'
+import type {DragEndEvent} from '@dnd-kit/core'
+import {
+    SortableContext,
+    arrayMove,
+    sortableKeyboardCoordinates,
+    verticalListSortingStrategy,
+} from '@dnd-kit/sortable'
+import {BoardRow} from './BoardRow'
 import type {Board} from '../types'
 
 type BoardSwitcherProps = {
@@ -9,6 +25,7 @@ type BoardSwitcherProps = {
     onAdd: (title: string) => void
     onRename: (boardId: string, title: string) => void
     onDelete: (boardId: string) => void
+    onReorder: (boards: Board[]) => void
 }
 
 export function BoardSwitcher({
@@ -18,6 +35,7 @@ export function BoardSwitcher({
     onAdd,
     onRename,
     onDelete,
+    onReorder,
 }: BoardSwitcherProps) {
     const [isOpen, setIsOpen] = useState(false)
     const [isAdding, setIsAdding] = useState(false)
@@ -82,6 +100,28 @@ export function BoardSwitcher({
         onDelete(board.id)
     }
 
+    // A few pixels of movement before a drag starts, so the buttons in each
+    // row still take ordinary clicks.
+    const sensors = useSensors(
+        useSensor(PointerSensor, {activationConstraint: {distance: 5}}),
+        useSensor(KeyboardSensor, {coordinateGetter: sortableKeyboardCoordinates})
+    )
+
+    // Stable identity, or dnd-kit reads it as a reordered list and drops the
+    // animation.
+    const boardIds = useMemo(() => boards.map((board) => board.id), [boards])
+
+    function handleDragEnd(event: DragEndEvent) {
+        const {active, over} = event
+        if (!over || active.id === over.id) return
+
+        const from = boards.findIndex((board) => board.id === active.id)
+        const to = boards.findIndex((board) => board.id === over.id)
+        if (from === -1 || to === -1) return
+
+        onReorder(arrayMove(boards, from, to))
+    }
+
     return (
         <>
             <button
@@ -111,50 +151,33 @@ export function BoardSwitcher({
                             </button>
                         </div>
 
-                        <ul className="board-list">
-                            {boards.map((board) => (
-                                <li
-                                    key={board.id}
-                                    className="board-list-item"
-                                    onContextMenu={(e) => {
-                                        e.preventDefault()
-                                        setMenuForId(board.id)
-                                    }}
-                                >
-                                    {editingId === board.id ? (
-                                        <input
-                                            className="board-input"
-                                            value={editValue}
-                                            onChange={(e) => setEditValue(e.target.value)}
-                                            onBlur={() => handleRename(board)}
-                                            onKeyDown={(e) => {
-                                                if (e.key === 'Enter') handleRename(board)
-                                                if (e.key === 'Escape') setEditingId(null)
-                                            }}
-                                            aria-label="Board name"
-                                            autoFocus
-                                        />
-                                    ) : (
-                                        <>
-                                            <button
-                                                className={
-                                                    board.id === activeBoardId
-                                                        ? 'board-name is-active'
-                                                        : 'board-name'
-                                                }
-                                                onClick={() => handleSelect(board.id)}
-                                            >
-                                                {board.title}
-                                            </button>
-                                            <button
-                                                className="board-menu-button"
-                                                onClick={() => setMenuForId(board.id)}
-                                                aria-label={`Options for ${board.title}`}
-                                                aria-haspopup="menu"
-                                            >
-                                                <span aria-hidden="true">⋮</span>
-                                            </button>
-
+                        {/* closestCenter rather than the default: the rows are
+                            short and sit close together, and intersection
+                            based detection kept finding nothing under the
+                            item being moved. */}
+                        <DndContext
+                            sensors={sensors}
+                            collisionDetection={closestCenter}
+                            onDragEnd={handleDragEnd}
+                        >
+                            <SortableContext
+                                items={boardIds}
+                                strategy={verticalListSortingStrategy}
+                            >
+                                <ul className="board-list">
+                                    {boards.map((board) => (
+                                        <BoardRow
+                                            key={board.id}
+                                            board={board}
+                                            isActive={board.id === activeBoardId}
+                                            isEditing={editingId === board.id}
+                                            editValue={editValue}
+                                            onEditValueChange={setEditValue}
+                                            onCommitRename={() => handleRename(board)}
+                                            onCancelRename={() => setEditingId(null)}
+                                            onSelect={() => handleSelect(board.id)}
+                                            onOpenMenu={() => setMenuForId(board.id)}
+                                        >
                                             {menuForId === board.id && (
                                                 <>
                                                     {/* Closes the menu on any
@@ -190,11 +213,11 @@ export function BoardSwitcher({
                                                     </div>
                                                 </>
                                             )}
-                                        </>
-                                    )}
-                                </li>
-                            ))}
-                        </ul>
+                                        </BoardRow>
+                                    ))}
+                                </ul>
+                            </SortableContext>
+                        </DndContext>
 
                         {isAdding ? (
                             <div className="board-add">

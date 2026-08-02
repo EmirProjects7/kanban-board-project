@@ -15,6 +15,8 @@ const reorderSchema = z.array(
     })
 )
 
+const boardOrderSchema = z.array(z.object({id: z.string()}))
+
 router.get('/', authenticate, async (req, res) => {
     const boards = await prisma.board.findMany(boardsOfUser(req.userId))
     res.json(boards)
@@ -33,6 +35,36 @@ router.post('/', authenticate, async (req, res) => {
         data: {title: parsed.data.title, userId: userId, order: count},
     })
     res.status(201).json(board)
+})
+
+// Declared before /:boardId so "order" is not read as a board id.
+router.put('/order', authenticate, async (req, res) => {
+    const userId = req.userId
+
+    const parsed = boardOrderSchema.safeParse(req.body)
+    if (!parsed.success) {
+        return res.status(400).json({error: 'Invalid board order payload'})
+    }
+
+    const owned = await prisma.board.findMany({
+        where: {userId: userId},
+        select: {id: true},
+    })
+    const ownedIds = new Set(owned.map((board) => board.id))
+
+    for (const board of parsed.data) {
+        if (!ownedIds.has(board.id)) {
+            return res.status(403).json({error: 'Not allowed'})
+        }
+    }
+
+    await prisma.$transaction(
+        parsed.data.map((board, index) =>
+            prisma.board.update({where: {id: board.id}, data: {order: index}})
+        )
+    )
+
+    res.status(200).json(await prisma.board.findMany(boardsOfUser(userId)))
 })
 
 router.put('/:boardId', authenticate, async (req, res) => {

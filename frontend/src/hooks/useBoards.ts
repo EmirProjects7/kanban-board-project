@@ -72,6 +72,15 @@ export function useBoards(isAuthenticated: boolean) {
         })
     }
 
+    async function reorderBoards(ordered: Board[]) {
+        // Applied straight away so the drag feels immediate; the request only
+        // makes it stick.
+        setBoards(ordered)
+        await attempt('Could not save the board order.', async () => {
+            await api.saveBoardOrder(ordered)
+        })
+    }
+
     function dismissError() {
         setError(null)
     }
@@ -85,6 +94,7 @@ export function useBoards(isAuthenticated: boolean) {
         addBoard,
         renameBoard,
         removeBoard,
+        reorderBoards,
         error,
         dismissError,
     }

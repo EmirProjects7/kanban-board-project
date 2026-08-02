@@ -22,6 +22,7 @@ function App() {
         addBoard,
         renameBoard,
         removeBoard,
+        reorderBoards,
         error: boardsError,
         dismissError: dismissBoardsError,
     } = useBoards(isAuthenticated)
@@ -84,6 +85,7 @@ function App() {
                     onAdd={addBoard}
                     onRename={renameBoard}
                     onDelete={removeBoard}
+                    onReorder={reorderBoards}
                 />
                 <h1>{activeBoard?.title ?? 'Kanban Board'}</h1>
                 <button
