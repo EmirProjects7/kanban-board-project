@@ -33,8 +33,7 @@ function Card({id, title, onDelete, onEdit}: CardProps) {
     }
 
     return (
-        <div ref={setNodeRef} style={style} {...attributes} {...listeners} className="card" tabIndex={0}
-             onDoubleClick={() => setIsEditing(true)}>
+        <div ref={setNodeRef} style={style} {...attributes} {...listeners} className="card" tabIndex={0}>
             {isEditing ? (
                 <input
                     className="card-edit-input"
@@ -49,7 +48,11 @@ function Card({id, title, onDelete, onEdit}: CardProps) {
                     onPointerDown={(e) => e.stopPropagation()}
                 />
             ) : (
-                <span>{title}</span>
+                // Only the text opens the editor. Double clicking the padding
+                // or the delete button used to start a rename too.
+                <span className="card-title" onDoubleClick={() => setIsEditing(true)}>
+                    {title}
+                </span>
             )}
             <button
                 className="delete-button"
