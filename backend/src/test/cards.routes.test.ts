@@ -110,3 +110,112 @@ describe('PUT /api/cards/:cardId', () => {
         expect(cardMock.update).not.toHaveBeenCalled()
     })
 })
+
+describe('card descriptions', () => {
+    function reachable() {
+        cardMock.findFirst.mockResolvedValue({id: 'card-1', column: {boardId: 'board-1'}})
+        cardMock.update.mockResolvedValue({id: 'card-1'})
+    }
+
+    it('saves a description on its own', async () => {
+        reachable()
+
+        const res = await request(app)
+            .put('/api/cards/card-1')
+            .set('Authorization', auth)
+            .send({description: 'Ring the supplier first'})
+
+        expect(res.status).toBe(200)
+        expect(cardMock.update).toHaveBeenCalledWith({
+            where: {id: 'card-1'},
+            data: {description: 'Ring the supplier first'},
+        })
+    })
+
+    it('leaves the title alone when only the description is sent', async () => {
+        reachable()
+
+        await request(app)
+            .put('/api/cards/card-1')
+            .set('Authorization', auth)
+            .send({description: 'Notes'})
+
+        expect(cardMock.update).toHaveBeenCalledWith(
+            expect.objectContaining({data: {description: 'Notes'}})
+        )
+    })
+
+    it('leaves the description alone when only the title is sent', async () => {
+        reachable()
+
+        await request(app)
+            .put('/api/cards/card-1')
+            .set('Authorization', auth)
+            .send({title: 'Renamed'})
+
+        expect(cardMock.update).toHaveBeenCalledWith(
+            expect.objectContaining({data: {title: 'Renamed'}})
+        )
+    })
+
+    it('writes both when both are sent', async () => {
+        reachable()
+
+        await request(app)
+            .put('/api/cards/card-1')
+            .set('Authorization', auth)
+            .send({title: 'Renamed', description: 'Notes'})
+
+        expect(cardMock.update).toHaveBeenCalledWith({
+            where: {id: 'card-1'},
+            data: {title: 'Renamed', description: 'Notes'},
+        })
+    })
+
+    it('clears the description when it is emptied', async () => {
+        reachable()
+
+        await request(app)
+            .put('/api/cards/card-1')
+            .set('Authorization', auth)
+            .send({description: '   '})
+
+        // Stored as null so "no description" has a single representation.
+        expect(cardMock.update).toHaveBeenCalledWith({
+            where: {id: 'card-1'},
+            data: {description: null},
+        })
+    })
+
+    it('rejects a request that changes nothing', async () => {
+        const res = await request(app)
+            .put('/api/cards/card-1')
+            .set('Authorization', auth)
+            .send({})
+
+        expect(res.status).toBe(400)
+        expect(cardMock.update).not.toHaveBeenCalled()
+    })
+
+    it('rejects a description longer than the limit', async () => {
+        const res = await request(app)
+            .put('/api/cards/card-1')
+            .set('Authorization', auth)
+            .send({description: 'a'.repeat(2001)})
+
+        expect(res.status).toBe(400)
+        expect(cardMock.update).not.toHaveBeenCalled()
+    })
+
+    it('refuses a card the user cannot reach', async () => {
+        cardMock.findFirst.mockResolvedValue(null)
+
+        const res = await request(app)
+            .put('/api/cards/other-card')
+            .set('Authorization', auth)
+            .send({description: 'Sneaky'})
+
+        expect(res.status).toBe(403)
+        expect(cardMock.update).not.toHaveBeenCalled()
+    })
+})

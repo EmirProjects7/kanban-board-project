@@ -33,6 +33,7 @@ model Column {
 model Card {
   id       String @id @default(uuid())
   title    String
+  description String?
   order Int @default(0)
   columnId String
   column   Column @relation(fields: [columnId], references: [id], onDelete: Cascade)
