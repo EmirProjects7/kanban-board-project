@@ -26,6 +26,9 @@ describe('stored XSS in card titles', () => {
                     onDelete={() => {}}
                     onEdit={() => {}}
                     onDescribe={() => {}}
+                    labels={[]}
+                    onToggleLabel={() => {}}
+                    onCreateLabel={() => {}}
                 />
             </DndContext>
         )
@@ -65,6 +68,9 @@ describe('stored XSS in column titles', () => {
                     onDeleteCard={() => {}}
                     onEditCard={() => {}}
                     onDescribeCard={() => {}}
+                    labels={[]}
+                    onToggleCardLabel={() => {}}
+                    onCreateLabel={() => {}}
                     onEditColumn={() => {}}
                     onDeleteColumn={() => {}}
                 />

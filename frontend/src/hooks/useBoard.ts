@@ -94,6 +94,20 @@ export function useBoard(boardId: string | null) {
         })
     }
 
+    // Attaching changes what the card carries, so the board is reloaded from
+    // the server rather than guessed at locally.
+    async function toggleCardLabel(cardId: string, labelId: string, attached: boolean) {
+        if (!boardId) return
+        await attempt('Could not change the labels.', async () => {
+            if (attached) {
+                await api.detachLabel(cardId, labelId)
+            } else {
+                await api.attachLabel(cardId, labelId)
+            }
+            setColumns(await api.fetchColumns(boardId))
+        })
+    }
+
     async function addColumn(title: string) {
         if (!boardId) return
         await attempt('Could not add the column.', async () => {
@@ -135,6 +149,7 @@ export function useBoard(boardId: string | null) {
         deleteCard,
         editCard,
         describeCard,
+        toggleCardLabel,
         addColumn,
         editColumn,
         deleteColumn,

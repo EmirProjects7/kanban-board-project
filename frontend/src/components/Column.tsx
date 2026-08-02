@@ -3,7 +3,7 @@ import {SortableContext, useSortable, verticalListSortingStrategy} from '@dnd-ki
 import {CSS} from '@dnd-kit/utilities'
 import Card from './Card'
 import AddCardForm from './AddCardForm'
-import type {Column as ColumnType} from '../types'
+import type {Column as ColumnType, Label, LabelColour} from '../types'
 
 
 type ColumnProps = {
@@ -12,6 +12,9 @@ type ColumnProps = {
     onDeleteCard: (cardId: string) => void
     onEditCard: (cardId: string, newTitle: string) => void
     onDescribeCard: (cardId: string, description: string) => void
+    labels: Label[]
+    onToggleCardLabel: (cardId: string, labelId: string, attached: boolean) => void
+    onCreateLabel: (name: string, colour: LabelColour) => void
     onEditColumn: (columnId: string, newTitle: string) => void
     onDeleteColumn: (columnId: string) => void
 }
@@ -22,6 +25,9 @@ function Column({
     onDeleteCard,
     onEditCard,
     onDescribeCard,
+    labels,
+    onToggleCardLabel,
+    onCreateLabel,
     onEditColumn,
     onDeleteColumn,
 }: ColumnProps) {
@@ -107,6 +113,9 @@ function Column({
                             onDelete={onDeleteCard}
                             onEdit={onEditCard}
                             onDescribe={onDescribeCard}
+                            labels={labels}
+                            onToggleLabel={onToggleCardLabel}
+                            onCreateLabel={onCreateLabel}
                         />
                     ))}
                     {column.cards.length === 0 && (<p className="empty-column">No cards yet</p>

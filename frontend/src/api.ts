@@ -1,4 +1,4 @@
-import type {Board, Card, Column} from './types'
+import type {Board, Card, Column, Label, LabelColour} from './types'
 
 export const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000'
 
@@ -74,6 +74,46 @@ export async function deleteBoard(boardId: string): Promise<void> {
     await request(`${BASE_URL}/api/boards/${boardId}`, {
         method: 'DELETE',
     })
+}
+
+export async function fetchLabels(boardId: string): Promise<Label[]> {
+    const res = await request(`${BASE_URL}/api/boards/${boardId}/labels`)
+    return res.json()
+}
+
+export async function createLabel(
+    boardId: string,
+    name: string,
+    colour: LabelColour
+): Promise<Label> {
+    const res = await request(`${BASE_URL}/api/boards/${boardId}/labels`, {
+        method: 'POST',
+        body: JSON.stringify({name, colour}),
+    })
+    return res.json()
+}
+
+export async function updateLabel(
+    labelId: string,
+    name: string,
+    colour: LabelColour
+): Promise<void> {
+    await request(`${BASE_URL}/api/labels/${labelId}`, {
+        method: 'PUT',
+        body: JSON.stringify({name, colour}),
+    })
+}
+
+export async function deleteLabel(labelId: string): Promise<void> {
+    await request(`${BASE_URL}/api/labels/${labelId}`, {method: 'DELETE'})
+}
+
+export async function attachLabel(cardId: string, labelId: string): Promise<void> {
+    await request(`${BASE_URL}/api/cards/${cardId}/labels/${labelId}`, {method: 'PUT'})
+}
+
+export async function detachLabel(cardId: string, labelId: string): Promise<void> {
+    await request(`${BASE_URL}/api/cards/${cardId}/labels/${labelId}`, {method: 'DELETE'})
 }
 
 export async function fetchColumns(boardId: string): Promise<Column[]> {

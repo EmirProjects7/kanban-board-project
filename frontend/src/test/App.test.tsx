@@ -13,6 +13,12 @@ const {apiMock, socketMock, disconnectSocket} = vi.hoisted(() => ({
         updateBoard: vi.fn(),
         deleteBoard: vi.fn(),
         fetchColumns: vi.fn(),
+        fetchLabels: vi.fn(),
+        createLabel: vi.fn(),
+        updateLabel: vi.fn(),
+        deleteLabel: vi.fn(),
+        attachLabel: vi.fn(),
+        detachLabel: vi.fn(),
         createCard: vi.fn(),
         deleteCard: vi.fn(),
         updateCard: vi.fn(),
@@ -39,6 +45,7 @@ beforeEach(() => {
     document.documentElement.removeAttribute('data-theme')
     apiMock.fetchBoards.mockResolvedValue(boards)
     apiMock.fetchColumns.mockResolvedValue(board)
+    apiMock.fetchLabels.mockResolvedValue([])
 })
 
 describe('authentication gate', () => {

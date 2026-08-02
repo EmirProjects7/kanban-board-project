@@ -1,19 +1,26 @@
 import {useState, useEffect} from 'react'
 import {createPortal} from 'react-dom'
-import type {Card} from '../types'
+import {LabelPicker} from './LabelPicker'
+import type {Card, Label, LabelColour} from '../types'
 
 type CardDetailProps = {
     card: Card
+    labels: Label[]
     onSaveTitle: (title: string) => void
     onSaveDescription: (description: string) => void
+    onToggleLabel: (labelId: string, attached: boolean) => void
+    onCreateLabel: (name: string, colour: LabelColour) => void
     onDelete: () => void
     onClose: () => void
 }
 
 export function CardDetail({
     card,
+    labels,
     onSaveTitle,
     onSaveDescription,
+    onToggleLabel,
+    onCreateLabel,
     onDelete,
     onClose,
 }: CardDetailProps) {
@@ -64,6 +71,14 @@ export function CardDetail({
                         ×
                     </button>
                 </div>
+
+                <span className="detail-label">Labels</span>
+                <LabelPicker
+                    labels={labels}
+                    attachedIds={new Set((card.labels ?? []).map((l) => l.label.id))}
+                    onToggle={onToggleLabel}
+                    onCreate={onCreateLabel}
+                />
 
                 <label className="detail-label" htmlFor="card-description">
                     Description
