@@ -2,16 +2,27 @@ import {useState} from 'react'
 import {useSortable} from '@dnd-kit/sortable'
 import {CSS} from '@dnd-kit/utilities'
 import {CardDetail} from './CardDetail'
-import type {Card as CardType} from '../types'
+import type {Card as CardType, Label, LabelColour} from '../types'
 
 type CardProps = {
     card: CardType
+    labels: Label[]
     onDelete: (id: string) => void
     onEdit: (id: string, newTitle: string) => void
     onDescribe: (id: string, description: string) => void
+    onToggleLabel: (cardId: string, labelId: string, attached: boolean) => void
+    onCreateLabel: (name: string, colour: LabelColour) => void
 }
 
-function Card({card, onDelete, onEdit, onDescribe}: CardProps) {
+function Card({
+    card,
+    labels,
+    onDelete,
+    onEdit,
+    onDescribe,
+    onToggleLabel,
+    onCreateLabel,
+}: CardProps) {
     const {attributes, listeners, setNodeRef, transform, transition, isDragging} = useSortable({
         id: card.id,
         data: {type: 'card'},
@@ -28,6 +39,7 @@ function Card({card, onDelete, onEdit, onDescribe}: CardProps) {
     }
 
     const hasDescription = Boolean(card.description && card.description.trim())
+    const attached = (card.labels ?? []).map((entry) => entry.label)
 
     function handleSave() {
         const trimmed = editValue.trim()
@@ -62,17 +74,31 @@ function Card({card, onDelete, onEdit, onDescribe}: CardProps) {
                     />
                 ) : (
                     <div className="card-body">
-                        {/* Only the text opens the inline editor. Double
-                            clicking the padding or the buttons used to start
-                            a rename too. */}
-                        <span className="card-title" onDoubleClick={() => setIsEditing(true)}>
-                            {card.title}
-                        </span>
-                        {hasDescription && (
-                            <span className="card-note" aria-label="Has a description">
-                                ≡
-                            </span>
+                        {attached.length > 0 && (
+                            <div className="card-labels">
+                                {attached.map((label) => (
+                                    <span
+                                        key={label.id}
+                                        className={`label-tag label-${label.colour}`}
+                                    >
+                                        {label.name}
+                                    </span>
+                                ))}
+                            </div>
                         )}
+                        <div className="card-title-row">
+                            {/* Only the text opens the inline editor. Double
+                                clicking the padding or the buttons used to
+                                start a rename too. */}
+                            <span className="card-title" onDoubleClick={() => setIsEditing(true)}>
+                                {card.title}
+                            </span>
+                            {hasDescription && (
+                                <span className="card-note" aria-label="Has a description">
+                                    ≡
+                                </span>
+                            )}
+                        </div>
                     </div>
                 )}
                 <div className="card-actions">
@@ -100,8 +126,13 @@ function Card({card, onDelete, onEdit, onDescribe}: CardProps) {
             {isOpen && (
                 <CardDetail
                     card={card}
+                    labels={labels}
                     onSaveTitle={(title) => onEdit(card.id, title)}
                     onSaveDescription={(description) => onDescribe(card.id, description)}
+                    onToggleLabel={(labelId, isAttached) =>
+                        onToggleLabel(card.id, labelId, isAttached)
+                    }
+                    onCreateLabel={onCreateLabel}
                     onDelete={() => {
                         setIsOpen(false)
                         onDelete(card.id)

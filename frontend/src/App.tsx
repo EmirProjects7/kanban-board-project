@@ -4,7 +4,9 @@ import {DndContext, DragOverlay, PointerSensor, KeyboardSensor, useSensor, useSe
 import {SortableContext, horizontalListSortingStrategy, sortableKeyboardCoordinates} from '@dnd-kit/sortable'
 import {useBoard} from './hooks/useBoard'
 import {useBoards} from './hooks/useBoards'
+import {useLabels} from './hooks/useLabels'
 import {useDragAndDrop} from './hooks/useDragDrop'
+import {LabelFilter} from './components/LabelFilter'
 import Column from './components/Column'
 import AddColumnForm from './components/AddColumnForm'
 import {BoardSwitcher} from './components/BoardSwitcher'
@@ -33,6 +35,7 @@ function App() {
         deleteCard,
         editCard,
         describeCard,
+        toggleCardLabel,
         addColumn,
         editColumn,
         deleteColumn,
@@ -41,7 +44,35 @@ function App() {
         dismissError,
         isDraggingRef
     } = useBoard(activeBoardId)
+    const {
+        labels,
+        addLabel,
+        error: labelsError,
+        dismissError: dismissLabelsError,
+    } = useLabels(activeBoardId)
+    const [filterIds, setFilterIds] = useState<Set<string>>(new Set())
     const activeBoard = boards.find((board) => board.id === activeBoardId) ?? null
+
+    // Filtering hides cards from view only. The columns handed to drag and drop
+    // stay whole, so a drop never reorders around cards that are out of sight.
+    const visibleColumns = useMemo(() => {
+        if (filterIds.size === 0) return columns
+        return columns.map((column) => ({
+            ...column,
+            cards: column.cards.filter((card) =>
+                (card.labels ?? []).some((entry) => filterIds.has(entry.label.id))
+            ),
+        }))
+    }, [columns, filterIds])
+
+    function toggleFilter(labelId: string) {
+        setFilterIds((prev) => {
+            const next = new Set(prev)
+            if (next.has(labelId)) next.delete(labelId)
+            else next.add(labelId)
+            return next
+        })
+    }
     // Same reason as the card list in Column: a fresh array here reads to
     // dnd-kit as a reordered list and kills the drag animation.
     const columnIds = useMemo(() => columns.map((column) => column.id), [columns])
@@ -99,25 +130,39 @@ function App() {
                     Logout
                 </button>
             </div>
-            {(boardsError ?? error) && (
+            {(boardsError ?? labelsError ?? error) && (
                 <div className="board-error" role="alert">
-                    <span>{boardsError ?? error}</span>
+                    <span>{boardsError ?? labelsError ?? error}</span>
                     <button
-                        onClick={boardsError ? dismissBoardsError : dismissError}
+                        onClick={
+                            boardsError
+                                ? dismissBoardsError
+                                : labelsError
+                                  ? dismissLabelsError
+                                  : dismissError
+                        }
                         aria-label="Dismiss error"
                     >
                         ×
                     </button>
                 </div>
             )}
+            <LabelFilter
+                labels={labels}
+                activeIds={filterIds}
+                onToggle={toggleFilter}
+                onClear={() => setFilterIds(new Set())}
+            />
             <DndContext sensors={sensors} onDragStart={handleDragStart} onDragOver={handleDragOver}
                         onDragEnd={handleDragEnd}>
                 <div className="board">
                     {/* function to map a column to its visualization, react requires a key*/}
                     <SortableContext items={columnIds} strategy={horizontalListSortingStrategy}>
-                        {columns.map((column) => (
+                        {visibleColumns.map((column) => (
                             <Column key={column.id} column={column} onAddCard={addCard}
                                     onDeleteCard={deleteCard} onEditCard={editCard} onDescribeCard={describeCard}
+                                    labels={labels} onToggleCardLabel={toggleCardLabel}
+                                    onCreateLabel={addLabel}
                                     onEditColumn={editColumn} onDeleteColumn={deleteColumn}/>
                         ))}
                     </SortableContext>

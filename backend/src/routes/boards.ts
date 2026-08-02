@@ -3,8 +3,8 @@ import {z} from 'zod'
 import {prisma} from '../prisma'
 import {authenticate} from '../middleware/authenticate'
 import {emitBoard} from '../board'
-import {boardOwnedBy, boardsOfUser, columnsOfBoard} from '../queries'
-import {titleSchema} from '../validation'
+import {boardOwnedBy, boardsOfUser, columnsOfBoard, labelsOfBoard} from '../queries'
+import {labelSchema, titleSchema} from '../validation'
 
 const router = Router()
 
@@ -114,6 +114,36 @@ router.get('/:boardId/columns', authenticate, async (req, res) => {
     }
 
     res.json(await prisma.column.findMany(columnsOfBoard(boardId)))
+})
+
+router.get('/:boardId/labels', authenticate, async (req, res) => {
+    const userId = req.userId
+    const boardId = req.params.boardId as string
+
+    if (!(await prisma.board.findFirst(boardOwnedBy(boardId, userId)))) {
+        return res.status(403).json({error: 'Not allowed'})
+    }
+
+    res.json(await prisma.label.findMany(labelsOfBoard(boardId)))
+})
+
+router.post('/:boardId/labels', authenticate, async (req, res) => {
+    const userId = req.userId
+    const boardId = req.params.boardId as string
+
+    const parsed = labelSchema.safeParse(req.body)
+    if (!parsed.success) {
+        return res.status(400).json({error: 'Invalid label'})
+    }
+
+    if (!(await prisma.board.findFirst(boardOwnedBy(boardId, userId)))) {
+        return res.status(403).json({error: 'Not allowed'})
+    }
+
+    const label = await prisma.label.create({
+        data: {name: parsed.data.name, colour: parsed.data.colour, boardId: boardId},
+    })
+    res.status(201).json(label)
 })
 
 router.post('/:boardId/columns', authenticate, async (req, res) => {

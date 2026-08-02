@@ -502,10 +502,19 @@ body {
 
 .card-body {
     display: flex;
-    align-items: baseline;
+    flex-direction: column;
     gap: 6px;
     min-width: 0;
     flex: 1;
+}
+
+/* The title and its notes marker share a line; labels sit on their own row
+   above, or a long title gets squeezed beside them. */
+.card-title-row {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    min-width: 0;
 }
 
 /* Sized to its text so the double click target matches what is written,
@@ -548,6 +557,166 @@ body {
 
 .card-open-button:hover {
     color: var(--text);
+}
+
+/* Labels --------------------------------------------------------------- */
+
+/* One class per colour, matching the fixed set the server accepts. Nothing
+   the user types ever reaches a style value. */
+.label-grey { --label: #8b93a5; }
+.label-red { --label: #f87171; }
+.label-amber { --label: #f0b429; }
+.label-green { --label: #4ade80; }
+.label-blue { --label: #60a5fa; }
+.label-purple { --label: #a78bfa; }
+
+.card-labels {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+.label-tag {
+    padding: 1px 7px;
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1.5;
+    color: var(--label);
+    background: color-mix(in srgb, var(--label) 16%, transparent);
+    border: 1px solid color-mix(in srgb, var(--label) 35%, transparent);
+    border-radius: 999px;
+    overflow-wrap: anywhere;
+}
+
+.label-picker {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.label-choices {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.label-chip {
+    padding: 4px 10px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--muted);
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    transition: color 0.15s, background 0.15s, border-color 0.15s;
+}
+
+.label-chip:hover {
+    border-color: var(--label);
+}
+
+/* The chip only takes its colour once it is on, so what is attached reads
+   at a glance. */
+.label-chip.is-on {
+    color: var(--label);
+    background: color-mix(in srgb, var(--label) 16%, transparent);
+    border-color: color-mix(in srgb, var(--label) 45%, transparent);
+}
+
+.label-empty {
+    font-size: 13px;
+    color: var(--muted);
+}
+
+.label-new {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+}
+
+.label-name-input {
+    flex: 1;
+    min-width: 120px;
+    padding: 6px 10px;
+    font-size: 13px;
+    color: var(--text);
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    outline: none;
+}
+
+.label-name-input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.label-colours {
+    display: flex;
+    gap: 4px;
+}
+
+.label-swatch {
+    width: 20px;
+    height: 20px;
+    padding: 0;
+    background: var(--label);
+    border: 2px solid transparent;
+    border-radius: 50%;
+    transition: border-color 0.15s;
+}
+
+.label-swatch.is-on {
+    border-color: var(--text);
+}
+
+.label-action {
+    align-self: flex-start;
+    padding: 6px 11px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--muted);
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    transition: color 0.15s, background 0.15s, border-color 0.15s;
+}
+
+.label-action:hover {
+    color: var(--text);
+    background: var(--surface-hover);
+    border-color: var(--border-strong);
+}
+
+.label-filter {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 24px 0;
+}
+
+.label-filter-title {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--muted);
+}
+
+.label-filter-clear {
+    padding: 4px 9px;
+    font-size: 12px;
+    color: var(--muted);
+    background: none;
+    border: none;
+    border-radius: 6px;
+}
+
+.label-filter-clear:hover {
+    color: var(--text);
+    background: var(--surface-hover);
 }
 
 /* Card detail ---------------------------------------------------------- */

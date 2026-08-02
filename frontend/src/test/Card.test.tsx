@@ -17,6 +17,9 @@ function renderCard(
         onDelete: () => {},
         onEdit: () => {},
         onDescribe: () => {},
+        labels: [],
+        onToggleLabel: () => {},
+        onCreateLabel: () => {},
         ...handlers,
     }
     return render(

@@ -179,7 +179,12 @@ describe('GET /api/boards/:boardId/columns', () => {
         expect(columnMock.findMany).toHaveBeenCalledWith({
             where: {boardId: 'board-1'},
             orderBy: {order: 'asc'},
-            include: {cards: {orderBy: {order: 'asc'}}},
+            include: {
+                cards: {
+                    orderBy: {order: 'asc'},
+                    include: {labels: {include: {label: true}}},
+                },
+            },
         })
     })
 
