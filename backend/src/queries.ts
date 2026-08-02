@@ -8,8 +8,26 @@ export const columnsOfBoard = (boardId: string) =>
     ({
         where: {boardId: boardId},
         orderBy: {order: 'asc'},
-        include: {cards: {orderBy: {order: 'asc'}}},
+        include: {
+            cards: {
+                orderBy: {order: 'asc'},
+                include: {labels: {include: {label: true}}},
+            },
+        },
     }) satisfies Prisma.ColumnFindManyArgs
+
+export const labelsOfBoard = (boardId: string) =>
+    ({
+        where: {boardId: boardId},
+        orderBy: {name: 'asc'},
+    }) satisfies Prisma.LabelFindManyArgs
+
+// A label is only reachable when the board holding it belongs to the caller,
+// the same path every other check takes.
+export const labelOwnedBy = (labelId: string, userId: string) =>
+    ({
+        where: {id: labelId, board: {userId: userId}},
+    }) satisfies Prisma.LabelFindFirstArgs
 
 export const boardsOfUser = (userId: string) =>
     ({

@@ -17,8 +17,31 @@ model Board {
   title   String
   order   Int      @default(0)
   columns Column[]
+  labels  Label[]
   userId  String
   user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// Labels belong to a board rather than a user, so the same board can be
+// reasoned about on its own and one board's labels cannot leak onto another.
+model Label {
+  id      String @id @default(uuid())
+  name    String
+  colour  String
+  boardId String
+  board   Board  @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  cards   CardLabel[]
+}
+
+// An explicit join row rather than an implicit many-to-many, so the pair can
+// be constrained and deleted directly.
+model CardLabel {
+  cardId  String
+  labelId String
+  card    Card  @relation(fields: [cardId], references: [id], onDelete: Cascade)
+  label   Label @relation(fields: [labelId], references: [id], onDelete: Cascade)
+
+  @@id([cardId, labelId])
 }
 
 model Column {
@@ -35,6 +58,7 @@ model Card {
   title    String
   description String?
   order Int @default(0)
+  labels   CardLabel[]
   columnId String
   column   Column @relation(fields: [columnId], references: [id], onDelete: Cascade)
 }

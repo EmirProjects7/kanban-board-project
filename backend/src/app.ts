@@ -5,6 +5,7 @@ import authRouter from './routes/auth'
 import boardsRouter from './routes/boards'
 import columnsRouter from './routes/columns'
 import cardsRouter from './routes/cards'
+import labelsRouter from './routes/labels'
 import {prisma} from './prisma'
 import {authLimiter, apiLimiter} from './middleware/rateLimit'
 
@@ -17,6 +18,7 @@ app.use('/api/auth', authLimiter, authRouter)
 app.use('/api/boards', apiLimiter, boardsRouter)
 app.use('/api/columns', apiLimiter, columnsRouter)
 app.use('/api/cards', apiLimiter, cardsRouter)
+app.use('/api/labels', apiLimiter, labelsRouter)
 
 // Opening the API host in a browser used to hit Express's "Cannot GET /".
 // This lists what the API serves and whether the database is actually
@@ -42,6 +44,8 @@ app.get('/', async (req, res) => {
                 'POST /api/boards',
                 'PUT /api/boards/:boardId',
                 'DELETE /api/boards/:boardId',
+                'GET /api/boards/:boardId/labels',
+                'POST /api/boards/:boardId/labels',
                 'GET /api/boards/:boardId/columns',
                 'POST /api/boards/:boardId/columns',
                 'PUT /api/boards/:boardId/columns',
@@ -51,7 +55,13 @@ app.get('/', async (req, res) => {
                 'DELETE /api/columns/:columnId',
                 'POST /api/columns/:columnId/cards',
             ],
-            cards: ['PUT /api/cards/:cardId', 'DELETE /api/cards/:cardId'],
+            cards: [
+                'PUT /api/cards/:cardId',
+                'DELETE /api/cards/:cardId',
+                'PUT /api/cards/:cardId/labels/:labelId',
+                'DELETE /api/cards/:cardId/labels/:labelId',
+            ],
+            labels: ['PUT /api/labels/:labelId', 'DELETE /api/labels/:labelId'],
         },
         note: 'Board endpoints require an Authorization: Bearer <token> header.',
     })
