@@ -1,6 +1,7 @@
 export type Card = {
     id: string
     title: string
+    description?: string | null
 }
 
 export type Column = {

@@ -11,11 +11,20 @@ type ColumnProps = {
     onAddCard: (columnId: string, title: string) => void
     onDeleteCard: (cardId: string) => void
     onEditCard: (cardId: string, newTitle: string) => void
+    onDescribeCard: (cardId: string, description: string) => void
     onEditColumn: (columnId: string, newTitle: string) => void
     onDeleteColumn: (columnId: string) => void
 }
 
-function Column({column, onAddCard, onDeleteCard, onEditCard, onEditColumn, onDeleteColumn}: ColumnProps) {
+function Column({
+    column,
+    onAddCard,
+    onDeleteCard,
+    onEditCard,
+    onDescribeCard,
+    onEditColumn,
+    onDeleteColumn,
+}: ColumnProps) {
     // useSortable also registers the column as a drop target, so cards can
     // still be dropped into it, including while it is empty.
     const {attributes, listeners, setNodeRef, transform, transition, isDragging} = useSortable({
@@ -92,8 +101,13 @@ function Column({column, onAddCard, onDeleteCard, onEditCard, onEditColumn, onDe
             <div className="cards">
                 <SortableContext items={cardIds} strategy={verticalListSortingStrategy}>
                     {column.cards.map((card) => (
-                        <Card key={card.id} id={card.id} title={card.title} onDelete={onDeleteCard}
-                              onEdit={onEditCard}/>
+                        <Card
+                            key={card.id}
+                            card={card}
+                            onDelete={onDeleteCard}
+                            onEdit={onEditCard}
+                            onDescribe={onDescribeCard}
+                        />
                     ))}
                     {column.cards.length === 0 && (<p className="empty-column">No cards yet</p>
                     )}

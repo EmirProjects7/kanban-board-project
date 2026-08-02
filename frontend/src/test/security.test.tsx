@@ -21,7 +21,12 @@ describe('stored XSS in card titles', () => {
     function renderCard(title: string) {
         render(
             <DndContext>
-                <Card id="card-1" title={title} onDelete={() => {}} onEdit={() => {}} />
+                <Card
+                    card={{id: 'card-1', title}}
+                    onDelete={() => {}}
+                    onEdit={() => {}}
+                    onDescribe={() => {}}
+                />
             </DndContext>
         )
     }
@@ -59,6 +64,7 @@ describe('stored XSS in column titles', () => {
                     onAddCard={() => {}}
                     onDeleteCard={() => {}}
                     onEditCard={() => {}}
+                    onDescribeCard={() => {}}
                     onEditColumn={() => {}}
                     onDeleteColumn={() => {}}
                 />

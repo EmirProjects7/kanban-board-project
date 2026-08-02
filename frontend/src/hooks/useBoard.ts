@@ -74,9 +74,23 @@ export function useBoard(boardId: string | null) {
 
     async function editCard(cardId: string, newTitle: string) {
         await attempt('Could not rename the card.', async () => {
-            await api.updateCard(cardId, newTitle)
+            await api.updateCard(cardId, {title: newTitle})
             setColumns((prev) => prev.map((column) =>
                 ({...column, cards: column.cards.map((c) => c.id === cardId ? {...c, title: newTitle} : c)})))
+        })
+    }
+
+    async function describeCard(cardId: string, description: string) {
+        const trimmed = description.trim()
+        const stored = trimmed === '' ? null : trimmed
+        await attempt('Could not save the description.', async () => {
+            await api.updateCard(cardId, {description: stored})
+            setColumns((prev) => prev.map((column) => ({
+                ...column,
+                cards: column.cards.map((c) =>
+                    c.id === cardId ? {...c, description: stored} : c
+                ),
+            })))
         })
     }
 
@@ -120,6 +134,7 @@ export function useBoard(boardId: string | null) {
         addCard,
         deleteCard,
         editCard,
+        describeCard,
         addColumn,
         editColumn,
         deleteColumn,
