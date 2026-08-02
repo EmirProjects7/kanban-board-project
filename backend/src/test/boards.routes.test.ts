@@ -318,3 +318,72 @@ describe('PUT /api/boards/:boardId/columns (reorder)', () => {
         expect(transactionMock).not.toHaveBeenCalled()
     })
 })
+
+describe('PUT /api/boards/order', () => {
+    it('requires authentication', async () => {
+        const res = await request(app).put('/api/boards/order').send([])
+        expect(res.status).toBe(401)
+    })
+
+    it('writes the payload order onto the boards', async () => {
+        boardMock.findMany.mockResolvedValue([{id: 'board-1'}, {id: 'board-2'}])
+
+        const res = await request(app)
+            .put('/api/boards/order')
+            .set('Authorization', auth)
+            .send([{id: 'board-2'}, {id: 'board-1'}])
+
+        expect(res.status).toBe(200)
+        expect(boardMock.update).toHaveBeenCalledWith({
+            where: {id: 'board-2'},
+            data: {order: 0},
+        })
+        expect(boardMock.update).toHaveBeenCalledWith({
+            where: {id: 'board-1'},
+            data: {order: 1},
+        })
+    })
+
+    it('applies the whole order in one transaction', async () => {
+        boardMock.findMany.mockResolvedValue([{id: 'board-1'}, {id: 'board-2'}])
+
+        await request(app)
+            .put('/api/boards/order')
+            .set('Authorization', auth)
+            .send([{id: 'board-2'}, {id: 'board-1'}])
+
+        expect(transactionMock).toHaveBeenCalledOnce()
+    })
+
+    it('refuses a board belonging to someone else', async () => {
+        boardMock.findMany.mockResolvedValue([{id: 'board-1'}])
+
+        const res = await request(app)
+            .put('/api/boards/order')
+            .set('Authorization', auth)
+            .send([{id: 'board-1'}, {id: 'someone-elses'}])
+
+        expect(res.status).toBe(403)
+        expect(transactionMock).not.toHaveBeenCalled()
+    })
+
+    it('rejects a payload that is not a list of boards', async () => {
+        const res = await request(app)
+            .put('/api/boards/order')
+            .set('Authorization', auth)
+            .send({nonsense: true})
+
+        expect(res.status).toBe(400)
+        expect(transactionMock).not.toHaveBeenCalled()
+    })
+
+    it('is not mistaken for a board called "order"', async () => {
+        // /order is declared first, so it must not fall through to the rename
+        // route and try to rename a board with that id.
+        boardMock.findMany.mockResolvedValue([])
+
+        await request(app).put('/api/boards/order').set('Authorization', auth).send([])
+
+        expect(boardMock.update).not.toHaveBeenCalled()
+    })
+})
