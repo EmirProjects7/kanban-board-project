@@ -10,6 +10,7 @@ into place, and changes appear in any other open session straight away.
 - **Drag and drop** — reorder cards inside a column, move them between columns, drag whole columns into a new order, and reorder the boards themselves (dnd-kit)
 - **Inline editing** — double click a card or a column title to rename it
 - **Card detail** — open a card to write a description; cards carrying notes are marked on the board
+- **Labels** — colour them, pin them onto cards, and narrow the board to the ones you pick
 - **Secure authentication** — register and log in with hashed passwords (bcrypt) and JWT sessions
 - **Several boards** — keep work, personal and anything else apart, switched from a drawer
 - **Personal data** — each user sees and edits only their own boards
@@ -36,6 +37,8 @@ into place, and changes appear in any other open session straight away.
 - Ownership runs through the board on every write, including the individual
   cards in a reorder, so one user cannot move another user's card, or a card
   from one of their other boards, into the board they are looking at
+- A label can only be pinned onto a card on the same board, and label colours
+  come from a fixed set, so nothing a user types reaches a style value
 - A board reorder is applied in a single transaction, so a rejected request
   cannot leave the board half-updated
 - SQL injection is prevented by Prisma's parameterised queries
@@ -164,11 +167,17 @@ comes from the login response.
 | `GET` | `/api/boards/:boardId/columns` | One board's columns and cards |
 | `POST` | `/api/boards/:boardId/columns` | Create a column on that board |
 | `PUT` | `/api/boards/:boardId/columns` | Persist that board's ordering |
+| `GET` | `/api/boards/:boardId/labels` | That board's labels |
+| `POST` | `/api/boards/:boardId/labels` | Create a label on that board |
+| `PUT` | `/api/labels/:labelId` | Rename or recolour a label |
+| `DELETE` | `/api/labels/:labelId` | Delete a label |
 | `PUT` | `/api/columns/:columnId` | Rename a column |
 | `DELETE` | `/api/columns/:columnId` | Delete a column |
 | `POST` | `/api/columns/:columnId/cards` | Add a card |
 | `PUT` | `/api/cards/:cardId` | Change a card's title, description, or both |
 | `DELETE` | `/api/cards/:cardId` | Delete a card |
+| `PUT` | `/api/cards/:cardId/labels/:labelId` | Pin a label onto a card on the same board |
+| `DELETE` | `/api/cards/:cardId/labels/:labelId` | Take a label off a card |
 
 Clients also receive a `board:updated` event over Socket.IO carrying
 `{boardId, columns}` whenever one of their boards changes. The room is per
