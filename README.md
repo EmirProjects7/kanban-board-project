@@ -7,8 +7,9 @@ into place, and changes appear in any other open session straight away.
 
 ## Features
 
-- **Drag and drop** — reorder cards inside a column, move them between columns, and drag whole columns into a new order (dnd-kit)
+- **Drag and drop** — reorder cards inside a column, move them between columns, drag whole columns into a new order, and reorder the boards themselves (dnd-kit)
 - **Inline editing** — double click a card or a column title to rename it
+- **Card detail** — open a card to write a description; cards carrying notes are marked on the board
 - **Secure authentication** — register and log in with hashed passwords (bcrypt) and JWT sessions
 - **Several boards** — keep work, personal and anything else apart, switched from a drawer
 - **Personal data** — each user sees and edits only their own boards
@@ -157,6 +158,7 @@ comes from the login response.
 | `POST` | `/api/auth/login` | Exchange credentials for a token |
 | `GET` | `/api/boards` | The signed-in user's boards |
 | `POST` | `/api/boards` | Create a board |
+| `PUT` | `/api/boards/order` | Persist the order of the boards |
 | `PUT` | `/api/boards/:boardId` | Rename a board |
 | `DELETE` | `/api/boards/:boardId` | Delete a board, unless it is the last one |
 | `GET` | `/api/boards/:boardId/columns` | One board's columns and cards |
@@ -165,7 +167,7 @@ comes from the login response.
 | `PUT` | `/api/columns/:columnId` | Rename a column |
 | `DELETE` | `/api/columns/:columnId` | Delete a column |
 | `POST` | `/api/columns/:columnId/cards` | Add a card |
-| `PUT` | `/api/cards/:cardId` | Rename a card |
+| `PUT` | `/api/cards/:cardId` | Change a card's title, description, or both |
 | `DELETE` | `/api/cards/:cardId` | Delete a card |
 
 Clients also receive a `board:updated` event over Socket.IO carrying
