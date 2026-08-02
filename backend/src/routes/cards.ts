@@ -2,16 +2,22 @@ import {Router} from 'express'
 import {prisma} from '../prisma'
 import {authenticate} from '../middleware/authenticate'
 import {emitBoard} from '../board'
+import {cardOwnedBy} from '../queries'
 import {titleSchema} from '../validation'
 
 const router = Router()
+
+// The board a card sits on is needed to broadcast the change, so it is
+// fetched alongside the ownership check rather than in a second query.
+const withBoardId = {include: {column: {select: {boardId: true}}}}
 
 router.delete('/:cardId', authenticate, async (req, res) => {
     const userId = req.userId
     const cardId = req.params.cardId as string
 
     const card = await prisma.card.findFirst({
-        where: {id: cardId, column: {userId: userId}},
+        ...cardOwnedBy(cardId, userId),
+        ...withBoardId,
     })
     if (!card) {
         return res.status(403).json({error: 'Not allowed'})
@@ -19,7 +25,7 @@ router.delete('/:cardId', authenticate, async (req, res) => {
 
     await prisma.card.delete({where: {id: cardId}})
     res.status(204).end()
-    await emitBoard(userId)
+    await emitBoard(userId, card.column.boardId)
 })
 
 router.put('/:cardId', authenticate, async (req, res) => {
@@ -32,7 +38,8 @@ router.put('/:cardId', authenticate, async (req, res) => {
     }
 
     const card = await prisma.card.findFirst({
-        where: {id: cardId, column: {userId: userId}},
+        ...cardOwnedBy(cardId, userId),
+        ...withBoardId,
     })
     if (!card) {
         return res.status(403).json({error: 'Not allowed'})
@@ -43,7 +50,7 @@ router.put('/:cardId', authenticate, async (req, res) => {
         data: {title: parsed.data.title},
     })
     res.status(200).json(updatedCard)
-    await emitBoard(userId)
+    await emitBoard(userId, card.column.boardId)
 })
 
 export default router

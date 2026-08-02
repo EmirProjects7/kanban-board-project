@@ -27,18 +27,35 @@ describe('emitBoard', () => {
         toMock.mockClear()
     })
 
-    it('fetches the user columns, ordered cards, and broadcasts to that user only', async () => {
-        const columns = [{id: 'col-1', title: 'Todo', cards: []}]
-        findManyMock.mockResolvedValue(columns)
+    it('reads the columns of the given board, cards in order', async () => {
+        findManyMock.mockResolvedValue([])
 
-        await emitBoard('user-1')
+        await emitBoard('user-1', 'board-1')
 
         expect(findManyMock).toHaveBeenCalledWith({
-            where: {userId: 'user-1'},
+            where: {boardId: 'board-1'},
             orderBy: {order: 'asc'},
             include: {cards: {orderBy: {order: 'asc'}}},
         })
+    })
+
+    it('broadcasts to that user only', async () => {
+        findManyMock.mockResolvedValue([])
+
+        await emitBoard('user-1', 'board-1')
+
         expect(toMock).toHaveBeenCalledWith('user-1')
-        expect(emitMock).toHaveBeenCalledWith('board:updated', columns)
+    })
+
+    it('names the board in the payload so other boards can ignore it', async () => {
+        const columns = [{id: 'col-1', title: 'Todo', cards: []}]
+        findManyMock.mockResolvedValue(columns)
+
+        await emitBoard('user-1', 'board-1')
+
+        expect(emitMock).toHaveBeenCalledWith('board:updated', {
+            boardId: 'board-1',
+            columns,
+        })
     })
 })

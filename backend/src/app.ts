@@ -2,6 +2,7 @@ import express from 'express'
 import type {ErrorRequestHandler} from 'express'
 import cors from 'cors'
 import authRouter from './routes/auth'
+import boardsRouter from './routes/boards'
 import columnsRouter from './routes/columns'
 import cardsRouter from './routes/cards'
 import {prisma} from './prisma'
@@ -13,6 +14,7 @@ const app = express()
 app.use(cors({origin: FRONTEND_URL}))
 app.use(express.json())
 app.use('/api/auth', authLimiter, authRouter)
+app.use('/api/boards', apiLimiter, boardsRouter)
 app.use('/api/columns', apiLimiter, columnsRouter)
 app.use('/api/cards', apiLimiter, cardsRouter)
 
