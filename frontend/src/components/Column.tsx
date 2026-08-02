@@ -1,4 +1,4 @@
-import {useState} from 'react'
+import {useState, useMemo} from 'react'
 import {SortableContext, useSortable, verticalListSortingStrategy} from '@dnd-kit/sortable'
 import {CSS} from '@dnd-kit/utilities'
 import Card from './Card'
@@ -24,6 +24,12 @@ function Column({column, onAddCard, onDeleteCard, onEditCard, onEditColumn, onDe
     })
     const [isEditing, setIsEditing] = useState(false)
     const [editValue, setEditValue] = useState(column.title)
+
+    // dnd-kit compares this list by reference to decide whether the order
+    // changed underneath it, and turns off its transitions for a frame when it
+    // thinks it did. Building it inline handed it a new array on every render,
+    // so the animation was permanently off and cards snapped into place.
+    const cardIds = useMemo(() => column.cards.map((card) => card.id), [column.cards])
 
     const style = {
         transform: CSS.Transform.toString(transform),
@@ -84,10 +90,7 @@ function Column({column, onAddCard, onDeleteCard, onEditCard, onEditColumn, onDe
                 </button>
             </div>
             <div className="cards">
-                <SortableContext
-                    items={column.cards.map((card) => card.id)}
-                    strategy={verticalListSortingStrategy}
-                >
+                <SortableContext items={cardIds} strategy={verticalListSortingStrategy}>
                     {column.cards.map((card) => (
                         <Card key={card.id} id={card.id} title={card.title} onDelete={onDeleteCard}
                               onEdit={onEditCard}/>

@@ -1,5 +1,5 @@
 import './App.css'
-import {useState, useEffect} from 'react'
+import {useState, useEffect, useMemo} from 'react'
 import {DndContext, DragOverlay, PointerSensor, KeyboardSensor, useSensor, useSensors} from '@dnd-kit/core'
 import {SortableContext, horizontalListSortingStrategy, sortableKeyboardCoordinates} from '@dnd-kit/sortable'
 import {useBoard} from './hooks/useBoard'
@@ -40,6 +40,9 @@ function App() {
         isDraggingRef
     } = useBoard(activeBoardId)
     const activeBoard = boards.find((board) => board.id === activeBoardId) ?? null
+    // Same reason as the card list in Column: a fresh array here reads to
+    // dnd-kit as a reordered list and kills the drag animation.
+    const columnIds = useMemo(() => columns.map((column) => column.id), [columns])
     const {activeCard, activeColumn, handleDragStart, handleDragOver, handleDragEnd} = useDragAndDrop(columns, setColumns, saveBoard, isDraggingRef)
     const sensors = useSensors(useSensor(PointerSensor, {activationConstraint: {distance: 5}}), useSensor(KeyboardSensor, {coordinateGetter: sortableKeyboardCoordinates}))
     const [theme, setTheme] = useState<'light' | 'dark'>(
@@ -108,10 +111,7 @@ function App() {
                         onDragEnd={handleDragEnd}>
                 <div className="board">
                     {/* function to map a column to its visualization, react requires a key*/}
-                    <SortableContext
-                        items={columns.map((column) => column.id)}
-                        strategy={horizontalListSortingStrategy}
-                    >
+                    <SortableContext items={columnIds} strategy={horizontalListSortingStrategy}>
                         {columns.map((column) => (
                             <Column key={column.id} column={column} onAddCard={addCard}
                                     onDeleteCard={deleteCard} onEditCard={editCard}
