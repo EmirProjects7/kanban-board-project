@@ -14,6 +14,7 @@ function renderSwitcher(override: Partial<Board[]> | Board[] = boards) {
         onAdd: vi.fn(),
         onRename: vi.fn(),
         onDelete: vi.fn(),
+        onReorder: vi.fn(),
     }
     render(
         <BoardSwitcher
@@ -200,5 +201,42 @@ describe('adding a board', () => {
         fireEvent.keyDown(input, {key: 'Enter'})
 
         expect(screen.getByRole('complementary')).toBeInTheDocument()
+    })
+})
+
+describe('reordering by drag', () => {
+    it('makes each board a drag handle', () => {
+        renderSwitcher()
+        openDrawer()
+        expect(screen.getByRole('button', {name: 'Work'})).toHaveAttribute(
+            'aria-roledescription',
+            'sortable'
+        )
+    })
+
+    it('does not nest the handle inside another button', () => {
+        // dnd-kit's attributes carry role="button"; on the row they would sit
+        // around the buttons already inside it.
+        renderSwitcher()
+        openDrawer()
+        const row = screen.getByRole('button', {name: 'Work'}).closest('li')!
+        expect(row).not.toHaveAttribute('role', 'button')
+    })
+
+    it('leaves a plain click selecting the board', () => {
+        const {onSelect, onReorder} = renderSwitcher()
+        openDrawer()
+        fireEvent.click(screen.getByRole('button', {name: 'Work'}))
+        expect(onSelect).toHaveBeenCalledWith('board-2')
+        expect(onReorder).not.toHaveBeenCalled()
+    })
+
+    it('stops a row being dragged while its name is being edited', () => {
+        renderSwitcher()
+        openDrawer()
+        openRowMenu('Work')
+        fireEvent.click(screen.getByRole('menuitem', {name: 'Rename'}))
+        expect(screen.getByLabelText('Board name')).toBeInTheDocument()
+        expect(screen.queryByRole('button', {name: 'Work'})).not.toBeInTheDocument()
     })
 })
