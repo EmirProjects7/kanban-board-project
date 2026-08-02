@@ -40,7 +40,8 @@ describe('GET /', () => {
 
         expect(res.body.endpoints.health).toBe('/health')
         expect(res.body.endpoints.auth).toContain('POST /api/auth/login')
-        expect(res.body.endpoints.columns).toContain('GET /api/columns')
+        expect(res.body.endpoints.boards).toContain('GET /api/boards')
+        expect(res.body.endpoints.columns).toContain('PUT /api/columns/:columnId')
     })
 
     it('says that board endpoints need a bearer token', async () => {

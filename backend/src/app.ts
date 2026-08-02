@@ -37,10 +37,16 @@ app.get('/', async (req, res) => {
         endpoints: {
             health: '/health',
             auth: ['POST /api/auth/register', 'POST /api/auth/login'],
+            boards: [
+                'GET /api/boards',
+                'POST /api/boards',
+                'PUT /api/boards/:boardId',
+                'DELETE /api/boards/:boardId',
+                'GET /api/boards/:boardId/columns',
+                'POST /api/boards/:boardId/columns',
+                'PUT /api/boards/:boardId/columns',
+            ],
             columns: [
-                'GET /api/columns',
-                'POST /api/columns',
-                'PUT /api/columns',
                 'PUT /api/columns/:columnId',
                 'DELETE /api/columns/:columnId',
                 'POST /api/columns/:columnId/cards',
