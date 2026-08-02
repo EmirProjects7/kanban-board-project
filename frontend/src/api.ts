@@ -23,13 +23,19 @@ export function setUnauthorizedHandler(handler: (() => void) | null): void {
     onUnauthorized = handler
 }
 
+// One place to end a session, so a rejected request and a rejected socket
+// handshake behave the same.
+export function handleUnauthorized(): void {
+    clearToken()
+    onUnauthorized?.()
+}
+
 // Every board request goes through here so a failure (401, 403, 500, ...)
 // throws instead of silently returning an error body as if it were the payload.
 async function request(url: string, options: RequestInit = {}): Promise<Response> {
     const res = await fetch(url, {...options, headers: authHeaders()})
     if (res.status === 401) {
-        clearToken()
-        onUnauthorized?.()
+        handleUnauthorized()
     }
     if (!res.ok) {
         throw new Error(`Request to ${url} failed with status ${res.status}`)
