@@ -1,4 +1,4 @@
-import type {Card, Column} from './types'
+import type {Board, Card, Column} from './types'
 
 export const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000'
 
@@ -43,8 +43,34 @@ async function request(url: string, options: RequestInit = {}): Promise<Response
     return res
 }
 
-export async function fetchColumns(): Promise<Column[]> {
-    const res = await request(`${BASE_URL}/api/columns`)
+export async function fetchBoards(): Promise<Board[]> {
+    const res = await request(`${BASE_URL}/api/boards`)
+    return res.json()
+}
+
+export async function createBoard(title: string): Promise<Board> {
+    const res = await request(`${BASE_URL}/api/boards`, {
+        method: 'POST',
+        body: JSON.stringify({title}),
+    })
+    return res.json()
+}
+
+export async function updateBoard(boardId: string, title: string): Promise<void> {
+    await request(`${BASE_URL}/api/boards/${boardId}`, {
+        method: 'PUT',
+        body: JSON.stringify({title}),
+    })
+}
+
+export async function deleteBoard(boardId: string): Promise<void> {
+    await request(`${BASE_URL}/api/boards/${boardId}`, {
+        method: 'DELETE',
+    })
+}
+
+export async function fetchColumns(boardId: string): Promise<Column[]> {
+    const res = await request(`${BASE_URL}/api/boards/${boardId}/columns`)
     return res.json()
 }
 
@@ -69,8 +95,8 @@ export async function updateCard(cardId: string, title: string): Promise<void> {
     })
 }
 
-export async function createColumn(title: string): Promise<Column> {
-    const res = await request(`${BASE_URL}/api/columns`, {
+export async function createColumn(boardId: string, title: string): Promise<Column> {
+    const res = await request(`${BASE_URL}/api/boards/${boardId}/columns`, {
         method: 'POST',
         body: JSON.stringify({title}),
     })
@@ -90,8 +116,8 @@ export async function deleteColumn(columnId: string): Promise<void> {
     })
 }
 
-export async function saveBoard(columns: Column[]): Promise<void> {
-    await request(`${BASE_URL}/api/columns`, {
+export async function saveBoard(boardId: string, columns: Column[]): Promise<void> {
+    await request(`${BASE_URL}/api/boards/${boardId}/columns`, {
         method: 'PUT',
         body: JSON.stringify(columns),
     })
