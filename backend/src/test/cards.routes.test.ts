@@ -35,7 +35,7 @@ describe('DELETE /api/cards/:cardId', () => {
     })
 
     it('deletes a card the user owns', async () => {
-        cardMock.findFirst.mockResolvedValue({id: 'card-1'})
+        cardMock.findFirst.mockResolvedValue({id: 'card-1', column: {boardId: 'board-1'}})
         cardMock.delete.mockResolvedValue({id: 'card-1'})
 
         const res = await request(app).delete('/api/cards/card-1').set('Authorization', auth)
@@ -44,14 +44,15 @@ describe('DELETE /api/cards/:cardId', () => {
         expect(cardMock.delete).toHaveBeenCalledWith({where: {id: 'card-1'}})
     })
 
-    it('scopes the ownership lookup to the requesting user', async () => {
-        cardMock.findFirst.mockResolvedValue({id: 'card-1'})
+    it('reaches the card through its column board, not a column owner', async () => {
+        cardMock.findFirst.mockResolvedValue({id: 'card-1', column: {boardId: 'board-1'}})
         cardMock.delete.mockResolvedValue({id: 'card-1'})
 
         await request(app).delete('/api/cards/card-1').set('Authorization', auth)
 
         expect(cardMock.findFirst).toHaveBeenCalledWith({
-            where: {id: 'card-1', column: {userId: 'user-1'}},
+            where: {id: 'card-1', column: {board: {userId: 'user-1'}}},
+            include: {column: {select: {boardId: true}}},
         })
     })
 
@@ -72,7 +73,7 @@ describe('PUT /api/cards/:cardId', () => {
     })
 
     it('renames a card the user owns', async () => {
-        cardMock.findFirst.mockResolvedValue({id: 'card-1'})
+        cardMock.findFirst.mockResolvedValue({id: 'card-1', column: {boardId: 'board-1'}})
         cardMock.update.mockResolvedValue({id: 'card-1', title: 'Renamed'})
 
         const res = await request(app)

@@ -26,7 +26,7 @@ describe('expired session', () => {
         api.setToken('expired-token')
         mockFetch({ok: false, status: 401})
 
-        await expect(api.fetchColumns()).rejects.toThrow()
+        await expect(api.fetchColumns('board-1')).rejects.toThrow()
 
         expect(api.getToken()).toBeNull()
     })
@@ -37,7 +37,7 @@ describe('expired session', () => {
         api.setUnauthorizedHandler(onUnauthorized)
         mockFetch({ok: false, status: 401})
 
-        await expect(api.fetchColumns()).rejects.toThrow()
+        await expect(api.fetchColumns('board-1')).rejects.toThrow()
 
         expect(onUnauthorized).toHaveBeenCalledOnce()
     })
@@ -48,7 +48,7 @@ describe('expired session', () => {
         api.setUnauthorizedHandler(onUnauthorized)
         mockFetch({ok: false, status: 401})
 
-        await expect(api.createColumn('Todo')).rejects.toThrow()
+        await expect(api.createColumn('board-1', 'Todo')).rejects.toThrow()
 
         expect(onUnauthorized).toHaveBeenCalledOnce()
     })
@@ -59,7 +59,7 @@ describe('expired session', () => {
         api.setUnauthorizedHandler(onUnauthorized)
         mockFetch({ok: false, status: 500})
 
-        await expect(api.fetchColumns()).rejects.toThrow()
+        await expect(api.fetchColumns('board-1')).rejects.toThrow()
 
         expect(api.getToken()).toBe('good-token')
         expect(onUnauthorized).not.toHaveBeenCalled()
@@ -82,7 +82,7 @@ describe('expired session', () => {
         api.setUnauthorizedHandler(null)
         mockFetch({ok: false, status: 401})
 
-        await expect(api.fetchColumns()).rejects.toThrow()
+        await expect(api.fetchColumns('board-1')).rejects.toThrow()
 
         expect(onUnauthorized).not.toHaveBeenCalled()
     })
@@ -110,7 +110,7 @@ describe('auth headers', () => {
         api.setToken('abc123')
         const fetchMock = mockFetch({json: async () => []})
 
-        await api.fetchColumns()
+        await api.fetchColumns('board-1')
 
         const headers = fetchMock.mock.calls[0][1].headers
         expect(headers.Authorization).toBe('Bearer abc123')
@@ -119,7 +119,7 @@ describe('auth headers', () => {
     it('omits the Authorization header when no token is stored', async () => {
         const fetchMock = mockFetch({json: async () => []})
 
-        await api.fetchColumns()
+        await api.fetchColumns('board-1')
 
         const headers = fetchMock.mock.calls[0][1].headers
         expect(headers.Authorization).toBeUndefined()
@@ -129,7 +129,7 @@ describe('auth headers', () => {
 describe('response status handling', () => {
     it('throws when a read request fails', async () => {
         mockFetch({ok: false, status: 401})
-        await expect(api.fetchColumns()).rejects.toThrow()
+        await expect(api.fetchColumns('board-1')).rejects.toThrow()
     })
 
     it('throws when creating a card fails', async () => {
@@ -149,7 +149,7 @@ describe('response status handling', () => {
 
     it('throws when creating a column fails', async () => {
         mockFetch({ok: false, status: 400})
-        await expect(api.createColumn('Todo')).rejects.toThrow()
+        await expect(api.createColumn('board-1', 'Todo')).rejects.toThrow()
     })
 
     it('throws when deleting a column fails', async () => {
@@ -159,12 +159,12 @@ describe('response status handling', () => {
 
     it('throws when saving the board fails', async () => {
         mockFetch({ok: false, status: 403})
-        await expect(api.saveBoard([])).rejects.toThrow()
+        await expect(api.saveBoard('board-1', [])).rejects.toThrow()
     })
 
     it('resolves when the request succeeds', async () => {
         mockFetch({json: async () => [{id: 'col-1', title: 'Todo', cards: []}]})
-        await expect(api.fetchColumns()).resolves.toHaveLength(1)
+        await expect(api.fetchColumns('board-1')).resolves.toHaveLength(1)
     })
 })
 

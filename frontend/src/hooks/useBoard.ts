@@ -3,7 +3,7 @@ import * as api from '../api'
 import {connectSocket} from '../socket'
 import type {Card, Column} from '../types'
 
-export function useBoard(isAuthenticated: boolean) {
+export function useBoard(boardId: string | null) {
     const [columns, setColumns] = useState<Column[]>([])
     const [error, setError] = useState<string | null>(null)
     const isDraggingRef = useRef(false)
@@ -26,30 +26,31 @@ export function useBoard(isAuthenticated: boolean) {
     }
 
     useEffect(() => {
-        if (!isAuthenticated) {
-            return
-        }
-        api.fetchColumns()
+        if (!boardId) return
+        api.fetchColumns(boardId)
             .then((data) => setColumns(data))
             .catch((err) => {
                 console.error(err)
                 setError('Could not load the board.')
             })
-    }, [isAuthenticated])
+    }, [boardId])
 
     useEffect(() => {
-        if (!isAuthenticated) {
+        if (!boardId) {
             return
         }
         const socket = connectSocket()
-        socket.on('board:updated', (data: Column[]) => {
+        socket.on('board:updated', (update: {boardId: string; columns: Column[]}) => {
             if (isDraggingRef.current) return
-            setColumns(data)
+            // The room is per user, so updates for a board that is not on
+            // screen arrive here too and have to be ignored.
+            if (update.boardId !== boardId) return
+            setColumns(update.columns)
         })
         return () => {
             socket.off('board:updated')
         }
-    }, [isAuthenticated])
+    }, [boardId])
 
     async function addCard(columnId: string, title: string) {
         await attempt('Could not add the card.', async () => {
@@ -80,8 +81,9 @@ export function useBoard(isAuthenticated: boolean) {
     }
 
     async function addColumn(title: string) {
+        if (!boardId) return
         await attempt('Could not add the column.', async () => {
-            const newColumn: Column = await api.createColumn(title)
+            const newColumn: Column = await api.createColumn(boardId, title)
             setColumns((prev) => [...prev, newColumn])
         })
     }
@@ -102,13 +104,16 @@ export function useBoard(isAuthenticated: boolean) {
     }
 
     async function saveBoard(updatedColumns: Column[]) {
+        if (!boardId) return
         await attempt('Could not save the new order.', async () => {
-            await api.saveBoard(updatedColumns)
+            await api.saveBoard(boardId, updatedColumns)
         })
     }
 
     return {
-        columns,
+        // Derived rather than cleared in an effect, which would cost an extra
+        // render pass every time the board changes.
+        columns: boardId ? columns : [],
         setColumns,
         error,
         dismissError,

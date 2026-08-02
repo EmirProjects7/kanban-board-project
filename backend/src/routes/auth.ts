@@ -22,8 +22,14 @@ router.post('/register', async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10)
 
     try {
+        // Created with a board, because the app has nowhere to put a column
+        // otherwise and a new account would open onto a dead end.
         const user = await prisma.user.create({
-            data: {email: email, password: hashedPassword},
+            data: {
+                email: email,
+                password: hashedPassword,
+                boards: {create: {title: 'My Board', order: 0}},
+            },
         })
         res.status(201).json({id: user.id, email: user.email})
     } catch (error) {

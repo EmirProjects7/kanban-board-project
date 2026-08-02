@@ -12,13 +12,22 @@ datasource db {
   provider = "postgresql"
 }
 
+model Board {
+  id      String   @id @default(uuid())
+  title   String
+  order   Int      @default(0)
+  columns Column[]
+  userId  String
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
 model Column {
-  id    String @id @default(uuid())
-  title String
-  order Int @default(0)
-  cards Card[]
-  userId String
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id      String @id @default(uuid())
+  title   String
+  order   Int    @default(0)
+  cards   Card[]
+  boardId String
+  board   Board  @relation(fields: [boardId], references: [id], onDelete: Cascade)
 }
 
 model Card {
@@ -34,5 +43,5 @@ model User {
   id       String @id @default(uuid())
   email    String @unique
   password String
-  columns Column[]
+  boards Board[]
 }

@@ -108,6 +108,237 @@ body {
     border-color: var(--border-strong);
 }
 
+/* Boards drawer ------------------------------------------------------ */
+
+.menu-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    flex-shrink: 0;
+    font-size: 15px;
+    color: var(--muted);
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    transition: color 0.15s, background 0.15s, border-color 0.15s;
+}
+
+.menu-button:hover {
+    color: var(--text);
+    background: var(--surface-hover);
+    border-color: var(--border-strong);
+}
+
+.drawer-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 20;
+    background: rgba(0, 0, 0, 0.45);
+}
+
+.drawer {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    z-index: 21;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    width: 264px;
+    max-width: 82vw;
+    padding: 14px;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    box-shadow: var(--shadow-lg);
+    overflow-y: auto;
+}
+
+.drawer-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 10px;
+    margin-bottom: 6px;
+    border-bottom: 1px solid var(--border);
+}
+
+.drawer-header h2 {
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--muted);
+}
+
+.drawer-close {
+    padding: 0 4px;
+    font-size: 16px;
+    line-height: 1;
+    color: var(--muted);
+    background: none;
+    border: none;
+    border-radius: 4px;
+}
+
+.drawer-close:hover {
+    color: var(--text);
+}
+
+.board-list {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.board-list-item {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    border-radius: 7px;
+}
+
+.board-list-item:hover {
+    background: var(--surface-hover);
+}
+
+.board-name {
+    flex: 1;
+    min-width: 0;
+    padding: 7px 9px;
+    font-size: 14px;
+    text-align: left;
+    color: var(--text);
+    background: transparent;
+    border: none;
+    border-radius: 7px;
+    overflow-wrap: anywhere;
+    transition: background 0.15s;
+}
+
+.board-name.is-active {
+    font-weight: 600;
+    color: var(--accent);
+    background: var(--accent-soft);
+}
+
+.board-menu-button {
+    flex-shrink: 0;
+    width: 24px;
+    padding: 4px 0;
+    font-size: 15px;
+    line-height: 1;
+    color: var(--muted);
+    background: none;
+    border: none;
+    border-radius: 5px;
+    opacity: 0;
+    transition: opacity 0.15s, color 0.15s, background 0.15s;
+}
+
+/* Revealed on hover so the list stays calm, but never hidden from the
+   keyboard. */
+.board-list-item:hover .board-menu-button,
+.board-menu-button:focus-visible {
+    opacity: 1;
+}
+
+.board-menu-button:hover {
+    color: var(--text);
+    background: var(--surface);
+}
+
+.row-menu-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 22;
+}
+
+.row-menu {
+    position: absolute;
+    top: calc(100% - 2px);
+    right: 0;
+    z-index: 23;
+    display: flex;
+    flex-direction: column;
+    min-width: 132px;
+    padding: 4px;
+    background: var(--surface-raised);
+    border: 1px solid var(--border-strong);
+    border-radius: 8px;
+    box-shadow: var(--shadow-lg);
+}
+
+.row-menu button {
+    padding: 7px 9px;
+    font-size: 13px;
+    text-align: left;
+    color: var(--text);
+    background: none;
+    border: none;
+    border-radius: 5px;
+}
+
+.row-menu button:hover:not(:disabled) {
+    background: var(--surface-hover);
+}
+
+.row-menu button:disabled {
+    color: var(--muted);
+    cursor: not-allowed;
+}
+
+.row-menu-danger:hover:not(:disabled) {
+    color: var(--danger);
+}
+
+.board-input {
+    flex: 1;
+    min-width: 0;
+    padding: 6px 9px;
+    font-size: 14px;
+    color: var(--text);
+    background: var(--bg);
+    border: 1px solid var(--accent);
+    border-radius: 7px;
+    outline: none;
+    box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.board-add {
+    display: flex;
+    gap: 6px;
+    margin-top: 8px;
+}
+
+.board-action {
+    padding: 7px 11px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--muted);
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    transition: color 0.15s, background 0.15s, border-color 0.15s;
+}
+
+.board-action:hover {
+    color: var(--text);
+    background: var(--surface-hover);
+    border-color: var(--border-strong);
+}
+
+.board-add-button {
+    margin-top: 8px;
+    text-align: left;
+}
+
 .board-error {
     display: flex;
     align-items: center;
@@ -267,6 +498,12 @@ body {
 .card:focus-visible {
     outline: 2px solid var(--accent);
     outline-offset: 2px;
+}
+
+/* Sized to its text so the double click target matches what is written,
+   not the whole card. */
+.card-title {
+    align-self: flex-start;
 }
 
 .card-edit-input {

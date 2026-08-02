@@ -31,18 +31,18 @@ beforeEach(() => {
 
 describe('initial load', () => {
     it('does not fetch when the user is not authenticated', () => {
-        renderHook(() => useBoard(false))
+        renderHook(() => useBoard(null))
         expect(apiMock.fetchColumns).not.toHaveBeenCalled()
     })
 
     it('loads the board once authenticated', async () => {
-        const {result} = renderHook(() => useBoard(true))
+        const {result} = renderHook(() => useBoard('board-1'))
         await waitFor(() => expect(result.current.columns).toEqual(board))
     })
 
     it('keeps an empty board when the fetch fails', async () => {
         apiMock.fetchColumns.mockRejectedValue(new Error('network down'))
-        const {result} = renderHook(() => useBoard(true))
+        const {result} = renderHook(() => useBoard('board-1'))
         await waitFor(() => expect(apiMock.fetchColumns).toHaveBeenCalled())
         expect(result.current.columns).toEqual([])
     })
@@ -51,7 +51,7 @@ describe('initial load', () => {
 describe('addCard', () => {
     it('appends the created card to the right column', async () => {
         apiMock.createCard.mockResolvedValue({id: 'card-2', title: 'New'})
-        const {result} = renderHook(() => useBoard(true))
+        const {result} = renderHook(() => useBoard('board-1'))
         await waitFor(() => expect(result.current.columns).toEqual(board))
 
         await act(async () => {
@@ -67,7 +67,7 @@ describe('addCard', () => {
         apiMock.createCard
             .mockResolvedValueOnce({id: 'card-2', title: 'First'})
             .mockResolvedValueOnce({id: 'card-3', title: 'Second'})
-        const {result} = renderHook(() => useBoard(true))
+        const {result} = renderHook(() => useBoard('board-1'))
         await waitFor(() => expect(result.current.columns).toEqual(board))
 
         await act(async () => {
@@ -86,7 +86,7 @@ describe('addCard', () => {
 describe('deleteCard', () => {
     it('removes the card from state', async () => {
         apiMock.deleteCard.mockResolvedValue(undefined)
-        const {result} = renderHook(() => useBoard(true))
+        const {result} = renderHook(() => useBoard('board-1'))
         await waitFor(() => expect(result.current.columns).toEqual(board))
 
         await act(async () => {
@@ -100,7 +100,7 @@ describe('deleteCard', () => {
 describe('editCard', () => {
     it('updates the card title in state', async () => {
         apiMock.updateCard.mockResolvedValue(undefined)
-        const {result} = renderHook(() => useBoard(true))
+        const {result} = renderHook(() => useBoard('board-1'))
         await waitFor(() => expect(result.current.columns).toEqual(board))
 
         await act(async () => {
@@ -114,7 +114,7 @@ describe('editCard', () => {
 describe('addColumn and deleteColumn', () => {
     it('appends a created column', async () => {
         apiMock.createColumn.mockResolvedValue({id: 'col-3', title: 'Backlog', cards: []})
-        const {result} = renderHook(() => useBoard(true))
+        const {result} = renderHook(() => useBoard('board-1'))
         await waitFor(() => expect(result.current.columns).toEqual(board))
 
         await act(async () => {
@@ -126,7 +126,7 @@ describe('addColumn and deleteColumn', () => {
 
     it('removes a deleted column', async () => {
         apiMock.deleteColumn.mockResolvedValue(undefined)
-        const {result} = renderHook(() => useBoard(true))
+        const {result} = renderHook(() => useBoard('board-1'))
         await waitFor(() => expect(result.current.columns).toEqual(board))
 
         await act(async () => {
@@ -144,32 +144,49 @@ describe('realtime board updates', () => {
     }
 
     it('does not subscribe when unauthenticated', () => {
-        renderHook(() => useBoard(false))
+        renderHook(() => useBoard(null))
         expect(socketMock.on).not.toHaveBeenCalled()
     })
 
-    it('applies an incoming board update', async () => {
-        const {result} = renderHook(() => useBoard(true))
+    it('applies an incoming update for the board on screen', async () => {
+        const {result} = renderHook(() => useBoard('board-1'))
         await waitFor(() => expect(result.current.columns).toEqual(board))
 
         const incoming = [{id: 'col-9', title: 'Remote', cards: []}]
-        emitUpdate(incoming)
+        emitUpdate({boardId: 'board-1', columns: incoming})
 
         expect(result.current.columns).toEqual(incoming)
     })
 
+    it('ignores an update for one of the user other boards', async () => {
+        // The socket room is per user, so updates for boards that are not on
+        // screen arrive here as well.
+        const {result} = renderHook(() => useBoard('board-1'))
+        await waitFor(() => expect(result.current.columns).toEqual(board))
+
+        emitUpdate({
+            boardId: 'board-2',
+            columns: [{id: 'col-9', title: 'Other board', cards: []}],
+        })
+
+        expect(result.current.columns).toEqual(board)
+    })
+
     it('ignores an incoming update while a drag is in progress', async () => {
-        const {result} = renderHook(() => useBoard(true))
+        const {result} = renderHook(() => useBoard('board-1'))
         await waitFor(() => expect(result.current.columns).toEqual(board))
 
         result.current.isDraggingRef.current = true
-        emitUpdate([{id: 'col-9', title: 'Remote', cards: []}])
+        emitUpdate({
+            boardId: 'board-1',
+            columns: [{id: 'col-9', title: 'Remote', cards: []}],
+        })
 
         expect(result.current.columns).toEqual(board)
     })
 
     it('unsubscribes on unmount', async () => {
-        const {unmount} = renderHook(() => useBoard(true))
+        const {unmount} = renderHook(() => useBoard('board-1'))
         unmount()
         expect(socketMock.off).toHaveBeenCalledWith('board:updated')
     })
@@ -177,20 +194,20 @@ describe('realtime board updates', () => {
 
 describe('failed requests', () => {
     it('starts with no error', async () => {
-        const {result} = renderHook(() => useBoard(true))
+        const {result} = renderHook(() => useBoard('board-1'))
         await waitFor(() => expect(result.current.columns).toEqual(board))
         expect(result.current.error).toBeNull()
     })
 
     it('reports a board that fails to load', async () => {
         apiMock.fetchColumns.mockRejectedValue(new Error('boom'))
-        const {result} = renderHook(() => useBoard(true))
+        const {result} = renderHook(() => useBoard('board-1'))
         await waitFor(() => expect(result.current.error).toBe('Could not load the board.'))
     })
 
     it('reports a card that fails to be added', async () => {
         apiMock.createCard.mockRejectedValue(new Error('boom'))
-        const {result} = renderHook(() => useBoard(true))
+        const {result} = renderHook(() => useBoard('board-1'))
         await waitFor(() => expect(result.current.columns).toEqual(board))
 
         await act(async () => {
@@ -202,7 +219,7 @@ describe('failed requests', () => {
 
     it('does not reject out of the handler when a request fails', async () => {
         apiMock.createCard.mockRejectedValue(new Error('boom'))
-        const {result} = renderHook(() => useBoard(true))
+        const {result} = renderHook(() => useBoard('board-1'))
         await waitFor(() => expect(result.current.columns).toEqual(board))
 
         await expect(
@@ -214,7 +231,7 @@ describe('failed requests', () => {
 
     it('leaves the board untouched when a delete fails', async () => {
         apiMock.deleteCard.mockRejectedValue(new Error('boom'))
-        const {result} = renderHook(() => useBoard(true))
+        const {result} = renderHook(() => useBoard('board-1'))
         await waitFor(() => expect(result.current.columns).toEqual(board))
 
         await act(async () => {
@@ -227,7 +244,7 @@ describe('failed requests', () => {
 
     it('reports a rename that fails', async () => {
         apiMock.updateColumn.mockRejectedValue(new Error('boom'))
-        const {result} = renderHook(() => useBoard(true))
+        const {result} = renderHook(() => useBoard('board-1'))
         await waitFor(() => expect(result.current.columns).toEqual(board))
 
         await act(async () => {
@@ -239,7 +256,7 @@ describe('failed requests', () => {
 
     it('reports an order that fails to save', async () => {
         apiMock.saveBoard.mockRejectedValue(new Error('boom'))
-        const {result} = renderHook(() => useBoard(true))
+        const {result} = renderHook(() => useBoard('board-1'))
         await waitFor(() => expect(result.current.columns).toEqual(board))
 
         await act(async () => {
@@ -252,7 +269,7 @@ describe('failed requests', () => {
     it('clears the error once an action succeeds', async () => {
         apiMock.createCard.mockRejectedValueOnce(new Error('boom'))
         apiMock.createCard.mockResolvedValueOnce({id: 'card-2', title: 'New'})
-        const {result} = renderHook(() => useBoard(true))
+        const {result} = renderHook(() => useBoard('board-1'))
         await waitFor(() => expect(result.current.columns).toEqual(board))
 
         await act(async () => {
@@ -268,7 +285,7 @@ describe('failed requests', () => {
 
     it('can be dismissed', async () => {
         apiMock.createCard.mockRejectedValue(new Error('boom'))
-        const {result} = renderHook(() => useBoard(true))
+        const {result} = renderHook(() => useBoard('board-1'))
         await waitFor(() => expect(result.current.columns).toEqual(board))
 
         await act(async () => {

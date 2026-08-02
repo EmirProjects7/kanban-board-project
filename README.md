@@ -2,7 +2,7 @@
 
 A full-stack, real-time Kanban board with secure authentication and personal boards.
 
-Every user signs in and sees only their own board. Cards and columns are dragged
+Every user signs in and sees only their own boards. Cards and columns are dragged
 into place, and changes appear in any other open session straight away.
 
 ## Features
@@ -10,7 +10,8 @@ into place, and changes appear in any other open session straight away.
 - **Drag and drop** — reorder cards inside a column, move them between columns, and drag whole columns into a new order (dnd-kit)
 - **Inline editing** — double click a card or a column title to rename it
 - **Secure authentication** — register and log in with hashed passwords (bcrypt) and JWT sessions
-- **Personal boards** — each user sees and edits only their own board
+- **Several boards** — keep work, personal and anything else apart, switched from a drawer
+- **Personal data** — each user sees and edits only their own boards
 - **Real-time sync** — changes appear instantly across sessions over WebSockets (Socket.IO)
 - **Persistent storage** — PostgreSQL with Prisma ORM
 - **Light and dark theme**, remembered between visits
@@ -31,8 +32,9 @@ into place, and changes appear in any other open session straight away.
 
 - Passwords are hashed with bcrypt and never stored in plaintext
 - JWT authentication on both the REST endpoints and the WebSocket connection
-- Ownership is checked on every write, including the individual cards in a board
-  reorder, so one user cannot move another user's card into their own column
+- Ownership runs through the board on every write, including the individual
+  cards in a reorder, so one user cannot move another user's card, or a card
+  from one of their other boards, into the board they are looking at
 - A board reorder is applied in a single transaction, so a rejected request
   cannot leave the board half-updated
 - SQL injection is prevented by Prisma's parameterised queries
@@ -153,17 +155,22 @@ comes from the login response.
 | --- | --- | --- |
 | `POST` | `/api/auth/register` | Create an account |
 | `POST` | `/api/auth/login` | Exchange credentials for a token |
-| `GET` | `/api/columns` | The signed-in user's board |
-| `POST` | `/api/columns` | Create a column |
-| `PUT` | `/api/columns` | Persist the whole board's ordering |
+| `GET` | `/api/boards` | The signed-in user's boards |
+| `POST` | `/api/boards` | Create a board |
+| `PUT` | `/api/boards/:boardId` | Rename a board |
+| `DELETE` | `/api/boards/:boardId` | Delete a board, unless it is the last one |
+| `GET` | `/api/boards/:boardId/columns` | One board's columns and cards |
+| `POST` | `/api/boards/:boardId/columns` | Create a column on that board |
+| `PUT` | `/api/boards/:boardId/columns` | Persist that board's ordering |
 | `PUT` | `/api/columns/:columnId` | Rename a column |
 | `DELETE` | `/api/columns/:columnId` | Delete a column |
 | `POST` | `/api/columns/:columnId/cards` | Add a card |
 | `PUT` | `/api/cards/:cardId` | Rename a card |
 | `DELETE` | `/api/cards/:cardId` | Delete a card |
 
-Clients also receive a `board:updated` event over Socket.IO whenever their board
-changes.
+Clients also receive a `board:updated` event over Socket.IO carrying
+`{boardId, columns}` whenever one of their boards changes. The room is per
+user, so a client showing a different board ignores it.
 
 ## Project structure
 
@@ -171,7 +178,7 @@ changes.
 backend/
   prisma/           schema and migrations
   src/
-    routes/         auth, columns and cards endpoints
+    routes/         auth, boards, columns and cards endpoints
     middleware/     authentication and rate limiting
     test/           backend test suite
     app.ts          express app

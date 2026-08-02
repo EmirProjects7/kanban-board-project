@@ -76,7 +76,7 @@ describe('token handling', () => {
         const fetchMock = vi.fn().mockResolvedValue({ok: true, status: 200, json: async () => []})
         vi.stubGlobal('fetch', fetchMock)
 
-        await api.fetchColumns()
+        await api.fetchColumns('board-1')
 
         const [url, options] = fetchMock.mock.calls[0]
         expect(url).not.toContain('secret-jwt')

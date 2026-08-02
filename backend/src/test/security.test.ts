@@ -4,9 +4,11 @@ import {join} from 'path'
 import express from 'express'
 import request from 'supertest'
 import jwt from 'jsonwebtoken'
+import boardsRouter from '../routes/boards'
 import columnsRouter from '../routes/columns'
 
-const {columnMock, cardMock, transactionMock, emitBoardMock} = vi.hoisted(() => ({
+const {boardMock, columnMock, cardMock, transactionMock, emitBoardMock} = vi.hoisted(() => ({
+    boardMock: {findMany: vi.fn(), findFirst: vi.fn(), count: vi.fn(), create: vi.fn()},
     columnMock: {
         findMany: vi.fn(),
         findFirst: vi.fn(),
@@ -21,12 +23,13 @@ const {columnMock, cardMock, transactionMock, emitBoardMock} = vi.hoisted(() => 
 }))
 
 vi.mock('../prisma', () => ({
-    prisma: {column: columnMock, card: cardMock, $transaction: transactionMock},
+    prisma: {board: boardMock, column: columnMock, card: cardMock, $transaction: transactionMock},
 }))
 vi.mock('../board', () => ({emitBoard: emitBoardMock}))
 
 const app = express()
 app.use(express.json())
+app.use('/api/boards', boardsRouter)
 app.use('/api/columns', columnsRouter)
 
 const auth = `Bearer ${jwt.sign({userId: 'user-1'}, process.env.JWT_SECRET!)}`
@@ -38,6 +41,10 @@ beforeEach(() => {
     vi.clearAllMocks()
     emitBoardMock.mockResolvedValue(undefined)
     columnMock.count.mockResolvedValue(0)
+    boardMock.count.mockResolvedValue(2)
+    boardMock.findFirst.mockResolvedValue({id: 'board-1', userId: 'user-1'})
+    columnMock.findMany.mockResolvedValue([])
+    cardMock.findMany.mockResolvedValue([])
 })
 
 describe('SQL injection', () => {
@@ -45,7 +52,7 @@ describe('SQL injection', () => {
         columnMock.create.mockResolvedValue({id: 'col-1', title: SQL_INJECTION, cards: []})
 
         const res = await request(app)
-            .post('/api/columns')
+            .post('/api/boards/board-1/columns')
             .set('Authorization', auth)
             .send({title: SQL_INJECTION})
 
@@ -53,7 +60,7 @@ describe('SQL injection', () => {
         // Prisma parameterizes queries, so the payload must arrive as a plain
         // data value rather than being interpolated into SQL.
         expect(columnMock.create).toHaveBeenCalledWith({
-            data: {title: SQL_INJECTION, userId: 'user-1', order: 0},
+            data: {title: SQL_INJECTION, boardId: 'board-1', order: 0},
             include: {cards: {orderBy: {order: 'asc'}}},
         })
     })
@@ -103,7 +110,7 @@ describe('SQL injection', () => {
 
 describe('stored XSS payloads', () => {
     it('stores a script payload verbatim without server-side interpretation', async () => {
-        columnMock.findFirst.mockResolvedValue({id: 'col-1'})
+        columnMock.findFirst.mockResolvedValue({id: 'col-1', boardId: 'board-1'})
         cardMock.count.mockResolvedValue(0)
         cardMock.create.mockResolvedValue({id: 'card-1', title: XSS_PAYLOAD, order: 0})
 
@@ -128,11 +135,11 @@ describe('JWT tampering', () => {
         const forged = `${header}.${forgedPayload}.${signature}`
 
         const res = await request(app)
-            .get('/api/columns')
+            .get('/api/boards')
             .set('Authorization', `Bearer ${forged}`)
 
         expect(res.status).toBe(401)
-        expect(columnMock.findMany).not.toHaveBeenCalled()
+        expect(boardMock.findMany).not.toHaveBeenCalled()
     })
 
     it('rejects an unsigned "alg: none" token', async () => {
@@ -140,47 +147,71 @@ describe('JWT tampering', () => {
         const payload = Buffer.from(JSON.stringify({userId: 'victim'})).toString('base64url')
 
         const res = await request(app)
-            .get('/api/columns')
+            .get('/api/boards')
             .set('Authorization', `Bearer ${header}.${payload}.`)
 
         expect(res.status).toBe(401)
-        expect(columnMock.findMany).not.toHaveBeenCalled()
+        expect(boardMock.findMany).not.toHaveBeenCalled()
     })
 
     it('rejects an expired token', async () => {
         const expired = jwt.sign({userId: 'user-1'}, process.env.JWT_SECRET!, {expiresIn: '-1s'})
 
         const res = await request(app)
-            .get('/api/columns')
+            .get('/api/boards')
             .set('Authorization', `Bearer ${expired}`)
 
         expect(res.status).toBe(401)
-        expect(columnMock.findMany).not.toHaveBeenCalled()
+        expect(boardMock.findMany).not.toHaveBeenCalled()
     })
 })
 
 describe('cross-user access (IDOR)', () => {
     it('reads are always scoped to the token user, never to a client-supplied id', async () => {
-        columnMock.findMany.mockResolvedValue([])
+        boardMock.findMany.mockResolvedValue([])
 
-        await request(app).get('/api/columns').set('Authorization', auth)
+        await request(app).get('/api/boards').set('Authorization', auth)
 
-        expect(columnMock.findMany).toHaveBeenCalledWith(
+        expect(boardMock.findMany).toHaveBeenCalledWith(
             expect.objectContaining({where: {userId: 'user-1'}})
         )
     })
 
     it('a forged userId in the request body cannot override the token user', async () => {
-        columnMock.create.mockResolvedValue({id: 'col-1', title: 'Todo', cards: []})
+        boardMock.create.mockResolvedValue({id: 'board-9', title: 'Todo'})
 
         await request(app)
-            .post('/api/columns')
+            .post('/api/boards')
             .set('Authorization', auth)
             .send({title: 'Todo', userId: 'victim'})
 
-        expect(columnMock.create).toHaveBeenCalledWith({
-            data: {title: 'Todo', userId: 'user-1', order: 0},
-            include: {cards: {orderBy: {order: 'asc'}}},
+        expect(boardMock.create).toHaveBeenCalledWith({
+            data: {title: 'Todo', userId: 'user-1', order: 2},
         })
+    })
+
+    it('a column cannot be moved onto a board the user does not own', async () => {
+        boardMock.findFirst.mockResolvedValue(null)
+
+        const res = await request(app)
+            .post('/api/boards/someone-elses-board/columns')
+            .set('Authorization', auth)
+            .send({title: 'Todo'})
+
+        expect(res.status).toBe(403)
+        expect(columnMock.create).not.toHaveBeenCalled()
+    })
+
+    it('a card id from another board cannot be dragged into this one', async () => {
+        columnMock.findMany.mockResolvedValue([{id: 'col-1'}])
+        cardMock.findMany.mockResolvedValue([{id: 'card-1'}])
+
+        const res = await request(app)
+            .put('/api/boards/board-1/columns')
+            .set('Authorization', auth)
+            .send([{id: 'col-1', cards: [{id: 'card-from-another-board'}]}])
+
+        expect(res.status).toBe(403)
+        expect(transactionMock).not.toHaveBeenCalled()
     })
 })

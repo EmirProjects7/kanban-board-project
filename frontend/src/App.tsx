@@ -3,9 +3,11 @@ import {useState, useEffect} from 'react'
 import {DndContext, DragOverlay, PointerSensor, KeyboardSensor, useSensor, useSensors} from '@dnd-kit/core'
 import {SortableContext, horizontalListSortingStrategy, sortableKeyboardCoordinates} from '@dnd-kit/sortable'
 import {useBoard} from './hooks/useBoard'
+import {useBoards} from './hooks/useBoards'
 import {useDragAndDrop} from './hooks/useDragDrop'
 import Column from './components/Column'
 import AddColumnForm from './components/AddColumnForm'
+import {BoardSwitcher} from './components/BoardSwitcher'
 import {AuthForm} from './components/AuthForm'
 import {clearToken, getToken, setUnauthorizedHandler} from './api'
 import {disconnectSocket} from './socket'
@@ -13,6 +15,16 @@ import {disconnectSocket} from './socket'
 
 function App() {
     const [isAuthenticated, setIsAuthenticated] = useState(!!getToken())
+    const {
+        boards,
+        activeBoardId,
+        selectBoard,
+        addBoard,
+        renameBoard,
+        removeBoard,
+        error: boardsError,
+        dismissError: dismissBoardsError,
+    } = useBoards(isAuthenticated)
     const {
         columns,
         setColumns,
@@ -26,7 +38,8 @@ function App() {
         error,
         dismissError,
         isDraggingRef
-    } = useBoard(isAuthenticated)
+    } = useBoard(activeBoardId)
+    const activeBoard = boards.find((board) => board.id === activeBoardId) ?? null
     const {activeCard, activeColumn, handleDragStart, handleDragOver, handleDragEnd} = useDragAndDrop(columns, setColumns, saveBoard, isDraggingRef)
     const sensors = useSensors(useSensor(PointerSensor, {activationConstraint: {distance: 5}}), useSensor(KeyboardSensor, {coordinateGetter: sortableKeyboardCoordinates}))
     const [theme, setTheme] = useState<'light' | 'dark'>(
@@ -61,7 +74,15 @@ function App() {
     return (
         <div className="app">
             <div className="app-header">
-                <h1>Kanban Board</h1>
+                <BoardSwitcher
+                    boards={boards}
+                    activeBoardId={activeBoardId}
+                    onSelect={selectBoard}
+                    onAdd={addBoard}
+                    onRename={renameBoard}
+                    onDelete={removeBoard}
+                />
+                <h1>{activeBoard?.title ?? 'Kanban Board'}</h1>
                 <button
                     className="theme-toggle"
                     onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
@@ -72,10 +93,13 @@ function App() {
                     Logout
                 </button>
             </div>
-            {error && (
+            {(boardsError ?? error) && (
                 <div className="board-error" role="alert">
-                    <span>{error}</span>
-                    <button onClick={dismissError} aria-label="Dismiss error">
+                    <span>{boardsError ?? error}</span>
+                    <button
+                        onClick={boardsError ? dismissBoardsError : dismissError}
+                        aria-label="Dismiss error"
+                    >
                         ×
                     </button>
                 </div>
