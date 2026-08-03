@@ -19,6 +19,7 @@ function renderColumn(override: Partial<ColumnType> = {}) {
         onDeleteCard: vi.fn(),
         onEditCard: vi.fn(),
         onDescribeCard: vi.fn(),
+        onSetCardDueDate: vi.fn(),
         labels: [],
         onToggleCardLabel: vi.fn(),
         onCreateLabel: vi.fn(),

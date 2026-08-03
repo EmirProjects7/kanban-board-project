@@ -1,6 +1,7 @@
 import {useState, useEffect} from 'react'
 import {createPortal} from 'react-dom'
 import {LabelPicker} from './LabelPicker'
+import {toInputValue} from '../dueDate'
 import type {Card, Label, LabelColour} from '../types'
 
 type CardDetailProps = {
@@ -8,6 +9,7 @@ type CardDetailProps = {
     labels: Label[]
     onSaveTitle: (title: string) => void
     onSaveDescription: (description: string) => void
+    onSaveDueDate: (day: string) => void
     onToggleLabel: (labelId: string, attached: boolean) => void
     onCreateLabel: (name: string, colour: LabelColour) => void
     onDelete: () => void
@@ -19,6 +21,7 @@ export function CardDetail({
     labels,
     onSaveTitle,
     onSaveDescription,
+    onSaveDueDate,
     onToggleLabel,
     onCreateLabel,
     onDelete,
@@ -70,6 +73,28 @@ export function CardDetail({
                     <button className="detail-close" onClick={onClose} aria-label="Close card">
                         ×
                     </button>
+                </div>
+
+                <label className="detail-label" htmlFor="card-due-date">
+                    Due date
+                </label>
+                <div className="detail-due">
+                    <input
+                        id="card-due-date"
+                        type="date"
+                        className="detail-due-input"
+                        value={toInputValue(card.dueDate)}
+                        onChange={(e) => onSaveDueDate(e.target.value)}
+                    />
+                    {card.dueDate && (
+                        <button
+                            type="button"
+                            className="detail-due-clear"
+                            onClick={() => onSaveDueDate('')}
+                        >
+                            Clear
+                        </button>
+                    )}
                 </div>
 
                 <span className="detail-label">Labels</span>

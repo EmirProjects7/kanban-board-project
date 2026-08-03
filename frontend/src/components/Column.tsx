@@ -12,6 +12,7 @@ type ColumnProps = {
     onDeleteCard: (cardId: string) => void
     onEditCard: (cardId: string, newTitle: string) => void
     onDescribeCard: (cardId: string, description: string) => void
+    onSetCardDueDate: (cardId: string, day: string) => void
     labels: Label[]
     onToggleCardLabel: (cardId: string, labelId: string, attached: boolean) => void
     onCreateLabel: (name: string, colour: LabelColour) => void
@@ -25,6 +26,7 @@ function Column({
     onDeleteCard,
     onEditCard,
     onDescribeCard,
+    onSetCardDueDate,
     labels,
     onToggleCardLabel,
     onCreateLabel,
@@ -113,6 +115,7 @@ function Column({
                             onDelete={onDeleteCard}
                             onEdit={onEditCard}
                             onDescribe={onDescribeCard}
+                            onSetDueDate={onSetCardDueDate}
                             labels={labels}
                             onToggleLabel={onToggleCardLabel}
                             onCreateLabel={onCreateLabel}

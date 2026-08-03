@@ -719,6 +719,71 @@ body {
     background: var(--surface-hover);
 }
 
+/* Due dates ------------------------------------------------------------ */
+
+.card-due {
+    align-self: flex-start;
+    padding: 1px 7px;
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1.5;
+    color: var(--muted);
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+}
+
+/* Late work should catch the eye; today's is worth noticing but not alarming. */
+.card-due.is-overdue {
+    color: var(--danger);
+    background: color-mix(in srgb, var(--danger) 14%, transparent);
+    border-color: color-mix(in srgb, var(--danger) 40%, transparent);
+}
+
+.card-due.is-today {
+    color: var(--accent);
+    background: var(--accent-soft);
+    border-color: color-mix(in srgb, var(--accent) 40%, transparent);
+}
+
+.detail-due {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.detail-due-input {
+    padding: 7px 10px;
+    font-family: inherit;
+    font-size: 14px;
+    color: var(--text);
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    outline: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.detail-due-input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.detail-due-clear {
+    padding: 6px 10px;
+    font-size: 13px;
+    color: var(--muted);
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    transition: color 0.15s, background 0.15s;
+}
+
+.detail-due-clear:hover {
+    color: var(--text);
+    background: var(--surface-hover);
+}
+
 /* Card detail ---------------------------------------------------------- */
 
 .detail-overlay {
