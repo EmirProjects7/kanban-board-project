@@ -217,3 +217,9 @@ frontend/
     dueDate.ts      due date parsing, formatting and overdue comparison
     types.ts        types shared across the UI
 ```
+
+## Notes
+
+Claude Code was used during development, for documentation and for parts of
+the implementation.
+
