@@ -2,6 +2,7 @@ import {useState} from 'react'
 import {useSortable} from '@dnd-kit/sortable'
 import {CSS} from '@dnd-kit/utilities'
 import {CardDetail} from './CardDetail'
+import {formatDueDate, isOverdue, isToday} from '../dueDate'
 import type {Card as CardType, Label, LabelColour} from '../types'
 
 type CardProps = {
@@ -10,6 +11,7 @@ type CardProps = {
     onDelete: (id: string) => void
     onEdit: (id: string, newTitle: string) => void
     onDescribe: (id: string, description: string) => void
+    onSetDueDate: (id: string, day: string) => void
     onToggleLabel: (cardId: string, labelId: string, attached: boolean) => void
     onCreateLabel: (name: string, colour: LabelColour) => void
 }
@@ -20,6 +22,7 @@ function Card({
     onDelete,
     onEdit,
     onDescribe,
+    onSetDueDate,
     onToggleLabel,
     onCreateLabel,
 }: CardProps) {
@@ -99,6 +102,24 @@ function Card({
                                 </span>
                             )}
                         </div>
+                        {card.dueDate && (
+                            <span
+                                className={
+                                    isOverdue(card.dueDate)
+                                        ? 'card-due is-overdue'
+                                        : isToday(card.dueDate)
+                                          ? 'card-due is-today'
+                                          : 'card-due'
+                                }
+                                aria-label={
+                                    isOverdue(card.dueDate)
+                                        ? `Overdue, was due ${formatDueDate(card.dueDate)}`
+                                        : `Due ${formatDueDate(card.dueDate)}`
+                                }
+                            >
+                                {formatDueDate(card.dueDate)}
+                            </span>
+                        )}
                     </div>
                 )}
                 <div className="card-actions">
@@ -129,6 +150,7 @@ function Card({
                     labels={labels}
                     onSaveTitle={(title) => onEdit(card.id, title)}
                     onSaveDescription={(description) => onDescribe(card.id, description)}
+                    onSaveDueDate={(day) => onSetDueDate(card.id, day)}
                     onToggleLabel={(labelId, isAttached) =>
                         onToggleLabel(card.id, labelId, isAttached)
                     }

@@ -94,6 +94,23 @@ export function useBoard(boardId: string | null) {
         })
     }
 
+    // The empty string means the date was cleared. Sent as null so "no due
+    // date" has one representation, matching how the description works.
+    async function setCardDueDate(cardId: string, day: string) {
+        const stored = day === '' ? null : day
+        await attempt('Could not save the due date.', async () => {
+            await api.updateCard(cardId, {dueDate: stored})
+            setColumns((prev) => prev.map((column) => ({
+                ...column,
+                cards: column.cards.map((c) =>
+                    c.id === cardId
+                        ? {...c, dueDate: stored ? `${stored}T00:00:00.000Z` : null}
+                        : c
+                ),
+            })))
+        })
+    }
+
     // Attaching changes what the card carries, so the board is reloaded from
     // the server rather than guessed at locally.
     async function toggleCardLabel(cardId: string, labelId: string, attached: boolean) {
@@ -149,6 +166,7 @@ export function useBoard(boardId: string | null) {
         deleteCard,
         editCard,
         describeCard,
+        setCardDueDate,
         toggleCardLabel,
         addColumn,
         editColumn,

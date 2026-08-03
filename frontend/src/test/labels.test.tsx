@@ -22,6 +22,7 @@ function renderCard(
         onDelete: () => {},
         onEdit: () => {},
         onDescribe: () => {},
+        onSetDueDate: () => {},
         onToggleLabel: () => {},
         onCreateLabel: () => {},
         ...handlers,

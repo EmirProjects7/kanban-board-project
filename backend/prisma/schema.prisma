@@ -57,6 +57,9 @@ model Card {
   id       String @id @default(uuid())
   title    String
   description String?
+  // A calendar day rather than an instant, so @db.Date. Stored and read back
+  // in UTC on both sides, which keeps the day from sliding across timezones.
+  dueDate  DateTime? @db.Date
   order Int @default(0)
   labels   CardLabel[]
   columnId String

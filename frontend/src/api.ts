@@ -139,7 +139,7 @@ export async function deleteCard(cardId: string): Promise<void> {
 // untouched and vice versa.
 export async function updateCard(
     cardId: string,
-    changes: {title?: string; description?: string | null}
+    changes: {title?: string; description?: string | null; dueDate?: string | null}
 ): Promise<void> {
     await request(`${BASE_URL}/api/cards/${cardId}`, {
         method: 'PUT',

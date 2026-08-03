@@ -12,6 +12,8 @@ export type Card = {
     id: string
     title: string
     description?: string | null
+    // Sent as an ISO instant at UTC midnight; only the day part is meaningful.
+    dueDate?: string | null
     // The API returns the join rows, each carrying its label.
     labels?: {label: Label}[]
 }

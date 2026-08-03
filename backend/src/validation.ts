@@ -20,8 +20,26 @@ export const labelSchema = z.object({
     colour: z.enum(LABEL_COLOURS),
 })
 
-// A card update can carry a title, a description, or both. Sending neither is
-// pointless, so it is rejected rather than silently doing nothing.
+// A due date is a calendar day, so it arrives as YYYY-MM-DD and is turned
+// into UTC midnight. Parsing the bare string instead would read it in the
+// server's timezone and could land on the day before.
+const dueDateSchema = z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, 'Expected YYYY-MM-DD')
+    .refine((value) => {
+        const parsed = new Date(`${value}T00:00:00Z`)
+        // The validity check comes first: toISOString throws on an invalid
+        // date, which would surface as a 500 rather than a rejected field.
+        if (Number.isNaN(parsed.getTime())) return false
+        // Round-tripping catches 2026-02-31, which Date rolls forward to March
+        // instead of refusing.
+        return parsed.toISOString().slice(0, 10) === value
+    }, 'Not a real date')
+    .transform((value) => new Date(`${value}T00:00:00Z`))
+
+// A card update can carry a title, a description, a due date, or any mix.
+// Sending none of them is pointless, so it is rejected rather than silently
+// doing nothing.
 export const cardUpdateSchema = z
     .object({
         title: z.string().trim().min(1).max(255).optional(),
@@ -34,7 +52,12 @@ export const cardUpdateSchema = z
             .transform((value) => (value === '' ? null : value))
             .nullable()
             .optional(),
+        dueDate: dueDateSchema.nullable().optional(),
     })
-    .refine((body) => body.title !== undefined || body.description !== undefined, {
-        message: 'Nothing to update',
-    })
+    .refine(
+        (body) =>
+            body.title !== undefined ||
+            body.description !== undefined ||
+            body.dueDate !== undefined,
+        {message: 'Nothing to update'}
+    )
