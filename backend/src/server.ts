@@ -16,6 +16,11 @@ if (missingEnvVars.length > 0) {
 // PORT in the environment would be picked up by the frontend dev server too.
 const PORT = Number(process.env.BACKEND_PORT) || 3000
 
+// Localhost by default: listen() without a host binds every interface, which
+// hands the API to anything else on the same network. A host that needs to
+// reach it from outside the machine sets BACKEND_HOST to 0.0.0.0.
+const HOST = process.env.BACKEND_HOST || '127.0.0.1'
+
 const httpServer = createServer(app)
 
 const io = new Server(httpServer, {cors: {origin: FRONTEND_URL}})
@@ -44,6 +49,6 @@ io.on('connection', (socket) => {
     })
 })
 
-httpServer.listen(PORT, () => {
-    console.log(`Server is running on http://localhost:${PORT}`)
+httpServer.listen(PORT, HOST, () => {
+    console.log(`Server is running on http://${HOST}:${PORT}`)
 })

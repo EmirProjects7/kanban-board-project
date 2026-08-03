@@ -8,8 +8,12 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB}
     ports:
+      # Bound to 127.0.0.1 on purpose. Without the host part Docker publishes
+      # on 0.0.0.0, which puts the database in reach of every device on the
+      # same network, and a direct connection there answers to nothing the
+      # application checks.
       # Override POSTGRES_PORT when another project already holds 5432.
-      - "${POSTGRES_PORT:-5432}:5432"
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
     volumes:
       - kanban_data:/var/lib/postgresql/data
 
