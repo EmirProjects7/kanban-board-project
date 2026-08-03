@@ -39,6 +39,8 @@ into place, and changes appear in any other open session straight away.
   from one of their other boards, into the board they are looking at
 - A label can only be pinned onto a card on the same board, and label colours
   come from a fixed set, so nothing a user types reaches a style value
+- The API and the database listen on localhost only while developing, so
+  neither is handed to other devices on the same network
 - A board reorder is applied in a single transaction, so a rejected request
   cannot leave the board half-updated
 - SQL injection is prevented by Prisma's parameterised queries
@@ -85,6 +87,7 @@ Optional, with the defaults shown:
 | Variable | Default | When to change it |
 | --- | --- | --- |
 | `BACKEND_PORT` | `3000` | The API port |
+| `BACKEND_HOST` | `127.0.0.1` | Set to `0.0.0.0` only where the API has to be reachable from outside the machine |
 | `FRONTEND_URL` | `http://localhost:5173` | The origin allowed by CORS |
 | `POSTGRES_PORT` | `5432` | If another project already uses 5432 on your machine. Change the port in `DATABASE_URL` to match. |
 
