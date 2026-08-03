@@ -11,6 +11,7 @@ into place, and changes appear in any other open session straight away.
 - **Inline editing** — double click a card or a column title to rename it
 - **Card detail** — open a card to write a description; cards carrying notes are marked on the board
 - **Labels** — colour them, pin them onto cards, and narrow the board to the ones you pick
+- **Due dates** — give a card a day; late ones turn red and today stands out
 - **Secure authentication** — register and log in with hashed passwords (bcrypt) and JWT sessions
 - **Several boards** — keep work, personal and anything else apart, switched from a drawer
 - **Personal data** — each user sees and edits only their own boards
@@ -178,7 +179,7 @@ comes from the login response.
 | `PUT` | `/api/columns/:columnId` | Rename a column |
 | `DELETE` | `/api/columns/:columnId` | Delete a column |
 | `POST` | `/api/columns/:columnId/cards` | Add a card |
-| `PUT` | `/api/cards/:cardId` | Change a card's title, description, or both |
+| `PUT` | `/api/cards/:cardId` | Change a card's title, description, due date, or any mix |
 | `DELETE` | `/api/cards/:cardId` | Delete a card |
 | `PUT` | `/api/cards/:cardId/labels/:labelId` | Pin a label onto a card on the same board |
 | `DELETE` | `/api/cards/:cardId/labels/:labelId` | Take a label off a card |
