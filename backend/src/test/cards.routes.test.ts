@@ -219,3 +219,111 @@ describe('card descriptions', () => {
         expect(cardMock.update).not.toHaveBeenCalled()
     })
 })
+
+describe('due dates', () => {
+    function reachable() {
+        cardMock.findFirst.mockResolvedValue({id: 'card-1', column: {boardId: 'board-1'}})
+        cardMock.update.mockResolvedValue({id: 'card-1'})
+    }
+
+    it('stores the day the user picked, at UTC midnight', async () => {
+        reachable()
+
+        const res = await request(app)
+            .put('/api/cards/card-1')
+            .set('Authorization', auth)
+            .send({dueDate: '2026-08-05'})
+
+        expect(res.status).toBe(200)
+        // Parsing the bare string would read it in the server's timezone and
+        // could land on the 4th.
+        expect(cardMock.update).toHaveBeenCalledWith({
+            where: {id: 'card-1'},
+            data: {dueDate: new Date('2026-08-05T00:00:00Z')},
+        })
+    })
+
+    it('clears the date when null is sent', async () => {
+        reachable()
+
+        await request(app)
+            .put('/api/cards/card-1')
+            .set('Authorization', auth)
+            .send({dueDate: null})
+
+        expect(cardMock.update).toHaveBeenCalledWith({
+            where: {id: 'card-1'},
+            data: {dueDate: null},
+        })
+    })
+
+    it('leaves the date alone when only the title is sent', async () => {
+        reachable()
+
+        await request(app)
+            .put('/api/cards/card-1')
+            .set('Authorization', auth)
+            .send({title: 'Renamed'})
+
+        expect(cardMock.update).toHaveBeenCalledWith(
+            expect.objectContaining({data: {title: 'Renamed'}})
+        )
+    })
+
+    it('writes a title and a date together', async () => {
+        reachable()
+
+        await request(app)
+            .put('/api/cards/card-1')
+            .set('Authorization', auth)
+            .send({title: 'Renamed', dueDate: '2026-12-31'})
+
+        expect(cardMock.update).toHaveBeenCalledWith({
+            where: {id: 'card-1'},
+            data: {title: 'Renamed', dueDate: new Date('2026-12-31T00:00:00Z')},
+        })
+    })
+
+    it('rejects a date that is not YYYY-MM-DD', async () => {
+        const res = await request(app)
+            .put('/api/cards/card-1')
+            .set('Authorization', auth)
+            .send({dueDate: '05/08/2026'})
+
+        expect(res.status).toBe(400)
+        expect(cardMock.update).not.toHaveBeenCalled()
+    })
+
+    it('rejects a day that does not exist', async () => {
+        // Date.parse would roll this forward to March rather than refuse it.
+        const res = await request(app)
+            .put('/api/cards/card-1')
+            .set('Authorization', auth)
+            .send({dueDate: '2026-02-31'})
+
+        expect(res.status).toBe(400)
+        expect(cardMock.update).not.toHaveBeenCalled()
+    })
+
+    it('rejects a timestamp where a day was expected', async () => {
+        const res = await request(app)
+            .put('/api/cards/card-1')
+            .set('Authorization', auth)
+            .send({dueDate: '2026-08-05T13:45:00Z'})
+
+        expect(res.status).toBe(400)
+        expect(cardMock.update).not.toHaveBeenCalled()
+    })
+
+    it('refuses a card the user cannot reach', async () => {
+        cardMock.findFirst.mockResolvedValue(null)
+
+        const res = await request(app)
+            .put('/api/cards/other-card')
+            .set('Authorization', auth)
+            .send({dueDate: '2026-08-05'})
+
+        expect(res.status).toBe(403)
+        expect(cardMock.update).not.toHaveBeenCalled()
+    })
+})

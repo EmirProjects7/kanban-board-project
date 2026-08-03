@@ -54,6 +54,7 @@ router.put('/:cardId', authenticate, async (req, res) => {
             ...(parsed.data.description !== undefined
                 ? {description: parsed.data.description}
                 : {}),
+            ...(parsed.data.dueDate !== undefined ? {dueDate: parsed.data.dueDate} : {}),
         },
     })
     res.status(200).json(updatedCard)
