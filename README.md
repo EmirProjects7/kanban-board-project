@@ -53,7 +53,7 @@ into place, and changes appear in any other open session straight away.
 
 ### Prerequisites
 
-- Node.js
+- Node.js 22 or newer
 - Docker Desktop
 
 ### 1. Clone and install
@@ -110,6 +110,9 @@ create `frontend/.env` from `frontend/.env.example` and set `VITE_API_URL`.
 ```bash
 npm run db
 ```
+
+This waits for Postgres to accept connections before it returns, so the
+migration below can run straight after it.
 
 ```bash
 cd backend && npx prisma migrate dev && cd ..
@@ -194,15 +197,23 @@ user, so a client showing a different board ignores it.
 backend/
   prisma/           schema and migrations
   src/
-    routes/         auth, boards, columns and cards endpoints
+    routes/         auth, boards, columns, cards and labels endpoints
     middleware/     authentication and rate limiting
     test/           backend test suite
-    app.ts          express app
-    server.ts       listening and socket wiring
+    app.ts          express app and the routers it mounts
+    server.ts       http listener, socket handshake auth and per-user rooms
+    socket.ts       holds the Socket.IO instance the rest of the app emits on
+    board.ts        reads a board and broadcasts it as board:updated
+    queries.ts      the shared query shape every read of a board goes through
+    validation.ts   Zod schemas and the fixed label colours
+    prisma.ts       Prisma client
 frontend/
   src/
     components/     board UI
     hooks/          board state and drag and drop
     test/           frontend test suite
     api.ts          API client
+    socket.ts       Socket.IO client and its reconnect handling
+    dueDate.ts      due date parsing, formatting and overdue comparison
+    types.ts        types shared across the UI
 ```
