@@ -90,6 +90,7 @@ Optional, with the defaults shown:
 | `BACKEND_HOST` | `127.0.0.1` | Set to `0.0.0.0` only where the API has to be reachable from outside the machine |
 | `FRONTEND_URL` | `http://localhost:5173` | The origin allowed by CORS |
 | `POSTGRES_PORT` | `5432` | If another project already uses 5432 on your machine. Change the port in `DATABASE_URL` to match. |
+| `POSTGRES_BIND_HOST` | `127.0.0.1` | The interface the database is published on. Leave it alone unless something outside the machine has to reach it. |
 
 Generate a strong `JWT_SECRET` rather than inventing one:
 
