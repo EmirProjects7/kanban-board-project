@@ -13,6 +13,16 @@ services:
       # direct connection answers to none of the checks the app makes.
       # POSTGRES_PORT moves the port when another project holds 5432.
       - "${POSTGRES_BIND_HOST:-127.0.0.1}:${POSTGRES_PORT:-5432}:5432"
+    # `up -d` returns as soon as the container starts, several seconds before
+    # postgres accepts connections. Without this, the migrate step in a fresh
+    # clone runs against a database that is not listening yet. `npm run db`
+    # passes --wait, which holds until this reports healthy.
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 2s
+      timeout: 3s
+      retries: 15
+      start_period: 5s
     volumes:
       - kanban_data:/var/lib/postgresql/data
 
