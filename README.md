@@ -1,5 +1,7 @@
 # Kanban Board
 
+[![CI](https://github.com/EmirProjects7/kanban-board-project/actions/workflows/ci.yml/badge.svg)](https://github.com/EmirProjects7/kanban-board-project/actions/workflows/ci.yml)
+
 A full-stack, real-time Kanban board with secure authentication and personal boards.
 
 Every user signs in and sees only their own boards. Cards and columns are dragged
