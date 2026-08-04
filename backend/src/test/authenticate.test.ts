@@ -68,4 +68,34 @@ describe('authenticate', () => {
         expect(res.status).toHaveBeenCalledWith(401)
         expect(next).not.toHaveBeenCalled()
     })
+
+    // Without the payload check req.userId would be undefined here, and Prisma
+    // reads an undefined `where` value as no filter, so the boards route would
+    // answer with every board in the database.
+    it('rejects a properly signed token that carries no user id', () => {
+        const token = jwt.sign({sub: 'user-1'}, process.env.JWT_SECRET!)
+        const req = {headers: {authorization: `Bearer ${token}`}} as Request
+        const res = mockRes()
+        const next = vi.fn()
+
+        authenticate(req, res, next)
+
+        expect(req.userId).toBeUndefined()
+        expect(res.status).toHaveBeenCalledWith(401)
+        expect(next).not.toHaveBeenCalled()
+    })
+
+    it('rejects a token signed with an algorithm the app does not use', () => {
+        const token = jwt.sign({userId: 'user-1'}, process.env.JWT_SECRET!, {
+            algorithm: 'HS512',
+        })
+        const req = {headers: {authorization: `Bearer ${token}`}} as Request
+        const res = mockRes()
+        const next = vi.fn()
+
+        authenticate(req, res, next)
+
+        expect(res.status).toHaveBeenCalledWith(401)
+        expect(next).not.toHaveBeenCalled()
+    })
 })
