@@ -143,4 +143,20 @@ describe('POST /api/auth/login', () => {
         expect(res.status).toBe(401)
         expect(res.body.error).toBe('Invalid credentials')
     })
+
+    // The two answers have to cost the same as well as read the same. Skipping
+    // the hash for an unknown address would return in about a millisecond
+    // where a known one takes bcrypt's full time, and timing the two apart
+    // tells an attacker which addresses are registered.
+    it('still hashes when the email is unknown', async () => {
+        userMock.findUnique.mockResolvedValue(null)
+        const compare = vi.spyOn(bcrypt, 'compare')
+
+        await request(app)
+            .post('/api/auth/login')
+            .send({email: 'nobody@b.com', password: 'secret123'})
+
+        expect(compare).toHaveBeenCalledOnce()
+        compare.mockRestore()
+    })
 })

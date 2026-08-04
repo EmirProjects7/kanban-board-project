@@ -12,6 +12,12 @@ const credentialsSchema = z.object({
     password: z.string().min(5).max(100),
 })
 
+// Compared against when no user matches, so a miss costs the same as a hit.
+// Returning early instead would answer an unknown address in about a
+// millisecond and a known one in bcrypt's full time, and timing the two apart
+// tells an attacker which addresses are registered.
+const absentUserHash = bcrypt.hashSync('no user with this address', 10)
+
 router.post('/register', async (req, res) => {
     const parsed = credentialsSchema.safeParse(req.body)
     if (!parsed.success) {
@@ -50,13 +56,9 @@ router.post('/login', async (req, res) => {
     const {email, password} = parsed.data
     const user = await prisma.user.findUnique({where: {email: email}})
 
-    if (!user) {
-        return res.status(401).json({error: 'Invalid credentials'})
-    }
+    const passwordMatch = await bcrypt.compare(password, user?.password ?? absentUserHash)
 
-    const passwordMatch = await bcrypt.compare(password, user.password)
-
-    if (!passwordMatch) {
+    if (!user || !passwordMatch) {
         return res.status(401).json({error: 'Invalid credentials'})
     }
 
