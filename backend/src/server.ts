@@ -1,9 +1,9 @@
 import 'dotenv/config'
 import {createServer} from 'http'
 import {Server} from 'socket.io'
-import jwt from 'jsonwebtoken'
 import app, {FRONTEND_URL} from './app'
 import {initSocket} from './socket'
+import {userIdFromToken} from './token'
 
 const requiredEnvVars = ['DATABASE_URL', 'JWT_SECRET'] as const
 const missingEnvVars = requiredEnvVars.filter((key) => !process.env[key])
@@ -32,13 +32,14 @@ io.use((socket, next) => {
     if (!token) {
         return next(new Error('No token provided'))
     }
-    try {
-        const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { userId: string }
-        socket.data.userId = decoded.userId
-        next()
-    } catch {
-        next(new Error('Invalid token'))
+
+    const userId = userIdFromToken(token)
+    if (!userId) {
+        return next(new Error('Invalid token'))
     }
+
+    socket.data.userId = userId
+    next()
 })
 
 io.on('connection', (socket) => {

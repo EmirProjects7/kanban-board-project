@@ -1,5 +1,5 @@
 import type { Request, Response, NextFunction } from 'express'
-import jwt from 'jsonwebtoken'
+import {userIdFromToken} from '../token'
 
 export function authenticate(req: Request, res: Response, next: NextFunction) {
     const authHeader = req.headers.authorization
@@ -8,13 +8,12 @@ export function authenticate(req: Request, res: Response, next: NextFunction) {
         return res.status(401).json({ error: 'No token provided' })
     }
 
-    const token = authHeader.split(' ')[1]
+    const userId = userIdFromToken(authHeader.split(' ')[1])
 
-    try {
-        const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { userId: string }
-        req.userId = decoded.userId
-        next()
-    } catch {
+    if (!userId) {
         return res.status(401).json({ error: 'Invalid token' })
     }
+
+    req.userId = userId
+    next()
 }
