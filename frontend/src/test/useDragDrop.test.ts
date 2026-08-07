@@ -87,10 +87,29 @@ describe('handleDragOver', () => {
         expect(getColumns()[1].cards.map((c) => c.id)).toEqual(['card-1', 'card-3'])
     })
 
-    it('does nothing when hovering inside the same column', () => {
-        const {hook, setColumns} = setup()
+    it('leaves the board untouched when hovering inside the same column', () => {
+        const {hook, getColumns} = setup()
         act(() => hook.result.current.handleDragOver(dragOver('card-1', 'card-2')))
-        expect(setColumns).not.toHaveBeenCalled()
+        expect(getColumns()).toEqual(initialBoard)
+    })
+
+    // dragOver fires on every pointer move, and the hook is not re-rendered
+    // between them, so a second call still sees the card in the column it came
+    // from. Resolving the two columns from the render's `columns` rather than
+    // from current state let it walk past the same-column guard and splice a
+    // second copy into the column the card had already been moved to.
+    it('does not duplicate the card when it fires again after the move', () => {
+        const {hook, getColumns} = setup()
+
+        act(() => hook.result.current.handleDragOver(dragOver('card-1', 'col-2')))
+        act(() => hook.result.current.handleDragOver(dragOver('card-1', 'col-2')))
+        act(() => hook.result.current.handleDragOver(dragOver('card-1', 'card-3')))
+
+        const columns = getColumns()
+        const ids = columns.flatMap((column) => column.cards.map((card) => card.id))
+        expect(ids).toHaveLength(new Set(ids).size)
+        expect(columns[1].cards.filter((c) => c.id === 'card-1')).toHaveLength(1)
+        expect(columns[0].cards.map((c) => c.id)).toEqual(['card-2'])
     })
 
     it('does nothing when there is no drop target', () => {

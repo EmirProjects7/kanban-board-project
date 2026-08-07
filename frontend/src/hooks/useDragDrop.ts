@@ -23,14 +23,6 @@ export function useDragAndDrop(
         return columns.findIndex((col) => col.cards.some((c) => c.id === id))
     }
 
-    function findColumns(activeId: string, overId: string) {
-        const activeColumn = columns.find((col) => col.cards.some((c) => c.id === activeId))
-        const overColumn = columns.find((col) =>
-            col.cards.some((c) => c.id === overId) || col.id === overId)
-        return {activeColumn, overColumn}
-    }
-
-
     function handleDragStart(event: DragStartEvent) {
         isDraggingRef.current = true
         const {active} = event
@@ -55,20 +47,32 @@ export function useDragAndDrop(
         // Columns only settle into place on drop, so nothing to preview here.
         if (isColumnDrag(event)) return
 
-        const {activeColumn, overColumn} = findColumns(active.id as string, over.id as string)
-        if (!activeColumn || !overColumn) return
-        if (activeColumn.id === overColumn.id) return
+        const activeId = active.id as string
+        const overId = over.id as string
 
+        // Both the lookup and the move read prevColumns. Resolving the two
+        // columns from the render's `columns` instead would go stale the moment
+        // this handler moved the card, and it fires again on every pointer move:
+        // the second call would still see the card in the column it came from,
+        // walk past the same-column guard, and splice a second copy into the
+        // one it had already been moved to. Two cards, one id, and React
+        // rendering both.
         setColumns((prevColumns) => {
-            const cardToMove = activeColumn.cards.find((c) => c.id === active.id)
+            const from = prevColumns.find((col) => col.cards.some((c) => c.id === activeId))
+            const to = prevColumns.find(
+                (col) => col.id === overId || col.cards.some((c) => c.id === overId)
+            )
+            if (!from || !to || from.id === to.id) return prevColumns
+
+            const cardToMove = from.cards.find((c) => c.id === activeId)
             if (!cardToMove) return prevColumns
 
             return prevColumns.map((column) => {
-                if (column.id === activeColumn.id) {
-                    return {...column, cards: column.cards.filter((c) => c.id !== active.id)}
+                if (column.id === from.id) {
+                    return {...column, cards: column.cards.filter((c) => c.id !== activeId)}
                 }
-                if (column.id === overColumn.id) {
-                    const overIndex = column.cards.findIndex((c) => c.id === over.id)
+                if (column.id === to.id) {
+                    const overIndex = column.cards.findIndex((c) => c.id === overId)
                     const insertIndex = overIndex >= 0 ? overIndex : column.cards.length
                     const newCards = [...column.cards]
                     newCards.splice(insertIndex, 0, cardToMove)
