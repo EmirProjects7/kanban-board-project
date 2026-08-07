@@ -106,6 +106,13 @@ jobs:
       - run: npm ci --prefix backend
       - run: npm ci --prefix frontend
 
+      # The client is generated into a gitignored folder, so it has to exist
+      # before anything compiles. Same step the backend job runs, except the
+      # database here is real and migrate deploy needs it anyway.
+      - name: Generate the Prisma client
+        run: npx prisma generate
+        working-directory: backend
+
       - name: Prepare the database
         run: npx prisma migrate deploy
         working-directory: backend
@@ -130,9 +137,11 @@ jobs:
         env:
           E2E_BASE_URL: http://localhost:5173
 
+      # Only useful when the stack got as far as starting, so a missing file
+      # here should not bury the error that actually failed the job.
       - name: Server logs
         if: failure()
-        run: tail -n 100 backend.log frontend.log
+        run: tail -n 100 backend.log frontend.log || true
 
       - uses: actions/upload-artifact@v4
         if: failure()
