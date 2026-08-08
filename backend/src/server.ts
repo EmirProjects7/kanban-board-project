@@ -3,7 +3,8 @@ import {createServer} from 'http'
 import {Server} from 'socket.io'
 import app, {FRONTEND_URL} from './app'
 import {initSocket} from './socket'
-import {userIdFromToken} from './token'
+import {claimsFromToken} from './token'
+import {isTokenCurrent} from './session'
 
 const requiredEnvVars = ['DATABASE_URL', 'JWT_SECRET'] as const
 const missingEnvVars = requiredEnvVars.filter((key) => !process.env[key])
@@ -27,18 +28,20 @@ const io = new Server(httpServer, {cors: {origin: FRONTEND_URL}})
 
 initSocket(io)
 
-io.use((socket, next) => {
+io.use(async (socket, next) => {
     const token = socket.handshake.auth.token
     if (!token) {
         return next(new Error('No token provided'))
     }
 
-    const userId = userIdFromToken(token)
-    if (!userId) {
+    // Same check the REST middleware makes, so a token retired by logging out
+    // cannot keep a socket open and carrying updates.
+    const claims = claimsFromToken(token)
+    if (!claims || !(await isTokenCurrent(claims))) {
         return next(new Error('Invalid token'))
     }
 
-    socket.data.userId = userId
+    socket.data.userId = claims.userId
     next()
 })
 

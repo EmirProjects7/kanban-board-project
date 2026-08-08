@@ -19,6 +19,9 @@ const {boardMock, columnMock, cardMock, transactionMock, emitBoardMock} = vi.hoi
     emitBoardMock: vi.fn(),
 }))
 
+// The version check has its own tests; here every signed token is current.
+vi.mock('../session', () => ({isTokenCurrent: () => Promise.resolve(true)}))
+
 vi.mock('../prisma', () => ({
     prisma: {
         board: boardMock,

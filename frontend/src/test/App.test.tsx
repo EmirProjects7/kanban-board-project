@@ -28,6 +28,7 @@ const {apiMock, socketMock, disconnectSocket} = vi.hoisted(() => ({
         saveBoard: vi.fn(),
         login: vi.fn(),
         register: vi.fn(),
+        logout: vi.fn(),
     },
     socketMock: {on: vi.fn(), off: vi.fn()},
     disconnectSocket: vi.fn(),
@@ -46,6 +47,7 @@ beforeEach(() => {
     apiMock.fetchBoards.mockResolvedValue(boards)
     apiMock.fetchColumns.mockResolvedValue(board)
     apiMock.fetchLabels.mockResolvedValue([])
+    apiMock.logout.mockResolvedValue(undefined)
 })
 
 describe('authentication gate', () => {
@@ -92,9 +94,11 @@ describe('logout', () => {
 
         fireEvent.click(screen.getByRole('button', {name: 'Logout'}))
 
+        // The server call goes first, so the local teardown lands a tick later.
+        expect(await screen.findByRole('heading', {name: 'Login'})).toBeInTheDocument()
+        expect(apiMock.logout).toHaveBeenCalledOnce()
         expect(apiMock.clearToken).toHaveBeenCalledOnce()
         expect(disconnectSocket).toHaveBeenCalledOnce()
-        expect(screen.getByRole('heading', {name: 'Login'})).toBeInTheDocument()
     })
 })
 

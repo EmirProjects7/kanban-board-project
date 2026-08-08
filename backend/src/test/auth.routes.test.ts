@@ -10,10 +10,13 @@ const {userMock} = vi.hoisted(() => ({
     userMock: {
         create: vi.fn(),
         findUnique: vi.fn(),
+        update: vi.fn(),
     },
 }))
 
 vi.mock('../prisma', () => ({prisma: {user: userMock}}))
+// The version check has its own tests; here every signed token is current.
+vi.mock('../session', () => ({isTokenCurrent: () => Promise.resolve(true)}))
 
 const app = express()
 app.use(express.json())
@@ -113,6 +116,24 @@ describe('POST /api/auth/login', () => {
         expect(decoded.userId).toBe('user-1')
     })
 
+    // Without this the token cannot be checked against the account later, and
+    // logging out would have nothing to compare.
+    it('signs the account version into the token', async () => {
+        userMock.findUnique.mockResolvedValue({
+            ...(await existingUser('secret123')),
+            tokenVersion: 7,
+        })
+
+        const res = await request(app)
+            .post('/api/auth/login')
+            .send({email: 'a@b.com', password: 'secret123'})
+
+        const decoded = jwt.verify(res.body.token, process.env.JWT_SECRET!) as {
+            tokenVersion: number
+        }
+        expect(decoded.tokenVersion).toBe(7)
+    })
+
     it('never returns the password hash', async () => {
         userMock.findUnique.mockResolvedValue(await existingUser('secret123'))
 
@@ -158,5 +179,30 @@ describe('POST /api/auth/login', () => {
 
         expect(compare).toHaveBeenCalledOnce()
         compare.mockRestore()
+    })
+})
+
+describe('POST /api/auth/logout', () => {
+    const auth = `Bearer ${jwt.sign({userId: 'user-1', tokenVersion: 0}, process.env.JWT_SECRET!)}`
+
+    // Clearing the token in the browser only forgets it locally. Bumping the
+    // version is what retires every copy of it that is still out there.
+    it('moves the account past every token it has issued', async () => {
+        userMock.update.mockResolvedValue({id: 'user-1', tokenVersion: 1})
+
+        const res = await request(app).post('/api/auth/logout').set('Authorization', auth)
+
+        expect(res.status).toBe(204)
+        expect(userMock.update).toHaveBeenCalledWith({
+            where: {id: 'user-1'},
+            data: {tokenVersion: {increment: 1}},
+        })
+    })
+
+    it('refuses without a token, so nobody can log anyone else out', async () => {
+        const res = await request(app).post('/api/auth/logout')
+
+        expect(res.status).toBe(401)
+        expect(userMock.update).not.toHaveBeenCalled()
     })
 })

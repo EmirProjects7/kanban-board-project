@@ -4,6 +4,7 @@ import jwt from 'jsonwebtoken'
 import {z} from 'zod'
 import {prisma} from '../prisma'
 import {Prisma} from '../generated/prisma/client'
+import {authenticate} from '../middleware/authenticate'
 
 const router = Router()
 
@@ -62,13 +63,27 @@ router.post('/login', async (req, res) => {
         return res.status(401).json({error: 'Invalid credentials'})
     }
 
+    // The version travels with the token so it can be checked on every request
+    // without the client having anything to do with it.
     const token = jwt.sign(
-        {userId: user.id},
+        {userId: user.id, tokenVersion: user.tokenVersion},
         process.env.JWT_SECRET!,
         {expiresIn: '7d'}
     )
 
     res.json({token: token, user: {id: user.id, email: user.email}})
+})
+
+// Clearing the token in the browser only forgets it locally; anyone holding a
+// copy could keep using it for the rest of the week. Bumping the version
+// retires every token this account has been issued, which is what makes
+// logging out mean something on a shared or lost machine.
+router.post('/logout', authenticate, async (req, res) => {
+    await prisma.user.update({
+        where: {id: req.userId},
+        data: {tokenVersion: {increment: 1}},
+    })
+    res.status(204).end()
 })
 
 export default router

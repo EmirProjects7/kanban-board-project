@@ -41,6 +41,8 @@ into place, and changes appear in any other open session straight away.
 
 - Passwords are hashed with bcrypt and never stored in plaintext
 - JWT authentication on both the REST endpoints and the WebSocket connection
+- Logging out retires the token on the server rather than only forgetting it in
+  the browser, so a copy taken off the machine stops working too
 - Ownership runs through the board on every write, including the individual
   cards in a reorder, so one user cannot move another user's card, or a card
   from one of their other boards, into the board they are looking at
@@ -204,6 +206,7 @@ comes from the login response.
 | --- | --- | --- |
 | `POST` | `/api/auth/register` | Create an account |
 | `POST` | `/api/auth/login` | Exchange credentials for a token |
+| `POST` | `/api/auth/logout` | Retire every token the account has been issued |
 | `GET` | `/api/boards` | The signed-in user's boards |
 | `POST` | `/api/boards` | Create a board |
 | `PUT` | `/api/boards/order` | Persist the order of the boards |

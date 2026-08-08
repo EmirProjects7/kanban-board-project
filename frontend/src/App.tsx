@@ -11,7 +11,7 @@ import Column from './components/Column'
 import AddColumnForm from './components/AddColumnForm'
 import {BoardSwitcher} from './components/BoardSwitcher'
 import {AuthForm} from './components/AuthForm'
-import {clearToken, getToken, setUnauthorizedHandler} from './api'
+import {clearToken, getToken, logout, setUnauthorizedHandler} from './api'
 import {disconnectSocket} from './socket'
 
 
@@ -88,7 +88,12 @@ function App() {
         localStorage.setItem('theme', theme)
     }, [theme])
 
-    function handleLogout() {
+    // The server call goes first, while the token is still in storage for the
+    // request to carry. It retires the token rather than only forgetting it
+    // here, so a copy taken off this machine stops working too. The local part
+    // runs either way, since a user who pressed log out is logged out.
+    async function handleLogout() {
+        await logout()
         clearToken()
         disconnectSocket()
         setIsAuthenticated(false)

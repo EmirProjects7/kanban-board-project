@@ -210,6 +210,21 @@ export async function login(email: string, password: string) {
     return response.json()
 }
 
+// Retires the token on the server, so a copy taken from this machine is not
+// still good for the rest of the week. Deliberately not routed through
+// `request`: a failure here must not stop the session ending locally, and a
+// 401 back would mean the token was already dead, which is the outcome anyway.
+export async function logout(): Promise<void> {
+    try {
+        await fetch(`${BASE_URL}/api/auth/logout`, {
+            method: 'POST',
+            headers: authHeaders(),
+        })
+    } catch (error) {
+        console.error(error)
+    }
+}
+
 function authHeaders(): Record<string, string> {
     const token = getToken()
     return {
