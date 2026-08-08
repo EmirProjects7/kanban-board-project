@@ -37,3 +37,6 @@ blob-report/
 *.njsproj
 *.sln
 *.sw?
+
+# Coverage
+coverage/

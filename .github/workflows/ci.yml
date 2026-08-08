@@ -36,8 +36,10 @@ jobs:
       - name: Type check
         run: npx tsc --noEmit
 
+      # Coverage carries thresholds, so a change that drops it fails here
+      # rather than going unnoticed until someone thinks to look.
       - name: Test
-        run: npm test
+        run: npm run test:coverage
 
       - name: Build
         run: npm run build
@@ -63,7 +65,7 @@ jobs:
         run: npm run lint
 
       - name: Test
-        run: npm test
+        run: npm run test:coverage
 
       - name: Build
         run: npm run build
