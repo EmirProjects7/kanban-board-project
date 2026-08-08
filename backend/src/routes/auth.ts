@@ -14,9 +14,8 @@ const credentialsSchema = z.object({
 })
 
 // Compared against when no user matches, so a miss costs the same as a hit.
-// Returning early instead would answer an unknown address in about a
-// millisecond and a known one in bcrypt's full time, and timing the two apart
-// tells an attacker which addresses are registered.
+// Returning early would answer unknown addresses faster, and timing them apart
+// tells an attacker which ones are registered.
 const absentUserHash = bcrypt.hashSync('no user with this address', 10)
 
 router.post('/register', async (req, res) => {
@@ -74,10 +73,8 @@ router.post('/login', async (req, res) => {
     res.json({token: token, user: {id: user.id, email: user.email}})
 })
 
-// Clearing the token in the browser only forgets it locally; anyone holding a
-// copy could keep using it for the rest of the week. Bumping the version
-// retires every token this account has been issued, which is what makes
-// logging out mean something on a shared or lost machine.
+// Clearing the token in the browser only forgets it locally. Bumping the
+// version retires every copy of it that is still out there.
 router.post('/logout', authenticate, async (req, res) => {
     await prisma.user.update({
         where: {id: req.userId},

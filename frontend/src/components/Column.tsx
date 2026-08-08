@@ -42,10 +42,9 @@ function Column({
     const [isEditing, setIsEditing] = useState(false)
     const [editValue, setEditValue] = useState(column.title)
 
-    // dnd-kit compares this list by reference to decide whether the order
-    // changed underneath it, and turns off its transitions for a frame when it
-    // thinks it did. Building it inline handed it a new array on every render,
-    // so the animation was permanently off and cards snapped into place.
+    // dnd-kit compares this by reference to spot an order change and drops its
+    // transitions when it sees one. Inline, that was every render, so the drag
+    // animation never ran.
     const cardIds = useMemo(() => column.cards.map((card) => card.id), [column.cards])
 
     const style = {
