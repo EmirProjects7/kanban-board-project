@@ -81,6 +81,49 @@ describe('addCard', () => {
         expect(titles).toContain('First')
         expect(titles).toContain('Second')
     })
+
+    // The server answers the write and broadcasts it, and the broadcast goes to
+    // this session too. When it wins the race the card is already in state by
+    // the time the response is handled, so appending it unconditionally put the
+    // same card in the column twice.
+    it('does not add the card twice when the broadcast arrives first', async () => {
+        const created = {id: 'card-2', title: 'New'}
+        let resolveCreate!: (card: unknown) => void
+        apiMock.createCard.mockReturnValue(
+            new Promise((resolve) => {
+                resolveCreate = resolve
+            })
+        )
+
+        const {result} = renderHook(() => useBoard('board-1'))
+        await waitFor(() => expect(result.current.columns).toEqual(board))
+
+        const broadcast = socketMock.on.mock.calls.find(
+            (call) => call[0] === 'board:updated'
+        )?.[1]
+
+        let adding!: Promise<void>
+        act(() => {
+            adding = result.current.addCard('col-1', 'New')
+        })
+
+        act(() => {
+            broadcast({
+                boardId: 'board-1',
+                columns: [
+                    {id: 'col-1', title: 'Todo', cards: [{id: 'card-1', title: 'Task'}, created]},
+                    {id: 'col-2', title: 'Done', cards: []},
+                ],
+            })
+        })
+
+        await act(async () => {
+            resolveCreate(created)
+            await adding
+        })
+
+        expect(result.current.columns[0].cards.map((c) => c.id)).toEqual(['card-1', 'card-2'])
+    })
 })
 
 describe('deleteCard', () => {
@@ -122,6 +165,39 @@ describe('addColumn and deleteColumn', () => {
         })
 
         expect(result.current.columns).toHaveLength(3)
+    })
+
+    it('does not add the column twice when the broadcast arrives first', async () => {
+        const created = {id: 'col-3', title: 'Backlog', cards: []}
+        let resolveCreate!: (column: unknown) => void
+        apiMock.createColumn.mockReturnValue(
+            new Promise((resolve) => {
+                resolveCreate = resolve
+            })
+        )
+
+        const {result} = renderHook(() => useBoard('board-1'))
+        await waitFor(() => expect(result.current.columns).toEqual(board))
+
+        const broadcast = socketMock.on.mock.calls.find(
+            (call) => call[0] === 'board:updated'
+        )?.[1]
+
+        let adding!: Promise<void>
+        act(() => {
+            adding = result.current.addColumn('Backlog')
+        })
+
+        act(() => {
+            broadcast({boardId: 'board-1', columns: [...board, created]})
+        })
+
+        await act(async () => {
+            resolveCreate(created)
+            await adding
+        })
+
+        expect(result.current.columns.map((c) => c.id)).toEqual(['col-1', 'col-2', 'col-3'])
     })
 
     it('removes a deleted column', async () => {

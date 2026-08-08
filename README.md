@@ -7,6 +7,8 @@ A full-stack, real-time Kanban board with secure authentication and personal boa
 Every user signs in and sees only their own boards. Cards and columns are dragged
 into place, and changes appear in any other open session straight away.
 
+![Two sessions of the same board side by side. Only the left one is used; the right one updates over the socket without a reload.](docs/demo.gif)
+
 ## Features
 
 - **Drag and drop** — reorder cards inside a column, move them between columns, drag whole columns into a new order, and reorder the boards themselves (dnd-kit)

@@ -67,3 +67,95 @@ jobs:
 
       - name: Build
         run: npm run build
+
+  e2e:
+    name: E2E
+    runs-on: ubuntu-latest
+    # A stack that never comes up sits in the wait below doing nothing, and the
+    # default limit is six hours, so a stuck run takes that long to report a
+    # failure anyone could have seen in one minute.
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: kanban
+          POSTGRES_PASSWORD: kanban
+          POSTGRES_DB: kanban_e2e
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql://kanban:kanban@localhost:5432/kanban_e2e
+      JWT_SECRET: e2e-secret-used-nowhere-else
+      BACKEND_HOST: 127.0.0.1
+      BACKEND_PORT: '3000'
+      FRONTEND_URL: http://localhost:5173
+      VITE_API_URL: http://localhost:3000
+      # The suite registers an account per test, which the production auth
+      # limit of ten per fifteen minutes would cut off partway through.
+      NODE_ENV: development
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+      - run: npm ci --prefix backend
+      - run: npm ci --prefix frontend
+
+      # The client is generated into a gitignored folder, so it has to exist
+      # before anything compiles. Same step the backend job runs, except the
+      # database here is real and migrate deploy needs it anyway.
+      - name: Generate the Prisma client
+        run: npx prisma generate
+        working-directory: backend
+
+      - name: Prepare the database
+        run: npx prisma migrate deploy
+        working-directory: backend
+
+      - run: npm run build --prefix frontend
+
+      - name: Install the browser
+        run: npx playwright install --with-deps chromium
+
+      # The frontend is served from its build, so the suite exercises what a
+      # build actually produces. The API runs through tsx rather than
+      # dist/server.js: the Prisma 7 client is emitted as ESM and the backend
+      # compiles to commonjs, so the compiled entry point throws on import.meta
+      # before it can listen. That is a real problem with `npm start` and worth
+      # its own fix, but not one to make here.
+      #
+      # localhost rather than 127.0.0.1 in the wait: vite preview binds ::1
+      # only, so the dotted spelling never answers and the step hangs. It is
+      # also the spelling CORS and the socket handshake are pinned to.
+      - name: Start the stack
+        run: |
+          npm run dev --prefix backend > backend.log 2>&1 &
+          npm run preview --prefix frontend -- --port 5173 --strictPort > frontend.log 2>&1 &
+          npx --yes wait-on http://localhost:3000/health http://localhost:5173 --timeout 90000
+
+      - name: Run the E2E suite
+        run: npx playwright test
+        env:
+          E2E_BASE_URL: http://localhost:5173
+
+      # Only useful when the stack got as far as starting, so a missing file
+      # here should not bury the error that actually failed the job.
+      - name: Server logs
+        if: failure()
+        run: tail -n 100 backend.log frontend.log || true
+
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
