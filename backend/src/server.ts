@@ -12,6 +12,21 @@ if (missingEnvVars.length > 0) {
     process.exit(1)
 }
 
+// Refusing to start beats starting with a secret anyone can guess. Every
+// session token is signed with this, so a weak one is not a weak password for
+// one account, it is the ability to mint a token for any account. The readme
+// says to generate one with `openssl rand -base64 32`, which lands at 44
+// characters; 32 leaves room for other generators without accepting a value
+// somebody typed by hand.
+const MINIMUM_SECRET_LENGTH = 32
+if (process.env.JWT_SECRET!.length < MINIMUM_SECRET_LENGTH) {
+    console.error(
+        `JWT_SECRET must be at least ${MINIMUM_SECRET_LENGTH} characters. ` +
+            'Generate one with: openssl rand -base64 32'
+    )
+    process.exit(1)
+}
+
 // Deliberately not PORT: one `npm run dev` starts both apps, so a generic
 // PORT in the environment would be picked up by the frontend dev server too.
 const PORT = Number(process.env.BACKEND_PORT) || 3000
