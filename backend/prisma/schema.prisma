@@ -3,9 +3,13 @@
 
 // Get a free hosted Postgres database in seconds: `npx create-db`
 
+// The generator emits ESM by default, which tsc then compiles alongside a
+// commonjs backend. The result builds but throws on import.meta the moment
+// dist/server.js is run, so `npm start` never got as far as listening.
 generator client {
-  provider = "prisma-client"
-  output   = "../src/generated/prisma"
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  moduleFormat = "cjs"
 }
 
 datasource db {
