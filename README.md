@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/EmirProjects7/kanban-board-project/actions/workflows/ci.yml/badge.svg)](https://github.com/EmirProjects7/kanban-board-project/actions/workflows/ci.yml)
 [![backend coverage](https://img.shields.io/badge/backend%20coverage-96%25-brightgreen)](#tests-and-coverage)
-[![frontend coverage](https://img.shields.io/badge/frontend%20coverage-77%25-green)](#tests-and-coverage)
+[![frontend coverage](https://img.shields.io/badge/frontend%20coverage-85%25-brightgreen)](#tests-and-coverage)
 
 A full-stack, real-time Kanban board with secure authentication and personal boards.
 
@@ -139,12 +139,12 @@ This starts Postgres in Docker, the API and the frontend together.
 
 ## Tests and coverage
 
-350 tests: 126 on the API, 221 on the UI, and 3 end-to-end in a real browser.
+393 tests: 135 on the API, 254 on the UI, and 4 end-to-end in a real browser.
 
 | Workspace | Statements | Branches | Functions | Lines |
 | --- | --- | --- | --- | --- |
-| Backend | 96.5% | 92.8% | 95.7% | 96.4% |
-| Frontend | 76.0% | 77.3% | 70.8% | 77.0% |
+| Backend | 96.6% | 93.2% | 95.9% | 96.5% |
+| Frontend | 84.9% | 80.6% | 82.2% | 85.9% |
 
 Both suites run with thresholds set just under those figures, so a change that
 drops coverage fails CI rather than going unnoticed. The generated Prisma
@@ -158,8 +158,9 @@ npm run test:coverage --prefix backend
 
 The end-to-end suite is separate and needs the stack running. It covers what
 the unit tests cannot reach: that a dragged card is still in its new column
-after a reload, that a rename survives one, and that a card added in one
-session arrives in another over the socket without a reload.
+after a reload, that a rename survives one, that a card added in one session
+arrives in another over the socket without a reload, and that logging out
+stops the token working rather than only clearing it in the browser.
 
 ```bash
 npm run e2e
