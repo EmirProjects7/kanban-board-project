@@ -123,24 +123,21 @@ jobs:
         run: npx prisma migrate deploy
         working-directory: backend
 
+      - run: npm run build --prefix backend
       - run: npm run build --prefix frontend
 
       - name: Install the browser
         run: npx playwright install --with-deps chromium
 
-      # The frontend is served from its build, so the suite exercises what a
-      # build actually produces. The API runs through tsx rather than
-      # dist/server.js: the Prisma 7 client is emitted as ESM and the backend
-      # compiles to commonjs, so the compiled entry point throws on import.meta
-      # before it can listen. That is a real problem with `npm start` and worth
-      # its own fix, but not one to make here.
+      # Both halves run from their build, so the suite exercises what a build
+      # actually produces rather than what the dev servers do.
       #
       # localhost rather than 127.0.0.1 in the wait: vite preview binds ::1
       # only, so the dotted spelling never answers and the step hangs. It is
       # also the spelling CORS and the socket handshake are pinned to.
       - name: Start the stack
         run: |
-          npm run dev --prefix backend > backend.log 2>&1 &
+          npm start --prefix backend > backend.log 2>&1 &
           npm run preview --prefix frontend -- --port 5173 --strictPort > frontend.log 2>&1 &
           npx --yes wait-on http://localhost:3000/health http://localhost:5173 --timeout 90000
 
