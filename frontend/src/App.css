@@ -916,7 +916,12 @@ body {
 
 .card-edit-input {
     display: block;
-    width: 100%;
+    /* Sized to the text rather than the card, so the space beside it belongs
+       to the card and a click there closes the rename instead of landing in a
+       field that only looks like empty card. The size attribute carries the
+       width; max-width stops a long title pushing past the card. */
+    width: auto;
+    max-width: 100%;
     margin: 0;
     padding: 0;
     font-family: inherit;

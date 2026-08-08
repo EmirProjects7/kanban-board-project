@@ -70,6 +70,11 @@ function Card({
                 {isEditing ? (
                     <input
                         className="card-edit-input"
+                        // Width follows the text. A full width field would look
+                        // like empty card to the right of the title, and
+                        // clicking there would land in the input rather than
+                        // closing the rename.
+                        size={Math.max(editValue.length, 1)}
                         value={editValue}
                         onChange={(e) => setEditValue(e.target.value)}
                         onBlur={handleSave}
