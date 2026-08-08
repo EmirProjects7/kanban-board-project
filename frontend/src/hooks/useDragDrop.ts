@@ -50,13 +50,9 @@ export function useDragAndDrop(
         const activeId = active.id as string
         const overId = over.id as string
 
-        // Both the lookup and the move read prevColumns. Resolving the two
-        // columns from the render's `columns` instead would go stale the moment
-        // this handler moved the card, and it fires again on every pointer move:
-        // the second call would still see the card in the column it came from,
-        // walk past the same-column guard, and splice a second copy into the
-        // one it had already been moved to. Two cards, one id, and React
-        // rendering both.
+        // Look up the columns in prevColumns, not in `columns`. This fires on
+        // every pointer move, and the render's copy goes stale after the first
+        // one, which used to splice the card into the target twice.
         setColumns((prevColumns) => {
             const from = prevColumns.find((col) => col.cards.some((c) => c.id === activeId))
             const to = prevColumns.find(

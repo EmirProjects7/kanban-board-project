@@ -61,19 +61,17 @@ function Card({
                 {...listeners}
                 className="card"
                 tabIndex={0}
-                // Anywhere on the card opens it, not just the button in the
-                // corner. The title text takes this back for renaming. The
-                // pointer sensor only arms after five pixels of movement, so a
-                // double click in place cannot be mistaken for a drag.
+                // Anywhere on the card opens it; the title text takes this back
+                // for renaming. Safe next to the drag sensor, which needs five
+                // pixels of movement before it arms.
                 onDoubleClick={() => setIsOpen(true)}
             >
                 {isEditing ? (
                     <input
                         className="card-edit-input"
-                        // Width follows the text. A full width field would look
-                        // like empty card to the right of the title, and
-                        // clicking there would land in the input rather than
-                        // closing the rename.
+                        // Width follows the text, so the space beside a short
+                        // title belongs to the card and a click there closes
+                        // the rename.
                         size={Math.max(editValue.length, 1)}
                         value={editValue}
                         onChange={(e) => setEditValue(e.target.value)}

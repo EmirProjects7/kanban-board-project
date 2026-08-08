@@ -203,9 +203,7 @@ export function BoardSwitcher({
                                                             role="menuitem"
                                                             className="row-menu-danger"
                                                             onClick={() => handleDelete(board)}
-                                                            // The server refuses
-                                                            // to delete the last
-                                                            // board as well.
+                                                            // The server refuses this too.
                                                             disabled={boards.length <= 1}
                                                         >
                                                             Delete
