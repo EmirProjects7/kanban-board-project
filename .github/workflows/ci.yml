@@ -71,8 +71,9 @@ jobs:
   e2e:
     name: E2E
     runs-on: ubuntu-latest
-    # A stack that never comes up would otherwise sit in the wait below until
-    # the six hour default, burning the whole budget on one stuck run.
+    # A stack that never comes up sits in the wait below doing nothing, and the
+    # default limit is six hours, so a stuck run takes that long to report a
+    # failure anyone could have seen in one minute.
     timeout-minutes: 15
     services:
       postgres:
