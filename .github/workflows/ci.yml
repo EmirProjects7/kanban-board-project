@@ -92,7 +92,10 @@ jobs:
           --health-retries 10
     env:
       DATABASE_URL: postgresql://kanban:kanban@localhost:5432/kanban_e2e
-      JWT_SECRET: e2e-secret-used-nowhere-else
+      # Long enough to clear the minimum the server enforces at startup. Still
+      # a throwaway: it exists for the length of one job, on a runner that is
+      # destroyed afterwards.
+      JWT_SECRET: e2e-secret-used-nowhere-else-and-long-enough-to-start-the-server
       BACKEND_HOST: 127.0.0.1
       BACKEND_PORT: '3000'
       FRONTEND_URL: http://localhost:5173
