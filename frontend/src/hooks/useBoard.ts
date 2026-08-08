@@ -55,10 +55,15 @@ export function useBoard(boardId: string | null) {
     async function addCard(columnId: string, title: string) {
         await attempt('Could not add the card.', async () => {
             const newCard: Card = await api.createCard(columnId, title)
+            // The write is broadcast to this session too, and that message can
+            // arrive before the response it came from. Appending either way
+            // would put the same card in the column twice.
             setColumns((prev) =>
-                prev.map((column) =>
-                    column.id === columnId ? {...column, cards: [...column.cards, newCard]} : column
-                )
+                prev.map((column) => {
+                    if (column.id !== columnId) return column
+                    if (column.cards.some((c) => c.id === newCard.id)) return column
+                    return {...column, cards: [...column.cards, newCard]}
+                })
             )
         })
     }
@@ -129,7 +134,11 @@ export function useBoard(boardId: string | null) {
         if (!boardId) return
         await attempt('Could not add the column.', async () => {
             const newColumn: Column = await api.createColumn(boardId, title)
-            setColumns((prev) => [...prev, newColumn])
+            // Same race as addCard: the broadcast for this write can beat the
+            // response, leaving the column already in place.
+            setColumns((prev) =>
+                prev.some((column) => column.id === newColumn.id) ? prev : [...prev, newColumn]
+            )
         })
     }
 
