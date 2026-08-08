@@ -43,36 +43,54 @@ describe('Card', () => {
         expect(deletedId).toBe('card-42')
     })
 
-    it('enters edit mode on double click', () => {
+    it('enters edit mode when the title text is double clicked', () => {
         renderCard({title: 'Editable'})
         fireEvent.doubleClick(screen.getByText('Editable'))
         expect(screen.getByDisplayValue('Editable')).toBeInTheDocument()
     })
 })
 
-describe('what opens the editor', () => {
-    it('opens when the text itself is double clicked', () => {
+// Two double click targets a few pixels apart, so which one answers where is
+// worth pinning down.
+describe('what a double click does', () => {
+    it('renames from the title text, and does not open the detail with it', () => {
         renderCard({title: 'Editable'})
 
         fireEvent.doubleClick(screen.getByText('Editable'))
 
         expect(screen.getByDisplayValue('Editable')).toBeInTheDocument()
+        expect(screen.queryByLabelText('Card title')).not.toBeInTheDocument()
     })
 
-    it('stays shut when the card around the text is double clicked', () => {
+    // The button in the corner is a small target, so the rest of the card
+    // answers too, padding included.
+    // Checked by class rather than by value: the detail carries a title field
+    // of its own holding the same text, so a value lookup matches either one.
+    it('opens the detail from the card around the text', () => {
         const {container} = renderCard({title: 'Editable'})
 
         fireEvent.doubleClick(container.querySelector('.card')!)
 
-        expect(screen.queryByDisplayValue('Editable')).not.toBeInTheDocument()
+        expect(screen.getByLabelText('Card title')).toBeInTheDocument()
+        expect(container.querySelector('.card-edit-input')).toBeNull()
     })
 
-    it('stays shut when the delete button is double clicked', () => {
+    it('still opens the detail from the button', () => {
         renderCard({title: 'Editable'})
+
+        fireEvent.click(screen.getByLabelText('Open Editable'))
+
+        expect(screen.getByLabelText('Card title')).toBeInTheDocument()
+    })
+
+    // Otherwise a quick second click on delete opens the card it just removed.
+    it('does nothing when the delete button is double clicked', () => {
+        const {container} = renderCard({title: 'Editable'})
 
         fireEvent.doubleClick(screen.getByLabelText('Delete Editable'))
 
-        expect(screen.queryByDisplayValue('Editable')).not.toBeInTheDocument()
+        expect(screen.queryByLabelText('Card title')).not.toBeInTheDocument()
+        expect(container.querySelector('.card-edit-input')).toBeNull()
     })
 })
 

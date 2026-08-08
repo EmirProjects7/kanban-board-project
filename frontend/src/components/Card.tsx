@@ -61,6 +61,11 @@ function Card({
                 {...listeners}
                 className="card"
                 tabIndex={0}
+                // Anywhere on the card opens it, not just the button in the
+                // corner. The title text takes this back for renaming. The
+                // pointer sensor only arms after five pixels of movement, so a
+                // double click in place cannot be mistaken for a drag.
+                onDoubleClick={() => setIsOpen(true)}
             >
                 {isEditing ? (
                     <input
@@ -74,6 +79,7 @@ function Card({
                         }}
                         autoFocus
                         onPointerDown={(e) => e.stopPropagation()}
+                        onDoubleClick={(e) => e.stopPropagation()}
                     />
                 ) : (
                     <div className="card-body">
@@ -90,10 +96,17 @@ function Card({
                             </div>
                         )}
                         <div className="card-title-row">
-                            {/* Only the text opens the inline editor. Double
-                                clicking the padding or the buttons used to
-                                start a rename too. */}
-                            <span className="card-title" onDoubleClick={() => setIsEditing(true)}>
+                            {/* The text renames, everything around it opens the
+                                card. stopPropagation is what keeps the two
+                                apart: without it a rename would open the detail
+                                on the way up. */}
+                            <span
+                                className="card-title"
+                                onDoubleClick={(e) => {
+                                    e.stopPropagation()
+                                    setIsEditing(true)
+                                }}
+                            >
                                 {card.title}
                             </span>
                             {hasDescription && (
@@ -122,7 +135,11 @@ function Card({
                         )}
                     </div>
                 )}
-                <div className="card-actions">
+                {/* Double clicks stop here. Without this, hitting delete twice
+                    in quick succession would also open the card it just
+                    removed. The button stays as the keyboard route in, since
+                    the sortable already answers to Enter and Space. */}
+                <div className="card-actions" onDoubleClick={(e) => e.stopPropagation()}>
                     <button
                         className="card-open-button"
                         onClick={() => setIsOpen(true)}

@@ -14,8 +14,8 @@ into place, and changes appear in any other open session straight away.
 ## Features
 
 - **Drag and drop** — reorder cards inside a column, move them between columns, drag whole columns into a new order, and reorder the boards themselves (dnd-kit)
-- **Inline editing** — double click a card or a column title to rename it
-- **Card detail** — open a card to write a description; cards carrying notes are marked on the board
+- **Inline editing** — double click a card title or a column title to rename it
+- **Card detail** — double click anywhere else on a card to open it, or use the button in its corner; write a description there, and cards carrying notes are marked on the board
 - **Labels** — colour them, pin them onto cards, and narrow the board to the ones you pick
 - **Due dates** — give a card a day; late ones turn red and today stands out
 - **Secure authentication** — register and log in with hashed passwords (bcrypt) and JWT sessions
