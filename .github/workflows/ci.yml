@@ -71,6 +71,9 @@ jobs:
   e2e:
     name: E2E
     runs-on: ubuntu-latest
+    # A stack that never comes up would otherwise sit in the wait below until
+    # the six hour default, burning the whole budget on one stuck run.
+    timeout-minutes: 15
     services:
       postgres:
         image: postgres:16
@@ -117,20 +120,26 @@ jobs:
         run: npx prisma migrate deploy
         working-directory: backend
 
-      - run: npm run build --prefix backend
       - run: npm run build --prefix frontend
 
       - name: Install the browser
         run: npx playwright install --with-deps chromium
 
-      # The built output rather than the dev servers, so the suite runs against
-      # what a build actually produces. E2E_BASE_URL tells the config the stack
-      # is already up, so it does not try to start one of its own.
+      # The frontend is served from its build, so the suite exercises what a
+      # build actually produces. The API runs through tsx rather than
+      # dist/server.js: the Prisma 7 client is emitted as ESM and the backend
+      # compiles to commonjs, so the compiled entry point throws on import.meta
+      # before it can listen. That is a real problem with `npm start` and worth
+      # its own fix, but not one to make here.
+      #
+      # localhost rather than 127.0.0.1 in the wait: vite preview binds ::1
+      # only, so the dotted spelling never answers and the step hangs. It is
+      # also the spelling CORS and the socket handshake are pinned to.
       - name: Start the stack
         run: |
-          node backend/dist/server.js > backend.log 2>&1 &
+          npm run dev --prefix backend > backend.log 2>&1 &
           npm run preview --prefix frontend -- --port 5173 --strictPort > frontend.log 2>&1 &
-          npx --yes wait-on http://127.0.0.1:3000/health http://127.0.0.1:5173
+          npx --yes wait-on http://localhost:3000/health http://localhost:5173 --timeout 90000
 
       - name: Run the E2E suite
         run: npx playwright test
