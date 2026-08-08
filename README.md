@@ -1,6 +1,8 @@
 # Kanban Board
 
 [![CI](https://github.com/EmirProjects7/kanban-board-project/actions/workflows/ci.yml/badge.svg)](https://github.com/EmirProjects7/kanban-board-project/actions/workflows/ci.yml)
+[![backend coverage](https://img.shields.io/badge/backend%20coverage-96%25-brightgreen)](#tests-and-coverage)
+[![frontend coverage](https://img.shields.io/badge/frontend%20coverage-77%25-green)](#tests-and-coverage)
 
 A full-stack, real-time Kanban board with secure authentication and personal boards.
 
@@ -133,6 +135,34 @@ This starts Postgres in Docker, the API and the frontend together.
 - App — http://localhost:5173
 - API — http://localhost:3000 (returns the endpoint list and whether the database is reachable)
 
+## Tests and coverage
+
+350 tests: 126 on the API, 221 on the UI, and 3 end-to-end in a real browser.
+
+| Workspace | Statements | Branches | Functions | Lines |
+| --- | --- | --- | --- | --- |
+| Backend | 96.5% | 92.8% | 95.7% | 96.4% |
+| Frontend | 76.0% | 77.3% | 70.8% | 77.0% |
+
+Both suites run with thresholds set just under those figures, so a change that
+drops coverage fails CI rather than going unnoticed. The generated Prisma
+client, `server.ts` and the test folders themselves are excluded from the
+measurement, since none of them say anything about how well the source is
+covered.
+
+```bash
+npm run test:coverage --prefix backend
+```
+
+The end-to-end suite is separate and needs the stack running. It covers what
+the unit tests cannot reach: that a dragged card is still in its new column
+after a reload, that a rename survives one, and that a card added in one
+session arrives in another over the socket without a reload.
+
+```bash
+npm run e2e
+```
+
 ## Scripts
 
 From the repository root:
@@ -148,6 +178,9 @@ Per workspace:
 | --- | --- |
 | `npm test --prefix backend` | Backend test suite |
 | `npm test --prefix frontend` | Frontend test suite |
+| `npm run test:coverage --prefix backend` | Backend suite with a coverage report |
+| `npm run test:coverage --prefix frontend` | Frontend suite with a coverage report |
+| `npm run e2e` | End-to-end suite, starts the stack itself |
 | `npm run build --prefix backend` | Type-check and compile the API |
 | `npm run build --prefix frontend` | Production build of the frontend |
 | `npm run lint --prefix backend` | ESLint on the API |
