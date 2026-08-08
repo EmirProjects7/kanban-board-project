@@ -203,9 +203,8 @@ router.put('/:boardId/columns', authenticate, async (req, res) => {
         }
     }
 
-    // The position of a column in the payload is its new order, same as the
-    // position of a card within a column. Applied as a single transaction so a
-    // mid-batch failure can't leave the board partially reordered.
+    // Position in the payload is the new order. One transaction, so a failure
+    // partway cannot leave the board half reordered.
     await prisma.$transaction([
         ...updatedColumns.map((column, index) =>
             prisma.column.update({

@@ -84,7 +84,6 @@ router.put('/:cardId/labels/:labelId', authenticate, async (req, res) => {
         return res.status(403).json({error: 'Not allowed'})
     }
 
-    // Attaching twice is not an error, it just stays attached.
     await prisma.cardLabel.upsert({
         where: {cardId_labelId: {cardId: cardId, labelId: labelId}},
         create: {cardId: cardId, labelId: labelId},
