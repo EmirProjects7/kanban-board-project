@@ -21,6 +21,17 @@ updates:
         update-types:
           - minor
           - patch
+    ignore:
+      # typescript-eslint pins its peer to typescript <6.1.0, and 8.66.0, the
+      # newest there is, still does. So TypeScript 7 cannot install here at all:
+      # npm ci fails on ERESOLVE before any of our code is reached. Dependabot
+      # would raise that same unmergeable pull request every week.
+      #
+      # Drop this once typescript-eslint accepts 7. Minor and patch updates to
+      # typescript still come through.
+      - dependency-name: typescript
+        update-types:
+          - version-update:semver-major
     commit-message:
       prefix: chore
 
