@@ -19,11 +19,21 @@ export function useBoards(isAuthenticated: boolean) {
         }
     }
 
+    // A failed load leaves the app showing an empty account, which is not what
+    // happened. Bumping this runs the effect again, so the error can offer a
+    // way out instead of only being dismissed.
+    const [attemptCount, setAttemptCount] = useState(0)
+
+    function retryLoad() {
+        setAttemptCount((count) => count + 1)
+    }
+
     useEffect(() => {
         if (!isAuthenticated) return
         api.fetchBoards()
             .then((loaded) => {
                 setBoards(loaded)
+                setError(null)
                 // Reopen whatever was last in view, as long as it still exists.
                 const remembered = localStorage.getItem(ACTIVE_BOARD_KEY)
                 const wanted = loaded.find((board) => board.id === remembered)
@@ -33,7 +43,7 @@ export function useBoards(isAuthenticated: boolean) {
                 console.error(err)
                 setError('Could not load your boards.')
             })
-    }, [isAuthenticated])
+    }, [isAuthenticated, attemptCount])
 
     function selectBoard(boardId: string) {
         setActiveBoardId(boardId)
@@ -97,5 +107,6 @@ export function useBoards(isAuthenticated: boolean) {
         reorderBoards,
         error,
         dismissError,
+        retryLoad,
     }
 }

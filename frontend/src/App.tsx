@@ -27,6 +27,7 @@ function App() {
         reorderBoards,
         error: boardsError,
         dismissError: dismissBoardsError,
+        retryLoad: retryBoards,
     } = useBoards(isAuthenticated)
     const {
         columns,
@@ -43,6 +44,7 @@ function App() {
         saveBoard,
         error,
         dismissError,
+        retryLoad: retryBoard,
         isDraggingRef
     } = useBoard(activeBoardId)
     const {
@@ -139,6 +141,18 @@ function App() {
             {(boardsError ?? labelsError ?? error) && (
                 <div className="board-error" role="alert">
                     <span>{boardsError ?? labelsError ?? error}</span>
+                    {/* A load that failed leaves the board empty, which reads as
+                        an empty account rather than a request that did not
+                        arrive. Dismissing alone would leave that lie on screen,
+                        so the ones that can be tried again offer it. */}
+                    {(boardsError ?? error) && (
+                        <button
+                            className="board-error-retry"
+                            onClick={boardsError ? retryBoards : retryBoard}
+                        >
+                            Try again
+                        </button>
+                    )}
                     <button
                         onClick={
                             boardsError

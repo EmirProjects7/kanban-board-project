@@ -25,15 +25,26 @@ export function useBoard(boardId: string | null) {
         setError(null)
     }
 
+    // Same as in useBoards: a failed load otherwise leaves an empty board on
+    // screen with no way back other than reloading the page.
+    const [attemptCount, setAttemptCount] = useState(0)
+
+    function retryLoad() {
+        setAttemptCount((count) => count + 1)
+    }
+
     useEffect(() => {
         if (!boardId) return
         api.fetchColumns(boardId)
-            .then((data) => setColumns(data))
+            .then((data) => {
+                setColumns(data)
+                setError(null)
+            })
             .catch((err) => {
                 console.error(err)
                 setError('Could not load the board.')
             })
-    }, [boardId])
+    }, [boardId, attemptCount])
 
     useEffect(() => {
         if (!boardId) {
@@ -181,6 +192,7 @@ export function useBoard(boardId: string | null) {
         editColumn,
         deleteColumn,
         saveBoard,
+        retryLoad,
         isDraggingRef
     }
 

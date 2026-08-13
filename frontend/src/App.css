@@ -369,6 +369,23 @@ body {
     outline-offset: 1px;
 }
 
+/* Sits beside the dismiss cross, so it needs to read as the action rather
+   than as another glyph. Pushed right, next to the ×, since the message
+   takes the space on the left. */
+.board-error-retry {
+    margin-left: auto;
+    padding: 3px 10px;
+    font-size: 12px;
+    font-weight: 600;
+    border: 1px solid color-mix(in srgb, var(--danger) 45%, transparent);
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.board-error-retry:hover {
+    background: color-mix(in srgb, var(--danger) 15%, transparent);
+}
+
 /* Board -------------------------------------------------------------- */
 
 .board {
