@@ -23,7 +23,6 @@ playwright-report/
 blob-report/
 
 # Local tooling
-.claude
 .agents
 .windsurf
 
