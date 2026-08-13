@@ -373,3 +373,21 @@ describe('failed requests', () => {
         expect(result.current.error).toBeNull()
     })
 })
+
+describe('retryLoad', () => {
+    it('loads the board on a second attempt after a failure', async () => {
+        apiMock.fetchColumns.mockRejectedValueOnce(new Error('network down'))
+        apiMock.fetchColumns.mockResolvedValue(board)
+
+        const {result} = renderHook(() => useBoard('board-1'))
+        await waitFor(() => expect(result.current.error).toBe('Could not load the board.'))
+        expect(result.current.columns).toEqual([])
+
+        await act(async () => {
+            result.current.retryLoad()
+        })
+
+        await waitFor(() => expect(result.current.columns).toEqual(board))
+        expect(result.current.error).toBeNull()
+    })
+})

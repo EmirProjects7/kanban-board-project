@@ -254,3 +254,38 @@ describe('errors', () => {
         expect(result.current.error).toBeNull()
     })
 })
+
+describe('retryLoad', () => {
+    // A failed load leaves an empty board on screen, which reads as an empty
+    // account. Without this the only way back was reloading the page.
+    it('loads the boards on a second attempt after a failure', async () => {
+        apiMock.fetchBoards.mockRejectedValueOnce(new Error('network down'))
+        apiMock.fetchBoards.mockResolvedValue(boards)
+
+        const {result} = renderHook(() => useBoards(true))
+        await waitFor(() => expect(result.current.error).toBe('Could not load your boards.'))
+        expect(result.current.boards).toEqual([])
+
+        await act(async () => {
+            result.current.retryLoad()
+        })
+
+        await waitFor(() => expect(result.current.boards).toEqual(boards))
+        expect(result.current.error).toBeNull()
+        expect(result.current.activeBoardId).toBe('board-1')
+    })
+
+    it('keeps reporting the failure when the retry fails too', async () => {
+        apiMock.fetchBoards.mockRejectedValue(new Error('still down'))
+
+        const {result} = renderHook(() => useBoards(true))
+        await waitFor(() => expect(result.current.error).toBe('Could not load your boards.'))
+
+        await act(async () => {
+            result.current.retryLoad()
+        })
+
+        await waitFor(() => expect(apiMock.fetchBoards).toHaveBeenCalledTimes(2))
+        expect(result.current.error).toBe('Could not load your boards.')
+    })
+})
