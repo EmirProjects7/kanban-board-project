@@ -7,6 +7,8 @@ import {useBoards} from './hooks/useBoards'
 import {useLabels} from './hooks/useLabels'
 import {useDragAndDrop} from './hooks/useDragDrop'
 import {LabelFilter} from './components/LabelFilter'
+import {CardSearch} from './components/CardSearch'
+import {cardMatches, isBlankQuery} from './search'
 import Column from './components/Column'
 import AddColumnForm from './components/AddColumnForm'
 import {BoardSwitcher} from './components/BoardSwitcher'
@@ -54,19 +56,31 @@ function App() {
         dismissError: dismissLabelsError,
     } = useLabels(activeBoardId)
     const [filterIds, setFilterIds] = useState<Set<string>>(new Set())
+    const [query, setQuery] = useState('')
     const activeBoard = boards.find((board) => board.id === activeBoardId) ?? null
 
     // Filtering hides cards from view only. The columns handed to drag and drop
     // stay whole, so a drop never reorders around cards that are out of sight.
+    //
+    // Labels and the search narrow together rather than either winning: picking
+    // a label and typing a word should leave the cards that answer to both.
     const visibleColumns = useMemo(() => {
-        if (filterIds.size === 0) return columns
+        if (filterIds.size === 0 && isBlankQuery(query)) return columns
         return columns.map((column) => ({
             ...column,
-            cards: column.cards.filter((card) =>
-                (card.labels ?? []).some((entry) => filterIds.has(entry.label.id))
-            ),
+            cards: column.cards.filter((card) => {
+                const labelled =
+                    filterIds.size === 0 ||
+                    (card.labels ?? []).some((entry) => filterIds.has(entry.label.id))
+                return labelled && cardMatches(card, query)
+            }),
         }))
-    }, [columns, filterIds])
+    }, [columns, filterIds, query])
+
+    const matchCount = useMemo(
+        () => visibleColumns.reduce((total, column) => total + column.cards.length, 0),
+        [visibleColumns]
+    )
 
     function toggleFilter(labelId: string) {
         setFilterIds((prev) => {
@@ -167,6 +181,7 @@ function App() {
                     </button>
                 </div>
             )}
+            <CardSearch query={query} onChange={setQuery} matchCount={matchCount} />
             <LabelFilter
                 labels={labels}
                 activeIds={filterIds}
