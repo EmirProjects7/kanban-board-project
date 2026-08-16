@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/EmirProjects7/kanban-board-project/actions/workflows/ci.yml/badge.svg)](https://github.com/EmirProjects7/kanban-board-project/actions/workflows/ci.yml)
 [![backend coverage](https://img.shields.io/badge/backend%20coverage-96%25-brightgreen)](#tests-and-coverage)
-[![frontend coverage](https://img.shields.io/badge/frontend%20coverage-85%25-brightgreen)](#tests-and-coverage)
+[![frontend coverage](https://img.shields.io/badge/frontend%20coverage-87%25-brightgreen)](#tests-and-coverage)
 
 A full-stack, real-time Kanban board with secure authentication and personal boards.
 
@@ -16,6 +16,7 @@ into place, and changes appear in any other open session straight away.
 - **Drag and drop** — reorder cards inside a column, move them between columns, drag whole columns into a new order, and reorder the boards themselves (dnd-kit)
 - **Inline editing** — double click a card title or a column title to rename it
 - **Card detail** — double click anywhere else on a card to open it, or use the button in its corner; write a description there, and cards carrying notes are marked on the board
+- **Search** — narrow the board by a word in a card's title or description; accents are optional, so `gorusme` finds `Görüşme`
 - **Labels** — colour them, pin them onto cards, and narrow the board to the ones you pick
 - **Due dates** — give a card a day; late ones turn red and today stands out
 - **Secure authentication** — register and log in with hashed passwords (bcrypt) and JWT sessions
@@ -139,12 +140,12 @@ This starts Postgres in Docker, the API and the frontend together.
 
 ## Tests and coverage
 
-393 tests: 135 on the API, 254 on the UI, and 4 end-to-end in a real browser.
+424 tests: 135 on the API, 285 on the UI, and 4 end-to-end in a real browser.
 
 | Workspace | Statements | Branches | Functions | Lines |
 | --- | --- | --- | --- | --- |
 | Backend | 96.6% | 93.2% | 95.9% | 96.5% |
-| Frontend | 84.9% | 80.6% | 82.2% | 85.9% |
+| Frontend | 86.8% | 82.4% | 84.7% | 87.8% |
 
 Both suites run with thresholds set just under those figures, so a change that
 drops coverage fails CI rather than going unnoticed. The generated Prisma

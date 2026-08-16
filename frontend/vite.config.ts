@@ -18,7 +18,7 @@ export default defineConfig({
             exclude: ['src/main.tsx', 'src/test/**', 'src/**/*.d.ts'],
             // Set just under what the suite reaches today, so the build fails
             // on a real drop rather than on ordinary noise.
-            thresholds: {statements: 84, branches: 80, functions: 81, lines: 85},
+            thresholds: {statements: 86, branches: 82, functions: 84, lines: 87},
         },
     },
 })

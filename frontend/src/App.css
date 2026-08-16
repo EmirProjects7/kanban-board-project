@@ -706,6 +706,55 @@ body {
     border-color: var(--border-strong);
 }
 
+/* Card search ---------------------------------------------------------- */
+
+.card-search {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 24px 0;
+}
+
+.card-search-input {
+    width: 260px;
+    max-width: 100%;
+    padding: 7px 11px;
+    font-family: inherit;
+    font-size: 13px;
+    color: var(--text);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 7px;
+}
+
+.card-search-input::placeholder {
+    color: var(--muted);
+}
+
+.card-search-input:focus {
+    outline: none;
+    border-color: var(--accent);
+}
+
+.card-search-count {
+    font-size: 12px;
+    color: var(--muted);
+}
+
+.card-search-clear {
+    padding: 4px 9px;
+    font-size: 12px;
+    color: var(--muted);
+    background: none;
+    border: none;
+    border-radius: 6px;
+}
+
+.card-search-clear:hover {
+    color: var(--text);
+    background: var(--surface-hover);
+}
+
 .label-filter {
     display: flex;
     flex-wrap: wrap;

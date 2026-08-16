@@ -189,3 +189,108 @@ describe('board errors', () => {
         expect(screen.queryByRole('alert')).not.toBeInTheDocument()
     })
 })
+
+describe('searching the board', () => {
+    const bug = {id: 'label-1', name: 'Bug', colour: 'red' as const}
+
+    const busyBoard = [
+        {
+            id: 'col-1',
+            title: 'Todo',
+            cards: [
+                {id: 'card-1', title: 'Chase the invoice'},
+                {id: 'card-2', title: 'Görüşme notları'},
+            ],
+        },
+        {
+            id: 'col-2',
+            title: 'Doing',
+            cards: [
+                {
+                    id: 'card-3',
+                    title: 'Ticket 41',
+                    description: 'The invoice is wrong',
+                    labels: [{label: bug}],
+                },
+            ],
+        },
+    ]
+
+    async function renderBoard() {
+        apiMock.getToken.mockReturnValue('a-token')
+        apiMock.fetchColumns.mockResolvedValue(busyBoard)
+        apiMock.fetchLabels.mockResolvedValue([bug])
+        render(<App />)
+        await screen.findByRole('heading', {name: 'Todo'})
+        return screen.getByLabelText('Search cards')
+    }
+
+    it('shows every card before anything is typed', async () => {
+        await renderBoard()
+
+        expect(screen.getByText('Chase the invoice')).toBeInTheDocument()
+        expect(screen.getByText('Görüşme notları')).toBeInTheDocument()
+        expect(screen.getByText('Ticket 41')).toBeInTheDocument()
+    })
+
+    it('keeps the cards that match and hides the rest', async () => {
+        const input = await renderBoard()
+
+        fireEvent.change(input, {target: {value: 'invoice'}})
+
+        expect(screen.getByText('Chase the invoice')).toBeInTheDocument()
+        expect(screen.queryByText('Görüşme notları')).not.toBeInTheDocument()
+    })
+
+    // The word is in the detail rather than the title on this one.
+    it('reaches a card through its description', async () => {
+        const input = await renderBoard()
+
+        fireEvent.change(input, {target: {value: 'invoice'}})
+
+        expect(screen.getByText('Ticket 41')).toBeInTheDocument()
+    })
+
+    it('finds an accented title typed without the accents', async () => {
+        const input = await renderBoard()
+
+        fireEvent.change(input, {target: {value: 'gorusme'}})
+
+        expect(screen.getByText('Görüşme notları')).toBeInTheDocument()
+        expect(screen.queryByText('Chase the invoice')).not.toBeInTheDocument()
+    })
+
+    it('leaves the columns in place when nothing matches', async () => {
+        const input = await renderBoard()
+
+        fireEvent.change(input, {target: {value: 'nothing here'}})
+
+        expect(screen.queryByText('Chase the invoice')).not.toBeInTheDocument()
+        expect(screen.getByRole('heading', {name: 'Todo'})).toBeInTheDocument()
+        expect(screen.getByRole('heading', {name: 'Doing'})).toBeInTheDocument()
+    })
+
+    it('puts the hidden cards back when the search is cleared', async () => {
+        const input = await renderBoard()
+        fireEvent.change(input, {target: {value: 'invoice'}})
+
+        fireEvent.click(screen.getByRole('button', {name: 'Clear'}))
+
+        expect(screen.getByText('Görüşme notları')).toBeInTheDocument()
+    })
+
+    // Neither filter wins: a label and a word together leave the cards that
+    // answer to both.
+    it('narrows alongside the label filter rather than replacing it', async () => {
+        const input = await renderBoard()
+
+        fireEvent.click(screen.getByRole('button', {name: 'Bug'}))
+        expect(screen.getByText('Ticket 41')).toBeInTheDocument()
+        expect(screen.queryByText('Chase the invoice')).not.toBeInTheDocument()
+
+        fireEvent.change(input, {target: {value: 'gorusme'}})
+
+        expect(screen.queryByText('Ticket 41')).not.toBeInTheDocument()
+        expect(screen.queryByText('Görüşme notları')).not.toBeInTheDocument()
+    })
+})
