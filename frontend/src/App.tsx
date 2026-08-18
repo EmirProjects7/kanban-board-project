@@ -1,5 +1,5 @@
 import './App.css'
-import {useState, useEffect, useMemo} from 'react'
+import {useState, useEffect, useMemo, useRef} from 'react'
 import {DndContext, DragOverlay, PointerSensor, KeyboardSensor, useSensor, useSensors} from '@dnd-kit/core'
 import {SortableContext, horizontalListSortingStrategy, sortableKeyboardCoordinates} from '@dnd-kit/sortable'
 import {useBoard} from './hooks/useBoard'
@@ -57,6 +57,7 @@ function App() {
     } = useLabels(activeBoardId)
     const [filterIds, setFilterIds] = useState<Set<string>>(new Set())
     const [query, setQuery] = useState('')
+    const searchRef = useRef<HTMLInputElement>(null)
     const activeBoard = boards.find((board) => board.id === activeBoardId) ?? null
 
     // Filtering hides cards from view only. The columns handed to drag and drop
@@ -81,6 +82,28 @@ function App() {
         () => visibleColumns.reduce((total, column) => total + column.cards.length, 0),
         [visibleColumns]
     )
+
+    // Slash jumps to the search, the way it does in most things with one.
+    // Ignored while the caret is already in a field, or the shortcut would eat
+    // the slash out of a card title being typed.
+    useEffect(() => {
+        function focusSearch(event: KeyboardEvent) {
+            if (event.key !== '/' || event.metaKey || event.ctrlKey || event.altKey) return
+
+            const target = event.target as HTMLElement | null
+            const editing =
+                target instanceof HTMLInputElement ||
+                target instanceof HTMLTextAreaElement ||
+                target?.isContentEditable === true
+            if (editing) return
+
+            event.preventDefault()
+            searchRef.current?.focus()
+        }
+
+        document.addEventListener('keydown', focusSearch)
+        return () => document.removeEventListener('keydown', focusSearch)
+    }, [])
 
     function toggleFilter(labelId: string) {
         setFilterIds((prev) => {
@@ -181,7 +204,12 @@ function App() {
                     </button>
                 </div>
             )}
-            <CardSearch query={query} onChange={setQuery} matchCount={matchCount} />
+            <CardSearch
+                query={query}
+                onChange={setQuery}
+                matchCount={matchCount}
+                inputRef={searchRef}
+            />
             <LabelFilter
                 labels={labels}
                 activeIds={filterIds}
