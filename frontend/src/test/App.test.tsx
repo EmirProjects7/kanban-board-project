@@ -294,3 +294,41 @@ describe('searching the board', () => {
         expect(screen.queryByText('Görüşme notları')).not.toBeInTheDocument()
     })
 })
+
+describe('the slash shortcut', () => {
+    async function renderBoard() {
+        apiMock.getToken.mockReturnValue('a-token')
+        render(<App />)
+        await screen.findByRole('heading', {name: 'Todo'})
+        return screen.getByLabelText('Search cards')
+    }
+
+    it('puts the caret in the search box', async () => {
+        const input = await renderBoard()
+
+        fireEvent.keyDown(document.body, {key: '/'})
+
+        expect(input).toHaveFocus()
+    })
+
+    // Otherwise typing "and/or" into a card title would jump the caret away
+    // mid-word.
+    it('leaves the key alone while another field has the caret', async () => {
+        await renderBoard()
+        const newCard = screen.getAllByPlaceholderText('New card...')[0]
+        newCard.focus()
+
+        fireEvent.keyDown(newCard, {key: '/'})
+
+        expect(newCard).toHaveFocus()
+    })
+
+    // A slash with a modifier belongs to the browser or the operating system.
+    it('ignores the key when it carries a modifier', async () => {
+        const input = await renderBoard()
+
+        fireEvent.keyDown(document.body, {key: '/', metaKey: true})
+
+        expect(input).not.toHaveFocus()
+    })
+})

@@ -75,3 +75,28 @@ describe('getting back out', () => {
         expect(onChange).toHaveBeenCalledWith('')
     })
 })
+
+describe('the keyboard hint', () => {
+    it('shows the slash while the box is empty', () => {
+        const {container} = renderSearch()
+
+        expect(container.querySelector('.card-search-hint')).toHaveTextContent('/')
+    })
+
+    // Once there is a query the count and the clear button need the room, and
+    // the shortcut has already done its job.
+    it('gives up the space once something is typed', () => {
+        const {container} = renderSearch('invoice', 1)
+
+        expect(container.querySelector('.card-search-hint')).toBeNull()
+    })
+
+    it('stays out of the accessibility tree', () => {
+        const {container} = renderSearch()
+
+        expect(container.querySelector('.card-search-hint')).toHaveAttribute(
+            'aria-hidden',
+            'true'
+        )
+    })
+})

@@ -2,14 +2,16 @@ type CardSearchProps = {
     query: string
     onChange: (query: string) => void
     matchCount: number
+    inputRef?: React.Ref<HTMLInputElement>
 }
 
-export function CardSearch({query, onChange, matchCount}: CardSearchProps) {
+export function CardSearch({query, onChange, matchCount, inputRef}: CardSearchProps) {
     const searching = query.trim() !== ''
 
     return (
         <div className="card-search" role="search">
             <input
+                ref={inputRef}
                 type="search"
                 className="card-search-input"
                 placeholder="Search cards..."
@@ -21,6 +23,13 @@ export function CardSearch({query, onChange, matchCount}: CardSearchProps) {
                 }}
                 aria-label="Search cards"
             />
+            {/* Hidden from the accessibility tree: a screen reader user is not
+                reaching for a slash key, and the input already has a label. */}
+            {!searching && (
+                <kbd className="card-search-hint" aria-hidden="true">
+                    /
+                </kbd>
+            )}
             {searching && (
                 <>
                     {/* Announced rather than only shown, so it is not silence
