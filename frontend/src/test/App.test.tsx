@@ -332,3 +332,38 @@ describe('the slash shortcut', () => {
         expect(input).not.toHaveFocus()
     })
 })
+
+describe('a board with no columns', () => {
+    // Registering creates a board and no columns, so this is the very first
+    // thing a new account sees.
+    it('says what to do rather than showing an empty page', async () => {
+        apiMock.getToken.mockReturnValue('a-token')
+        apiMock.fetchColumns.mockResolvedValue([])
+        render(<App />)
+
+        expect(await screen.findByText('Nothing here yet. Add a column to start.')).toBeInTheDocument()
+    })
+
+    it('drops the hint once a column exists', async () => {
+        apiMock.getToken.mockReturnValue('a-token')
+        render(<App />)
+        await screen.findByRole('heading', {name: 'Todo'})
+
+        expect(
+            screen.queryByText('Nothing here yet. Add a column to start.')
+        ).not.toBeInTheDocument()
+    })
+
+    // A failed load also leaves columns empty, and saying "nothing here yet"
+    // on top of an error would be telling the user their board is gone.
+    it('stays quiet when the board failed to load', async () => {
+        apiMock.getToken.mockReturnValue('a-token')
+        apiMock.fetchColumns.mockRejectedValue(new Error('boom'))
+        render(<App />)
+        await screen.findByRole('alert')
+
+        expect(
+            screen.queryByText('Nothing here yet. Add a column to start.')
+        ).not.toBeInTheDocument()
+    })
+})

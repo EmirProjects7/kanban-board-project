@@ -706,6 +706,16 @@ body {
     border-color: var(--border-strong);
 }
 
+.board-empty {
+    /* Reads as a line next to the add form, so the hint and the control that
+       answers it are seen together. The top padding lines it up with the text
+       inside the form rather than with the form's border. */
+    flex-shrink: 0;
+    padding-top: 13px;
+    font-size: 14px;
+    color: var(--muted);
+}
+
 /* Card search ---------------------------------------------------------- */
 
 .card-search {
