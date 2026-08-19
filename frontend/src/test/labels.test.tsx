@@ -128,25 +128,39 @@ describe('choosing labels in the detail', () => {
 })
 
 describe('the filter bar', () => {
-    function renderFilter(activeIds = new Set<string>()) {
+    function renderFilter(activeIds = new Set<string>(), overdueOnly = false) {
         const onToggle = vi.fn()
         const onClear = vi.fn()
+        const onToggleOverdue = vi.fn()
         render(
             <LabelFilter
                 labels={[bug, chore]}
                 activeIds={activeIds}
                 onToggle={onToggle}
+                overdueOnly={overdueOnly}
+                onToggleOverdue={onToggleOverdue}
                 onClear={onClear}
             />
         )
-        return {onToggle, onClear}
+        return {onToggle, onClear, onToggleOverdue}
     }
 
-    it('stays out of the way when the board has no labels', () => {
+    // The bar used to hide itself without labels. Overdue does not depend on
+    // them, so it earns its place either way.
+    it('offers overdue even when the board has no labels', () => {
         render(
-            <LabelFilter labels={[]} activeIds={new Set()} onToggle={vi.fn()} onClear={vi.fn()} />
+            <LabelFilter
+                labels={[]}
+                activeIds={new Set()}
+                onToggle={vi.fn()}
+                overdueOnly={false}
+                onToggleOverdue={vi.fn()}
+                onClear={vi.fn()}
+            />
         )
-        expect(screen.queryByRole('group')).not.toBeInTheDocument()
+
+        expect(screen.getByRole('button', {name: 'Overdue'})).toBeInTheDocument()
+        expect(screen.queryByRole('button', {name: 'Bug'})).not.toBeInTheDocument()
     })
 
     it('offers each label', () => {
@@ -175,5 +189,51 @@ describe('the filter bar', () => {
         const {onClear} = renderFilter(new Set(['label-1']))
         fireEvent.click(screen.getByRole('button', {name: 'Clear'}))
         expect(onClear).toHaveBeenCalledOnce()
+    })
+})
+
+describe('the overdue toggle', () => {
+    function renderBar(overdueOnly = false, activeIds = new Set<string>()) {
+        const onToggleOverdue = vi.fn()
+        const onClear = vi.fn()
+        render(
+            <LabelFilter
+                labels={[bug, chore]}
+                activeIds={activeIds}
+                onToggle={vi.fn()}
+                overdueOnly={overdueOnly}
+                onToggleOverdue={onToggleOverdue}
+                onClear={onClear}
+            />
+        )
+        return {onToggleOverdue, onClear, button: screen.getByRole('button', {name: 'Overdue'})}
+    }
+
+    it('reports being off', () => {
+        const {button} = renderBar()
+        expect(button).toHaveAttribute('aria-pressed', 'false')
+    })
+
+    it('reports being on', () => {
+        const {button} = renderBar(true)
+        expect(button).toHaveAttribute('aria-pressed', 'true')
+    })
+
+    it('asks to be toggled', () => {
+        const {button, onToggleOverdue} = renderBar()
+        fireEvent.click(button)
+        expect(onToggleOverdue).toHaveBeenCalledOnce()
+    })
+
+    // Clear has to reach every rule, or turning it off would leave the board
+    // still narrowed with nothing on screen explaining why.
+    it('brings out the clear button on its own', () => {
+        renderBar(true)
+        expect(screen.getByRole('button', {name: 'Clear'})).toBeInTheDocument()
+    })
+
+    it('leaves clear away when nothing is filtering', () => {
+        renderBar(false)
+        expect(screen.queryByRole('button', {name: 'Clear'})).not.toBeInTheDocument()
     })
 })
