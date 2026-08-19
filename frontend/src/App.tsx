@@ -8,7 +8,7 @@ import {useLabels} from './hooks/useLabels'
 import {useDragAndDrop} from './hooks/useDragDrop'
 import {LabelFilter} from './components/LabelFilter'
 import {CardSearch} from './components/CardSearch'
-import {cardMatches, isBlankQuery} from './search'
+import {countCards, visibleColumns as filterColumns} from './boardFilter'
 import Column from './components/Column'
 import AddColumnForm from './components/AddColumnForm'
 import {BoardSwitcher} from './components/BoardSwitcher'
@@ -60,28 +60,12 @@ function App() {
     const searchRef = useRef<HTMLInputElement>(null)
     const activeBoard = boards.find((board) => board.id === activeBoardId) ?? null
 
-    // Filtering hides cards from view only. The columns handed to drag and drop
-    // stay whole, so a drop never reorders around cards that are out of sight.
-    //
-    // Labels and the search narrow together rather than either winning: picking
-    // a label and typing a word should leave the cards that answer to both.
-    const visibleColumns = useMemo(() => {
-        if (filterIds.size === 0 && isBlankQuery(query)) return columns
-        return columns.map((column) => ({
-            ...column,
-            cards: column.cards.filter((card) => {
-                const labelled =
-                    filterIds.size === 0 ||
-                    (card.labels ?? []).some((entry) => filterIds.has(entry.label.id))
-                return labelled && cardMatches(card, query)
-            }),
-        }))
-    }, [columns, filterIds, query])
-
-    const matchCount = useMemo(
-        () => visibleColumns.reduce((total, column) => total + column.cards.length, 0),
-        [visibleColumns]
+    const visibleColumns = useMemo(
+        () => filterColumns(columns, {labelIds: filterIds, query}),
+        [columns, filterIds, query]
     )
+
+    const matchCount = useMemo(() => countCards(visibleColumns), [visibleColumns])
 
     // Slash jumps to the search, the way it does in most things with one.
     // Ignored while the caret is already in a field, or the shortcut would eat
