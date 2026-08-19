@@ -4,11 +4,22 @@ type LabelFilterProps = {
     labels: Label[]
     activeIds: Set<string>
     onToggle: (labelId: string) => void
+    overdueOnly: boolean
+    onToggleOverdue: () => void
     onClear: () => void
 }
 
-export function LabelFilter({labels, activeIds, onToggle, onClear}: LabelFilterProps) {
-    if (labels.length === 0) return null
+export function LabelFilter({
+    labels,
+    activeIds,
+    onToggle,
+    overdueOnly,
+    onToggleOverdue,
+    onClear,
+}: LabelFilterProps) {
+    // The overdue toggle does not depend on the board having labels, so the bar
+    // now earns its place either way.
+    const filtering = activeIds.size > 0 || overdueOnly
 
     return (
         <div className="label-filter" role="group" aria-label="Filter by label">
@@ -27,7 +38,15 @@ export function LabelFilter({labels, activeIds, onToggle, onClear}: LabelFilterP
                     </button>
                 )
             })}
-            {activeIds.size > 0 && (
+            <button
+                type="button"
+                className={`overdue-chip${overdueOnly ? ' is-on' : ''}`}
+                onClick={onToggleOverdue}
+                aria-pressed={overdueOnly}
+            >
+                Overdue
+            </button>
+            {filtering && (
                 <button type="button" className="label-filter-clear" onClick={onClear}>
                     Clear
                 </button>

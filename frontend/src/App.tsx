@@ -57,12 +57,13 @@ function App() {
     } = useLabels(activeBoardId)
     const [filterIds, setFilterIds] = useState<Set<string>>(new Set())
     const [query, setQuery] = useState('')
+    const [overdueOnly, setOverdueOnly] = useState(false)
     const searchRef = useRef<HTMLInputElement>(null)
     const activeBoard = boards.find((board) => board.id === activeBoardId) ?? null
 
     const visibleColumns = useMemo(
-        () => filterColumns(columns, {labelIds: filterIds, query}),
-        [columns, filterIds, query]
+        () => filterColumns(columns, {labelIds: filterIds, query, overdueOnly}),
+        [columns, filterIds, query, overdueOnly]
     )
 
     const matchCount = useMemo(() => countCards(visibleColumns), [visibleColumns])
@@ -198,7 +199,12 @@ function App() {
                 labels={labels}
                 activeIds={filterIds}
                 onToggle={toggleFilter}
-                onClear={() => setFilterIds(new Set())}
+                overdueOnly={overdueOnly}
+                onToggleOverdue={() => setOverdueOnly((on) => !on)}
+                onClear={() => {
+                    setFilterIds(new Set())
+                    setOverdueOnly(false)
+                }}
             />
             <DndContext sensors={sensors} onDragStart={handleDragStart} onDragOver={handleDragOver}
                         onDragEnd={handleDragEnd}>

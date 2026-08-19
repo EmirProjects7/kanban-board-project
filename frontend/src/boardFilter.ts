@@ -1,13 +1,15 @@
 import {cardMatches, isBlankQuery} from './search'
+import {isOverdue} from './dueDate'
 import type {Column} from './types'
 
 export type BoardFilter = {
     labelIds: Set<string>
     query: string
+    overdueOnly: boolean
 }
 
 export function isEmptyFilter(filter: BoardFilter): boolean {
-    return filter.labelIds.size === 0 && isBlankQuery(filter.query)
+    return filter.labelIds.size === 0 && isBlankQuery(filter.query) && !filter.overdueOnly
 }
 
 function keeps(card: Column['cards'][number], filter: BoardFilter): boolean {
@@ -15,7 +17,11 @@ function keeps(card: Column['cards'][number], filter: BoardFilter): boolean {
         filter.labelIds.size === 0 ||
         (card.labels ?? []).some((entry) => filter.labelIds.has(entry.label.id))
 
-    return labelled && cardMatches(card, filter.query)
+    // A card with no date is not late, it is undated, so it goes with the rest
+    // of what the filter is hiding.
+    const late = !filter.overdueOnly || isOverdue(card.dueDate)
+
+    return labelled && late && cardMatches(card, filter.query)
 }
 
 // Hides cards from view only. The columns themselves are always returned, and

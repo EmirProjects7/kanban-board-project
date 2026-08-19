@@ -20,7 +20,7 @@ const board: Column[] = [
     },
 ]
 
-const nothing = {labelIds: new Set<string>(), query: ''}
+const nothing = {labelIds: new Set<string>(), query: '', overdueOnly: false}
 
 describe('isEmptyFilter', () => {
     it('is empty with no labels and no query', () => {
@@ -37,6 +37,10 @@ describe('isEmptyFilter', () => {
 
     it('treats a query of spaces as empty', () => {
         expect(isEmptyFilter({...nothing, query: '   '})).toBe(true)
+    })
+
+    it('is not empty once overdue is on', () => {
+        expect(isEmptyFilter({...nothing, overdueOnly: true})).toBe(false)
     })
 })
 
@@ -62,7 +66,7 @@ describe('visibleColumns', () => {
 
     // Neither rule wins: both have to be satisfied.
     it('narrows by label and query together', () => {
-        const result = visibleColumns(board, {labelIds: new Set(['label-1']), query: 'invoice'})
+        const result = visibleColumns(board, {...nothing, labelIds: new Set(['label-1']), query: 'invoice'})
 
         expect(countCards(result)).toBe(0)
     })
@@ -80,6 +84,51 @@ describe('visibleColumns', () => {
         visibleColumns(board, {...nothing, query: 'invoice'})
 
         expect(board[0].cards).toHaveLength(2)
+    })
+})
+
+describe('overdue only', () => {
+    const yesterday = new Date(Date.now() - 86_400_000).toISOString()
+    const tomorrow = new Date(Date.now() + 86_400_000).toISOString()
+
+    const dated: Column[] = [
+        {
+            id: 'col-1',
+            title: 'Todo',
+            cards: [
+                {id: 'late', title: 'Chase the invoice', dueDate: yesterday},
+                {id: 'soon', title: 'Book the room', dueDate: tomorrow},
+                {id: 'undated', title: 'Ticket 41'},
+            ],
+        },
+    ]
+
+    it('keeps only the cards whose day has passed', () => {
+        const result = visibleColumns(dated, {...nothing, overdueOnly: true})
+
+        expect(result[0].cards.map((card) => card.id)).toEqual(['late'])
+    })
+
+    // Undated is not late, it is undated, and lumping the two together would
+    // bury a real list of overdue work under everything nobody dated.
+    it('does not treat an undated card as late', () => {
+        const result = visibleColumns(dated, {...nothing, overdueOnly: true})
+
+        expect(result[0].cards.map((card) => card.id)).not.toContain('undated')
+    })
+
+    it('changes nothing while it is off', () => {
+        expect(visibleColumns(dated, nothing)).toBe(dated)
+    })
+
+    it('narrows alongside the search rather than replacing it', () => {
+        const result = visibleColumns(dated, {
+            ...nothing,
+            overdueOnly: true,
+            query: 'room',
+        })
+
+        expect(countCards(result)).toBe(0)
     })
 })
 

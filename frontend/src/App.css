@@ -793,6 +793,30 @@ body {
     color: var(--muted);
 }
 
+.overdue-chip {
+    /* Same shape as a label chip, but never a label colour: it filters by a
+       date, and borrowing a colour would read as one more label. */
+    padding: 4px 10px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--muted);
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    transition: color 0.15s, background 0.15s, border-color 0.15s;
+}
+
+.overdue-chip:hover {
+    color: var(--text);
+    border-color: var(--border-strong);
+}
+
+.overdue-chip.is-on {
+    color: var(--danger);
+    background: color-mix(in srgb, var(--danger) 14%, transparent);
+    border-color: color-mix(in srgb, var(--danger) 40%, transparent);
+}
+
 .label-filter-clear {
     padding: 4px 9px;
     font-size: 12px;
