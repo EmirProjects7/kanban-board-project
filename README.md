@@ -18,7 +18,7 @@ into place, and changes appear in any other open session straight away.
 - **Card detail** — double click anywhere else on a card to open it, or use the button in its corner; write a description there, and cards carrying notes are marked on the board
 - **Search** — press `/` to jump to it, then narrow the board by a word in a card's title or description; accents are optional, so `gorusme` finds `Görüşme`
 - **Labels** — colour them, pin them onto cards, and narrow the board to the ones you pick
-- **Due dates** — give a card a day; late ones turn red and today stands out
+- **Due dates** — give a card a day; late ones turn red, today stands out, and one toggle narrows the board to what is overdue
 - **Secure authentication** — register and log in with hashed passwords (bcrypt) and JWT sessions
 - **Several boards** — keep work, personal and anything else apart, switched from a drawer
 - **Personal data** — each user sees and edits only their own boards
@@ -140,12 +140,12 @@ This starts Postgres in Docker, the API and the frontend together.
 
 ## Tests and coverage
 
-430 tests: 135 on the API, 291 on the UI, and 4 end-to-end in a real browser.
+455 tests: 135 on the API, 316 on the UI, and 4 end-to-end in a real browser.
 
 | Workspace | Statements | Branches | Functions | Lines |
 | --- | --- | --- | --- | --- |
 | Backend | 96.6% | 93.2% | 95.9% | 96.5% |
-| Frontend | 87.1% | 82.7% | 85.0% | 88.0% |
+| Frontend | 86.8% | 83.7% | 84.5% | 87.8% |
 
 Both suites run with thresholds set just under those figures, so a change that
 drops coverage fails CI rather than going unnoticed. The generated Prisma
