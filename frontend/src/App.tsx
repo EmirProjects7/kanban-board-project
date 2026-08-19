@@ -219,6 +219,16 @@ function App() {
             <DndContext sensors={sensors} onDragStart={handleDragStart} onDragOver={handleDragOver}
                         onDragEnd={handleDragEnd}>
                 <div className="board">
+                    {/* A new account arrives with a board and no columns, so
+                        without this the first thing anyone sees is an empty
+                        page and a lone form. Only for a board that really has
+                        none: a search that hides every card is a different
+                        thing, and the search bar already says so. */}
+                    {columns.length === 0 && !error && (
+                        <p className="board-empty">
+                            Nothing here yet. Add a column to start.
+                        </p>
+                    )}
                     {/* function to map a column to its visualization, react requires a key*/}
                     <SortableContext items={columnIds} strategy={horizontalListSortingStrategy}>
                         {visibleColumns.map((column) => (
