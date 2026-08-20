@@ -68,6 +68,14 @@ function App() {
 
     const matchCount = useMemo(() => countCards(visibleColumns), [visibleColumns])
 
+    // The columns handed to Column are the filtered ones, so their own counts
+    // cannot say how big they really are. Looked up by id rather than by
+    // position, since a filter never reorders but a drag does.
+    const totalsById = useMemo(
+        () => new Map(columns.map((column) => [column.id, column.cards.length])),
+        [columns]
+    )
+
     // Slash jumps to the search, the way it does in most things with one.
     // Ignored while the caret is already in a field, or the shortcut would eat
     // the slash out of a card title being typed.
@@ -226,7 +234,8 @@ function App() {
                                     onDeleteCard={deleteCard} onEditCard={editCard} onDescribeCard={describeCard} onSetCardDueDate={setCardDueDate}
                                     labels={labels} onToggleCardLabel={toggleCardLabel}
                                     onCreateLabel={addLabel}
-                                    onEditColumn={editColumn} onDeleteColumn={deleteColumn}/>
+                                    onEditColumn={editColumn} onDeleteColumn={deleteColumn}
+                                    totalCards={totalsById.get(column.id)}/>
                         ))}
                     </SortableContext>
                     <AddColumnForm onAdd={addColumn}/>

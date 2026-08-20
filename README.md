@@ -16,7 +16,7 @@ into place, and changes appear in any other open session straight away.
 - **Drag and drop** — reorder cards inside a column, move them between columns, drag whole columns into a new order, and reorder the boards themselves (dnd-kit)
 - **Inline editing** — double click a card title or a column title to rename it
 - **Card detail** — double click anywhere else on a card to open it, or use the button in its corner; write a description there, and cards carrying notes are marked on the board
-- **Search** — press `/` to jump to it, then narrow the board by a word in a card's title or description; accents are optional, so `gorusme` finds `Görüşme`
+- **Search** — press `/` to jump to it, then narrow the board by a word in a card's title or description; accents are optional, so `gorusme` finds `Görüşme`. Filtered columns show how much they are hiding, as `1 / 4`
 - **Labels** — colour them, pin them onto cards, and narrow the board to the ones you pick
 - **Due dates** — give a card a day; late ones turn red, today stands out, and one toggle narrows the board to what is overdue
 - **Secure authentication** — register and log in with hashed passwords (bcrypt) and JWT sessions
@@ -140,12 +140,12 @@ This starts Postgres in Docker, the API and the frontend together.
 
 ## Tests and coverage
 
-455 tests: 135 on the API, 316 on the UI, and 4 end-to-end in a real browser.
+464 tests: 135 on the API, 325 on the UI, and 4 end-to-end in a real browser.
 
 | Workspace | Statements | Branches | Functions | Lines |
 | --- | --- | --- | --- | --- |
 | Backend | 96.6% | 93.2% | 95.9% | 96.5% |
-| Frontend | 86.8% | 83.7% | 84.5% | 87.8% |
+| Frontend | 86.9% | 83.9% | 84.6% | 87.9% |
 
 Both suites run with thresholds set just under those figures, so a change that
 drops coverage fails CI rather than going unnoticed. The generated Prisma
