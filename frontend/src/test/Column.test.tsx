@@ -150,3 +150,49 @@ describe('Column renaming', () => {
         expect(screen.queryByLabelText('Column title')).not.toBeInTheDocument()
     })
 })
+
+describe('the card count', () => {
+    function renderWithTotal(cards: ColumnType['cards'], totalCards?: number) {
+        const handlers = {
+            onAddCard: vi.fn(),
+            onDeleteCard: vi.fn(),
+            onEditCard: vi.fn(),
+            onDescribeCard: vi.fn(),
+            onSetCardDueDate: vi.fn(),
+            labels: [],
+            onToggleCardLabel: vi.fn(),
+            onCreateLabel: vi.fn(),
+            onEditColumn: vi.fn(),
+            onDeleteColumn: vi.fn(),
+        }
+        const {container} = render(
+            <DndContext>
+                <Column column={{...column, cards}} totalCards={totalCards} {...handlers} />
+            </DndContext>
+        )
+        return container.querySelector('.column-count')
+    }
+
+    it('shows a plain number when nothing is filtering', () => {
+        expect(renderWithTotal(column.cards)).toHaveTextContent('2')
+    })
+
+    // The plain count is the filtered one, so on its own the column looks
+    // smaller than it is.
+    it('shows both numbers when cards are hidden', () => {
+        expect(renderWithTotal([column.cards[0]], 2)).toHaveTextContent('1 / 2')
+    })
+
+    // Otherwise every column on an unfiltered board would read "2 / 2".
+    it('stays plain when the total matches what is shown', () => {
+        expect(renderWithTotal(column.cards, 2)).toHaveTextContent('2')
+    })
+
+    it('shows the split even when a filter hides everything', () => {
+        expect(renderWithTotal([], 2)).toHaveTextContent('0 / 2')
+    })
+
+    it('falls back to the plain count without a total', () => {
+        expect(renderWithTotal([column.cards[0]])).toHaveTextContent('1')
+    })
+})

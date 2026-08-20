@@ -18,6 +18,8 @@ type ColumnProps = {
     onCreateLabel: (name: string, colour: LabelColour) => void
     onEditColumn: (columnId: string, newTitle: string) => void
     onDeleteColumn: (columnId: string) => void
+    /** How many cards the column holds before any filter. */
+    totalCards?: number
 }
 
 function Column({
@@ -32,6 +34,7 @@ function Column({
     onCreateLabel,
     onEditColumn,
     onDeleteColumn,
+    totalCards,
 }: ColumnProps) {
     // useSortable also registers the column as a drop target, so cards can
     // still be dropped into it, including while it is empty.
@@ -39,6 +42,10 @@ function Column({
         id: column.id,
         data: {type: 'column'},
     })
+    // Only worth saying when the two differ; an unfiltered board would
+    // otherwise read "3 / 3" on every column.
+    const hiding = totalCards !== undefined && totalCards > column.cards.length
+
     const [isEditing, setIsEditing] = useState(false)
     const [editValue, setEditValue] = useState(column.title)
 
@@ -93,8 +100,12 @@ function Column({
                 ) : (
                     <h2 onDoubleClick={startEditing}>{column.title}</h2>
                 )}
+                {/* While a filter is on, the plain count is the filtered one,
+                    and the column looks smaller than it is. Showing both keeps
+                    the real size in view. aria-hidden because the cards are
+                    right there to be counted. */}
                 <span className="column-count" aria-hidden="true">
-                    {column.cards.length}
+                    {hiding ? `${column.cards.length} / ${totalCards}` : column.cards.length}
                 </span>
                 <button
                     className="delete-column-button"
