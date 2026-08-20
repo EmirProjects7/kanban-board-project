@@ -367,3 +367,61 @@ describe('a board with no columns', () => {
         ).not.toBeInTheDocument()
     })
 })
+
+describe('column counts under a filter', () => {
+    const busy = [
+        {
+            id: 'col-1',
+            title: 'Todo',
+            cards: [
+                {id: 'card-1', title: 'Chase the invoice'},
+                {id: 'card-2', title: 'Book the room'},
+                {id: 'card-3', title: 'Ticket 41'},
+            ],
+        },
+    ]
+
+    async function renderBoard() {
+        apiMock.getToken.mockReturnValue('a-token')
+        apiMock.fetchColumns.mockResolvedValue(busy)
+        const {container} = render(<App />)
+        await screen.findByRole('heading', {name: 'Todo'})
+        return {
+            count: () => container.querySelector('.column-count')?.textContent,
+            search: screen.getByLabelText('Search cards'),
+        }
+    }
+
+    it('counts plainly while nothing is filtering', async () => {
+        const {count} = await renderBoard()
+
+        expect(count()).toBe('3')
+    })
+
+    // Without the total the column would read "1" and look like a column of
+    // one rather than one card showing out of three.
+    it('keeps the real size in view while searching', async () => {
+        const {count, search} = await renderBoard()
+
+        fireEvent.change(search, {target: {value: 'invoice'}})
+
+        expect(count()).toBe('1 / 3')
+    })
+
+    it('says none of three when nothing matches', async () => {
+        const {count, search} = await renderBoard()
+
+        fireEvent.change(search, {target: {value: 'nothing here'}})
+
+        expect(count()).toBe('0 / 3')
+    })
+
+    it('goes back to a plain count once the search is cleared', async () => {
+        const {count, search} = await renderBoard()
+        fireEvent.change(search, {target: {value: 'invoice'}})
+
+        fireEvent.change(search, {target: {value: ''}})
+
+        expect(count()).toBe('3')
+    })
+})
