@@ -1,6 +1,6 @@
 import {describe, it, expect, vi, beforeEach} from 'vitest'
 import express from 'express'
-import request from 'supertest'
+import {testClient} from './client'
 import jwt from 'jsonwebtoken'
 import columnsRouter from '../routes/columns'
 
@@ -21,6 +21,8 @@ vi.mock('../board', () => ({emitBoard: emitBoardMock}))
 const app = express()
 app.use(express.json())
 app.use('/api/columns', columnsRouter)
+
+const client = testClient(app)
 
 const auth = `Bearer ${jwt.sign({userId: 'user-1'}, process.env.JWT_SECRET!)}`
 
@@ -44,7 +46,7 @@ describe('ownership runs through the board', () => {
         reachable()
         columnMock.update.mockResolvedValue({id: 'col-1', title: 'Renamed'})
 
-        await request(app)
+        await client()
             .put('/api/columns/col-1')
             .set('Authorization', auth)
             .send({title: 'Renamed'})
@@ -57,7 +59,7 @@ describe('ownership runs through the board', () => {
 
 describe('POST /api/columns/:columnId/cards', () => {
     it('requires authentication', async () => {
-        const res = await request(app).post('/api/columns/col-1/cards').send({title: 'Task'})
+        const res = await client().post('/api/columns/col-1/cards').send({title: 'Task'})
         expect(res.status).toBe(401)
     })
 
@@ -66,7 +68,7 @@ describe('POST /api/columns/:columnId/cards', () => {
         cardMock.count.mockResolvedValue(3)
         cardMock.create.mockResolvedValue({id: 'card-1', title: 'Task', order: 3})
 
-        const res = await request(app)
+        const res = await client()
             .post('/api/columns/col-1/cards')
             .set('Authorization', auth)
             .send({title: 'Task'})
@@ -80,7 +82,7 @@ describe('POST /api/columns/:columnId/cards', () => {
     it('refuses a column the user cannot reach', async () => {
         unreachable()
 
-        const res = await request(app)
+        const res = await client()
             .post('/api/columns/someone-elses/cards')
             .set('Authorization', auth)
             .send({title: 'Task'})
@@ -90,7 +92,7 @@ describe('POST /api/columns/:columnId/cards', () => {
     })
 
     it('rejects an empty title', async () => {
-        const res = await request(app)
+        const res = await client()
             .post('/api/columns/col-1/cards')
             .set('Authorization', auth)
             .send({title: '   '})
@@ -103,7 +105,7 @@ describe('POST /api/columns/:columnId/cards', () => {
         reachable()
         cardMock.create.mockResolvedValue({id: 'card-1', title: 'Task', order: 0})
 
-        await request(app)
+        await client()
             .post('/api/columns/col-1/cards')
             .set('Authorization', auth)
             .send({title: 'Task'})
@@ -117,7 +119,7 @@ describe('PUT /api/columns/:columnId (rename)', () => {
         reachable()
         columnMock.update.mockResolvedValue({id: 'col-1', title: 'Renamed'})
 
-        const res = await request(app)
+        const res = await client()
             .put('/api/columns/col-1')
             .set('Authorization', auth)
             .send({title: 'Renamed'})
@@ -132,7 +134,7 @@ describe('PUT /api/columns/:columnId (rename)', () => {
     it('refuses a column the user cannot reach', async () => {
         unreachable()
 
-        const res = await request(app)
+        const res = await client()
             .put('/api/columns/someone-elses')
             .set('Authorization', auth)
             .send({title: 'Hijacked'})
@@ -142,7 +144,7 @@ describe('PUT /api/columns/:columnId (rename)', () => {
     })
 
     it('rejects an empty title', async () => {
-        const res = await request(app)
+        const res = await client()
             .put('/api/columns/col-1')
             .set('Authorization', auth)
             .send({title: '   '})
@@ -157,7 +159,7 @@ describe('DELETE /api/columns/:columnId', () => {
         reachable()
         columnMock.delete.mockResolvedValue({id: 'col-1'})
 
-        const res = await request(app).delete('/api/columns/col-1').set('Authorization', auth)
+        const res = await client().delete('/api/columns/col-1').set('Authorization', auth)
 
         expect(res.status).toBe(204)
         expect(columnMock.delete).toHaveBeenCalledWith({where: {id: 'col-1'}})
@@ -166,7 +168,7 @@ describe('DELETE /api/columns/:columnId', () => {
     it('refuses a column the user cannot reach', async () => {
         unreachable()
 
-        const res = await request(app)
+        const res = await client()
             .delete('/api/columns/someone-elses')
             .set('Authorization', auth)
 

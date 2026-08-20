@@ -1,6 +1,6 @@
 import {describe, it, expect, vi, beforeEach} from 'vitest'
 import express from 'express'
-import request from 'supertest'
+import {testClient} from './client'
 import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
 import authRouter from '../routes/auth'
@@ -22,6 +22,8 @@ const app = express()
 app.use(express.json())
 app.use('/api/auth', authRouter)
 
+const client = testClient(app)
+
 beforeEach(() => {
     vi.clearAllMocks()
 })
@@ -30,7 +32,7 @@ describe('POST /api/auth/register', () => {
     it('creates a user and never returns the password', async () => {
         userMock.create.mockResolvedValue({id: 'user-1', email: 'a@b.com'})
 
-        const res = await request(app)
+        const res = await client()
             .post('/api/auth/register')
             .send({email: 'a@b.com', password: 'secret123'})
 
@@ -42,7 +44,7 @@ describe('POST /api/auth/register', () => {
     it('stores the password hashed, not in plaintext', async () => {
         userMock.create.mockResolvedValue({id: 'user-1', email: 'a@b.com'})
 
-        await request(app)
+        await client()
             .post('/api/auth/register')
             .send({email: 'a@b.com', password: 'secret123'})
 
@@ -52,7 +54,7 @@ describe('POST /api/auth/register', () => {
     })
 
     it('rejects an invalid email', async () => {
-        const res = await request(app)
+        const res = await client()
             .post('/api/auth/register')
             .send({email: 'not-an-email', password: 'secret123'})
 
@@ -61,7 +63,7 @@ describe('POST /api/auth/register', () => {
     })
 
     it('rejects a password shorter than 5 characters', async () => {
-        const res = await request(app)
+        const res = await client()
             .post('/api/auth/register')
             .send({email: 'a@b.com', password: '123'})
 
@@ -77,7 +79,7 @@ describe('POST /api/auth/register', () => {
             })
         )
 
-        const res = await request(app)
+        const res = await client()
             .post('/api/auth/register')
             .send({email: 'taken@b.com', password: 'secret123'})
 
@@ -87,7 +89,7 @@ describe('POST /api/auth/register', () => {
     it('returns 500 rather than a misleading conflict for unexpected database errors', async () => {
         userMock.create.mockRejectedValue(new Error('connection lost'))
 
-        const res = await request(app)
+        const res = await client()
             .post('/api/auth/register')
             .send({email: 'a@b.com', password: 'secret123'})
 
@@ -107,7 +109,7 @@ describe('POST /api/auth/login', () => {
     it('returns a token signed with the user id', async () => {
         userMock.findUnique.mockResolvedValue(await existingUser('secret123'))
 
-        const res = await request(app)
+        const res = await client()
             .post('/api/auth/login')
             .send({email: 'a@b.com', password: 'secret123'})
 
@@ -124,7 +126,7 @@ describe('POST /api/auth/login', () => {
             tokenVersion: 7,
         })
 
-        const res = await request(app)
+        const res = await client()
             .post('/api/auth/login')
             .send({email: 'a@b.com', password: 'secret123'})
 
@@ -137,7 +139,7 @@ describe('POST /api/auth/login', () => {
     it('never returns the password hash', async () => {
         userMock.findUnique.mockResolvedValue(await existingUser('secret123'))
 
-        const res = await request(app)
+        const res = await client()
             .post('/api/auth/login')
             .send({email: 'a@b.com', password: 'secret123'})
 
@@ -147,7 +149,7 @@ describe('POST /api/auth/login', () => {
     it('rejects a wrong password', async () => {
         userMock.findUnique.mockResolvedValue(await existingUser('secret123'))
 
-        const res = await request(app)
+        const res = await client()
             .post('/api/auth/login')
             .send({email: 'a@b.com', password: 'wrong-password'})
 
@@ -157,7 +159,7 @@ describe('POST /api/auth/login', () => {
     it('returns the same error for an unknown email as for a wrong password', async () => {
         userMock.findUnique.mockResolvedValue(null)
 
-        const res = await request(app)
+        const res = await client()
             .post('/api/auth/login')
             .send({email: 'nobody@b.com', password: 'secret123'})
 
@@ -173,7 +175,7 @@ describe('POST /api/auth/login', () => {
         userMock.findUnique.mockResolvedValue(null)
         const compare = vi.spyOn(bcrypt, 'compare')
 
-        await request(app)
+        await client()
             .post('/api/auth/login')
             .send({email: 'nobody@b.com', password: 'secret123'})
 
@@ -190,7 +192,7 @@ describe('POST /api/auth/logout', () => {
     it('moves the account past every token it has issued', async () => {
         userMock.update.mockResolvedValue({id: 'user-1', tokenVersion: 1})
 
-        const res = await request(app).post('/api/auth/logout').set('Authorization', auth)
+        const res = await client().post('/api/auth/logout').set('Authorization', auth)
 
         expect(res.status).toBe(204)
         expect(userMock.update).toHaveBeenCalledWith({
@@ -200,7 +202,7 @@ describe('POST /api/auth/logout', () => {
     })
 
     it('refuses without a token, so nobody can log anyone else out', async () => {
-        const res = await request(app).post('/api/auth/logout')
+        const res = await client().post('/api/auth/logout')
 
         expect(res.status).toBe(401)
         expect(userMock.update).not.toHaveBeenCalled()

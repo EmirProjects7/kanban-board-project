@@ -1,6 +1,6 @@
 import {describe, it, expect, vi, beforeEach} from 'vitest'
 import express from 'express'
-import request from 'supertest'
+import {testClient} from './client'
 import jwt from 'jsonwebtoken'
 import boardsRouter from '../routes/boards'
 
@@ -36,6 +36,8 @@ const app = express()
 app.use(express.json())
 app.use('/api/boards', boardsRouter)
 
+const client = testClient(app)
+
 const auth = `Bearer ${jwt.sign({userId: 'user-1'}, process.env.JWT_SECRET!)}`
 
 // The board exists and belongs to user-1 unless a test says otherwise.
@@ -59,13 +61,13 @@ beforeEach(() => {
 
 describe('GET /api/boards', () => {
     it('requires authentication', async () => {
-        expect((await request(app).get('/api/boards')).status).toBe(401)
+        expect((await client().get('/api/boards')).status).toBe(401)
     })
 
     it('returns only the requesting user boards, in order', async () => {
         boardMock.findMany.mockResolvedValue([{id: 'board-1', title: 'My Board'}])
 
-        const res = await request(app).get('/api/boards').set('Authorization', auth)
+        const res = await client().get('/api/boards').set('Authorization', auth)
 
         expect(res.status).toBe(200)
         expect(boardMock.findMany).toHaveBeenCalledWith({
@@ -80,7 +82,7 @@ describe('POST /api/boards', () => {
         boardMock.count.mockResolvedValue(1)
         boardMock.create.mockResolvedValue({id: 'board-2', title: 'Work'})
 
-        const res = await request(app)
+        const res = await client()
             .post('/api/boards')
             .set('Authorization', auth)
             .send({title: 'Work'})
@@ -92,7 +94,7 @@ describe('POST /api/boards', () => {
     })
 
     it('rejects an empty title', async () => {
-        const res = await request(app)
+        const res = await client()
             .post('/api/boards')
             .set('Authorization', auth)
             .send({title: '  '})
@@ -107,7 +109,7 @@ describe('PUT /api/boards/:boardId', () => {
         ownsBoard()
         boardMock.update.mockResolvedValue({id: 'board-1', title: 'Renamed'})
 
-        const res = await request(app)
+        const res = await client()
             .put('/api/boards/board-1')
             .set('Authorization', auth)
             .send({title: 'Renamed'})
@@ -122,7 +124,7 @@ describe('PUT /api/boards/:boardId', () => {
     it('refuses a board belonging to someone else', async () => {
         refusesBoard()
 
-        const res = await request(app)
+        const res = await client()
             .put('/api/boards/someone-elses')
             .set('Authorization', auth)
             .send({title: 'Hijacked'})
@@ -137,7 +139,7 @@ describe('DELETE /api/boards/:boardId', () => {
         ownsBoard()
         boardMock.count.mockResolvedValue(3)
 
-        const res = await request(app)
+        const res = await client()
             .delete('/api/boards/board-1')
             .set('Authorization', auth)
 
@@ -148,7 +150,7 @@ describe('DELETE /api/boards/:boardId', () => {
     it('refuses a board belonging to someone else', async () => {
         refusesBoard()
 
-        const res = await request(app)
+        const res = await client()
             .delete('/api/boards/someone-elses')
             .set('Authorization', auth)
 
@@ -160,7 +162,7 @@ describe('DELETE /api/boards/:boardId', () => {
         ownsBoard()
         boardMock.count.mockResolvedValue(1)
 
-        const res = await request(app)
+        const res = await client()
             .delete('/api/boards/board-1')
             .set('Authorization', auth)
 
@@ -174,7 +176,7 @@ describe('GET /api/boards/:boardId/columns', () => {
         ownsBoard()
         columnMock.findMany.mockResolvedValue([{id: 'col-1', title: 'Todo', cards: []}])
 
-        const res = await request(app)
+        const res = await client()
             .get('/api/boards/board-1/columns')
             .set('Authorization', auth)
 
@@ -194,7 +196,7 @@ describe('GET /api/boards/:boardId/columns', () => {
     it('refuses to read a board belonging to someone else', async () => {
         refusesBoard()
 
-        const res = await request(app)
+        const res = await client()
             .get('/api/boards/someone-elses/columns')
             .set('Authorization', auth)
 
@@ -209,7 +211,7 @@ describe('POST /api/boards/:boardId/columns', () => {
         columnMock.count.mockResolvedValue(2)
         columnMock.create.mockResolvedValue({id: 'col-3', title: 'Done', cards: []})
 
-        const res = await request(app)
+        const res = await client()
             .post('/api/boards/board-1/columns')
             .set('Authorization', auth)
             .send({title: 'Done'})
@@ -224,7 +226,7 @@ describe('POST /api/boards/:boardId/columns', () => {
     it('refuses to add a column to a board belonging to someone else', async () => {
         refusesBoard()
 
-        const res = await request(app)
+        const res = await client()
             .post('/api/boards/someone-elses/columns')
             .set('Authorization', auth)
             .send({title: 'Done'})
@@ -244,7 +246,7 @@ describe('PUT /api/boards/:boardId/columns (reorder)', () => {
     it('writes the payload order onto the columns', async () => {
         boardContains(['col-1', 'col-2'], [])
 
-        const res = await request(app)
+        const res = await client()
             .put('/api/boards/board-1/columns')
             .set('Authorization', auth)
             .send([
@@ -266,7 +268,7 @@ describe('PUT /api/boards/:boardId/columns (reorder)', () => {
     it('writes the card positions in the same transaction', async () => {
         boardContains(['col-1'], ['card-1', 'card-2'])
 
-        await request(app)
+        await client()
             .put('/api/boards/board-1/columns')
             .set('Authorization', auth)
             .send([{id: 'col-1', cards: [{id: 'card-2'}, {id: 'card-1'}]}])
@@ -281,7 +283,7 @@ describe('PUT /api/boards/:boardId/columns (reorder)', () => {
     it('refuses a column that belongs to another board', async () => {
         boardContains(['col-1'], [])
 
-        const res = await request(app)
+        const res = await client()
             .put('/api/boards/board-1/columns')
             .set('Authorization', auth)
             .send([{id: 'column-from-another-board', cards: []}])
@@ -293,7 +295,7 @@ describe('PUT /api/boards/:boardId/columns (reorder)', () => {
     it('refuses a card from another board, even inside a column of this one', async () => {
         boardContains(['col-1'], ['card-1'])
 
-        const res = await request(app)
+        const res = await client()
             .put('/api/boards/board-1/columns')
             .set('Authorization', auth)
             .send([{id: 'col-1', cards: [{id: 'card-from-another-board'}]}])
@@ -305,7 +307,7 @@ describe('PUT /api/boards/:boardId/columns (reorder)', () => {
     it('refuses to reorder a board belonging to someone else', async () => {
         refusesBoard()
 
-        const res = await request(app)
+        const res = await client()
             .put('/api/boards/someone-elses/columns')
             .set('Authorization', auth)
             .send([])
@@ -317,7 +319,7 @@ describe('PUT /api/boards/:boardId/columns (reorder)', () => {
     it('rejects a payload that is not an array of columns', async () => {
         ownsBoard()
 
-        const res = await request(app)
+        const res = await client()
             .put('/api/boards/board-1/columns')
             .set('Authorization', auth)
             .send({nonsense: true})
@@ -329,14 +331,14 @@ describe('PUT /api/boards/:boardId/columns (reorder)', () => {
 
 describe('PUT /api/boards/order', () => {
     it('requires authentication', async () => {
-        const res = await request(app).put('/api/boards/order').send([])
+        const res = await client().put('/api/boards/order').send([])
         expect(res.status).toBe(401)
     })
 
     it('writes the payload order onto the boards', async () => {
         boardMock.findMany.mockResolvedValue([{id: 'board-1'}, {id: 'board-2'}])
 
-        const res = await request(app)
+        const res = await client()
             .put('/api/boards/order')
             .set('Authorization', auth)
             .send([{id: 'board-2'}, {id: 'board-1'}])
@@ -355,7 +357,7 @@ describe('PUT /api/boards/order', () => {
     it('applies the whole order in one transaction', async () => {
         boardMock.findMany.mockResolvedValue([{id: 'board-1'}, {id: 'board-2'}])
 
-        await request(app)
+        await client()
             .put('/api/boards/order')
             .set('Authorization', auth)
             .send([{id: 'board-2'}, {id: 'board-1'}])
@@ -366,7 +368,7 @@ describe('PUT /api/boards/order', () => {
     it('refuses a board belonging to someone else', async () => {
         boardMock.findMany.mockResolvedValue([{id: 'board-1'}])
 
-        const res = await request(app)
+        const res = await client()
             .put('/api/boards/order')
             .set('Authorization', auth)
             .send([{id: 'board-1'}, {id: 'someone-elses'}])
@@ -376,7 +378,7 @@ describe('PUT /api/boards/order', () => {
     })
 
     it('rejects a payload that is not a list of boards', async () => {
-        const res = await request(app)
+        const res = await client()
             .put('/api/boards/order')
             .set('Authorization', auth)
             .send({nonsense: true})
@@ -390,7 +392,7 @@ describe('PUT /api/boards/order', () => {
         // route and try to rename a board with that id.
         boardMock.findMany.mockResolvedValue([])
 
-        await request(app).put('/api/boards/order').set('Authorization', auth).send([])
+        await client().put('/api/boards/order').set('Authorization', auth).send([])
 
         expect(boardMock.update).not.toHaveBeenCalled()
     })
