@@ -1,6 +1,6 @@
 import {describe, it, expect, vi, beforeEach} from 'vitest'
 import express from 'express'
-import request from 'supertest'
+import {testClient} from './client'
 import jwt from 'jsonwebtoken'
 import cardsRouter from '../routes/cards'
 
@@ -23,6 +23,8 @@ const app = express()
 app.use(express.json())
 app.use('/api/cards', cardsRouter)
 
+const client = testClient(app)
+
 const token = jwt.sign({userId: 'user-1'}, process.env.JWT_SECRET!)
 const auth = `Bearer ${token}`
 
@@ -33,7 +35,7 @@ beforeEach(() => {
 
 describe('DELETE /api/cards/:cardId', () => {
     it('requires authentication', async () => {
-        const res = await request(app).delete('/api/cards/card-1')
+        const res = await client().delete('/api/cards/card-1')
         expect(res.status).toBe(401)
     })
 
@@ -41,7 +43,7 @@ describe('DELETE /api/cards/:cardId', () => {
         cardMock.findFirst.mockResolvedValue({id: 'card-1', column: {boardId: 'board-1'}})
         cardMock.delete.mockResolvedValue({id: 'card-1'})
 
-        const res = await request(app).delete('/api/cards/card-1').set('Authorization', auth)
+        const res = await client().delete('/api/cards/card-1').set('Authorization', auth)
 
         expect(res.status).toBe(204)
         expect(cardMock.delete).toHaveBeenCalledWith({where: {id: 'card-1'}})
@@ -51,7 +53,7 @@ describe('DELETE /api/cards/:cardId', () => {
         cardMock.findFirst.mockResolvedValue({id: 'card-1', column: {boardId: 'board-1'}})
         cardMock.delete.mockResolvedValue({id: 'card-1'})
 
-        await request(app).delete('/api/cards/card-1').set('Authorization', auth)
+        await client().delete('/api/cards/card-1').set('Authorization', auth)
 
         expect(cardMock.findFirst).toHaveBeenCalledWith({
             where: {id: 'card-1', column: {board: {userId: 'user-1'}}},
@@ -62,7 +64,7 @@ describe('DELETE /api/cards/:cardId', () => {
     it('refuses to delete a card the user does not own', async () => {
         cardMock.findFirst.mockResolvedValue(null)
 
-        const res = await request(app).delete('/api/cards/other-card').set('Authorization', auth)
+        const res = await client().delete('/api/cards/other-card').set('Authorization', auth)
 
         expect(res.status).toBe(403)
         expect(cardMock.delete).not.toHaveBeenCalled()
@@ -71,7 +73,7 @@ describe('DELETE /api/cards/:cardId', () => {
 
 describe('PUT /api/cards/:cardId', () => {
     it('requires authentication', async () => {
-        const res = await request(app).put('/api/cards/card-1').send({title: 'New'})
+        const res = await client().put('/api/cards/card-1').send({title: 'New'})
         expect(res.status).toBe(401)
     })
 
@@ -79,7 +81,7 @@ describe('PUT /api/cards/:cardId', () => {
         cardMock.findFirst.mockResolvedValue({id: 'card-1', column: {boardId: 'board-1'}})
         cardMock.update.mockResolvedValue({id: 'card-1', title: 'Renamed'})
 
-        const res = await request(app)
+        const res = await client()
             .put('/api/cards/card-1')
             .set('Authorization', auth)
             .send({title: 'Renamed'})
@@ -92,7 +94,7 @@ describe('PUT /api/cards/:cardId', () => {
     })
 
     it('rejects an empty title', async () => {
-        const res = await request(app)
+        const res = await client()
             .put('/api/cards/card-1')
             .set('Authorization', auth)
             .send({title: '   '})
@@ -104,7 +106,7 @@ describe('PUT /api/cards/:cardId', () => {
     it('refuses to rename a card the user does not own', async () => {
         cardMock.findFirst.mockResolvedValue(null)
 
-        const res = await request(app)
+        const res = await client()
             .put('/api/cards/other-card')
             .set('Authorization', auth)
             .send({title: 'Hijacked'})
@@ -123,7 +125,7 @@ describe('card descriptions', () => {
     it('saves a description on its own', async () => {
         reachable()
 
-        const res = await request(app)
+        const res = await client()
             .put('/api/cards/card-1')
             .set('Authorization', auth)
             .send({description: 'Ring the supplier first'})
@@ -138,7 +140,7 @@ describe('card descriptions', () => {
     it('leaves the title alone when only the description is sent', async () => {
         reachable()
 
-        await request(app)
+        await client()
             .put('/api/cards/card-1')
             .set('Authorization', auth)
             .send({description: 'Notes'})
@@ -151,7 +153,7 @@ describe('card descriptions', () => {
     it('leaves the description alone when only the title is sent', async () => {
         reachable()
 
-        await request(app)
+        await client()
             .put('/api/cards/card-1')
             .set('Authorization', auth)
             .send({title: 'Renamed'})
@@ -164,7 +166,7 @@ describe('card descriptions', () => {
     it('writes both when both are sent', async () => {
         reachable()
 
-        await request(app)
+        await client()
             .put('/api/cards/card-1')
             .set('Authorization', auth)
             .send({title: 'Renamed', description: 'Notes'})
@@ -178,7 +180,7 @@ describe('card descriptions', () => {
     it('clears the description when it is emptied', async () => {
         reachable()
 
-        await request(app)
+        await client()
             .put('/api/cards/card-1')
             .set('Authorization', auth)
             .send({description: '   '})
@@ -191,7 +193,7 @@ describe('card descriptions', () => {
     })
 
     it('rejects a request that changes nothing', async () => {
-        const res = await request(app)
+        const res = await client()
             .put('/api/cards/card-1')
             .set('Authorization', auth)
             .send({})
@@ -201,7 +203,7 @@ describe('card descriptions', () => {
     })
 
     it('rejects a description longer than the limit', async () => {
-        const res = await request(app)
+        const res = await client()
             .put('/api/cards/card-1')
             .set('Authorization', auth)
             .send({description: 'a'.repeat(2001)})
@@ -213,7 +215,7 @@ describe('card descriptions', () => {
     it('refuses a card the user cannot reach', async () => {
         cardMock.findFirst.mockResolvedValue(null)
 
-        const res = await request(app)
+        const res = await client()
             .put('/api/cards/other-card')
             .set('Authorization', auth)
             .send({description: 'Sneaky'})
@@ -232,7 +234,7 @@ describe('due dates', () => {
     it('stores the day the user picked, at UTC midnight', async () => {
         reachable()
 
-        const res = await request(app)
+        const res = await client()
             .put('/api/cards/card-1')
             .set('Authorization', auth)
             .send({dueDate: '2026-08-05'})
@@ -249,7 +251,7 @@ describe('due dates', () => {
     it('clears the date when null is sent', async () => {
         reachable()
 
-        await request(app)
+        await client()
             .put('/api/cards/card-1')
             .set('Authorization', auth)
             .send({dueDate: null})
@@ -263,7 +265,7 @@ describe('due dates', () => {
     it('leaves the date alone when only the title is sent', async () => {
         reachable()
 
-        await request(app)
+        await client()
             .put('/api/cards/card-1')
             .set('Authorization', auth)
             .send({title: 'Renamed'})
@@ -276,7 +278,7 @@ describe('due dates', () => {
     it('writes a title and a date together', async () => {
         reachable()
 
-        await request(app)
+        await client()
             .put('/api/cards/card-1')
             .set('Authorization', auth)
             .send({title: 'Renamed', dueDate: '2026-12-31'})
@@ -288,7 +290,7 @@ describe('due dates', () => {
     })
 
     it('rejects a date that is not YYYY-MM-DD', async () => {
-        const res = await request(app)
+        const res = await client()
             .put('/api/cards/card-1')
             .set('Authorization', auth)
             .send({dueDate: '05/08/2026'})
@@ -299,7 +301,7 @@ describe('due dates', () => {
 
     it('rejects a day that does not exist', async () => {
         // Date.parse would roll this forward to March rather than refuse it.
-        const res = await request(app)
+        const res = await client()
             .put('/api/cards/card-1')
             .set('Authorization', auth)
             .send({dueDate: '2026-02-31'})
@@ -309,7 +311,7 @@ describe('due dates', () => {
     })
 
     it('rejects a timestamp where a day was expected', async () => {
-        const res = await request(app)
+        const res = await client()
             .put('/api/cards/card-1')
             .set('Authorization', auth)
             .send({dueDate: '2026-08-05T13:45:00Z'})
@@ -321,7 +323,7 @@ describe('due dates', () => {
     it('refuses a card the user cannot reach', async () => {
         cardMock.findFirst.mockResolvedValue(null)
 
-        const res = await request(app)
+        const res = await client()
             .put('/api/cards/other-card')
             .set('Authorization', auth)
             .send({dueDate: '2026-08-05'})

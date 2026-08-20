@@ -2,7 +2,7 @@ import {describe, it, expect, vi, beforeEach} from 'vitest'
 import {readFileSync, readdirSync} from 'fs'
 import {join} from 'path'
 import express from 'express'
-import request from 'supertest'
+import {testClient} from './client'
 import jwt from 'jsonwebtoken'
 import boardsRouter from '../routes/boards'
 import columnsRouter from '../routes/columns'
@@ -35,6 +35,8 @@ app.use(express.json())
 app.use('/api/boards', boardsRouter)
 app.use('/api/columns', columnsRouter)
 
+const client = testClient(app)
+
 const auth = `Bearer ${jwt.sign({userId: 'user-1'}, process.env.JWT_SECRET!)}`
 
 const SQL_INJECTION = "Robert'); DROP TABLE cards; --"
@@ -54,7 +56,7 @@ describe('SQL injection', () => {
     it('passes a SQL payload to Prisma as a value, never as query text', async () => {
         columnMock.create.mockResolvedValue({id: 'col-1', title: SQL_INJECTION, cards: []})
 
-        const res = await request(app)
+        const res = await client()
             .post('/api/boards/board-1/columns')
             .set('Authorization', auth)
             .send({title: SQL_INJECTION})
@@ -117,7 +119,7 @@ describe('stored XSS payloads', () => {
         cardMock.count.mockResolvedValue(0)
         cardMock.create.mockResolvedValue({id: 'card-1', title: XSS_PAYLOAD, order: 0})
 
-        const res = await request(app)
+        const res = await client()
             .post('/api/columns/col-1/cards')
             .set('Authorization', auth)
             .send({title: XSS_PAYLOAD})
@@ -137,7 +139,7 @@ describe('JWT tampering', () => {
             .toString('base64url')
         const forged = `${header}.${forgedPayload}.${signature}`
 
-        const res = await request(app)
+        const res = await client()
             .get('/api/boards')
             .set('Authorization', `Bearer ${forged}`)
 
@@ -149,7 +151,7 @@ describe('JWT tampering', () => {
         const header = Buffer.from(JSON.stringify({alg: 'none', typ: 'JWT'})).toString('base64url')
         const payload = Buffer.from(JSON.stringify({userId: 'victim'})).toString('base64url')
 
-        const res = await request(app)
+        const res = await client()
             .get('/api/boards')
             .set('Authorization', `Bearer ${header}.${payload}.`)
 
@@ -160,7 +162,7 @@ describe('JWT tampering', () => {
     it('rejects an expired token', async () => {
         const expired = jwt.sign({userId: 'user-1'}, process.env.JWT_SECRET!, {expiresIn: '-1s'})
 
-        const res = await request(app)
+        const res = await client()
             .get('/api/boards')
             .set('Authorization', `Bearer ${expired}`)
 
@@ -173,7 +175,7 @@ describe('cross-user access (IDOR)', () => {
     it('reads are always scoped to the token user, never to a client-supplied id', async () => {
         boardMock.findMany.mockResolvedValue([])
 
-        await request(app).get('/api/boards').set('Authorization', auth)
+        await client().get('/api/boards').set('Authorization', auth)
 
         expect(boardMock.findMany).toHaveBeenCalledWith(
             expect.objectContaining({where: {userId: 'user-1'}})
@@ -183,7 +185,7 @@ describe('cross-user access (IDOR)', () => {
     it('a forged userId in the request body cannot override the token user', async () => {
         boardMock.create.mockResolvedValue({id: 'board-9', title: 'Todo'})
 
-        await request(app)
+        await client()
             .post('/api/boards')
             .set('Authorization', auth)
             .send({title: 'Todo', userId: 'victim'})
@@ -196,7 +198,7 @@ describe('cross-user access (IDOR)', () => {
     it('a column cannot be moved onto a board the user does not own', async () => {
         boardMock.findFirst.mockResolvedValue(null)
 
-        const res = await request(app)
+        const res = await client()
             .post('/api/boards/someone-elses-board/columns')
             .set('Authorization', auth)
             .send({title: 'Todo'})
@@ -209,7 +211,7 @@ describe('cross-user access (IDOR)', () => {
         columnMock.findMany.mockResolvedValue([{id: 'col-1'}])
         cardMock.findMany.mockResolvedValue([{id: 'card-1'}])
 
-        const res = await request(app)
+        const res = await client()
             .put('/api/boards/board-1/columns')
             .set('Authorization', auth)
             .send([{id: 'col-1', cards: [{id: 'card-from-another-board'}]}])

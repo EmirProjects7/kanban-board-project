@@ -1,5 +1,5 @@
 import {describe, it, expect, vi, beforeEach} from 'vitest'
-import request from 'supertest'
+import {testClient} from './client'
 import app from '../app'
 
 const {queryRawMock} = vi.hoisted(() => ({queryRawMock: vi.fn()}))
@@ -7,6 +7,8 @@ const {queryRawMock} = vi.hoisted(() => ({queryRawMock: vi.fn()}))
 vi.mock('../prisma', () => ({
     prisma: {$queryRaw: queryRawMock},
 }))
+
+const client = testClient(app)
 
 beforeEach(() => {
     vi.clearAllMocks()
@@ -16,7 +18,7 @@ describe('GET /', () => {
     it('reports ok and a connected database when the query succeeds', async () => {
         queryRawMock.mockResolvedValue([{'?column?': 1}])
 
-        const res = await request(app).get('/')
+        const res = await client().get('/')
 
         expect(res.status).toBe(200)
         expect(res.body.status).toBe('ok')
@@ -26,7 +28,7 @@ describe('GET /', () => {
     it('reports degraded and an unreachable database when the query throws', async () => {
         queryRawMock.mockRejectedValue(new Error('connection refused'))
 
-        const res = await request(app).get('/')
+        const res = await client().get('/')
 
         expect(res.status).toBe(200)
         expect(res.body.status).toBe('degraded')
@@ -36,7 +38,7 @@ describe('GET /', () => {
     it('lists the endpoints the api serves', async () => {
         queryRawMock.mockResolvedValue([{'?column?': 1}])
 
-        const res = await request(app).get('/')
+        const res = await client().get('/')
 
         expect(res.body.endpoints.health).toBe('/health')
         expect(res.body.endpoints.auth).toContain('POST /api/auth/login')
@@ -47,7 +49,7 @@ describe('GET /', () => {
     it('says that board endpoints need a bearer token', async () => {
         queryRawMock.mockResolvedValue([{'?column?': 1}])
 
-        const res = await request(app).get('/')
+        const res = await client().get('/')
 
         expect(res.body.note).toMatch(/Bearer/)
     })
@@ -55,7 +57,7 @@ describe('GET /', () => {
 
 describe('GET /health', () => {
     it('answers ok without touching the database', async () => {
-        const res = await request(app).get('/health')
+        const res = await client().get('/health')
 
         expect(res.status).toBe(200)
         expect(res.body.status).toBe('ok')
@@ -65,7 +67,7 @@ describe('GET /health', () => {
 
 describe('unknown routes', () => {
     it('still 404s instead of pretending to succeed', async () => {
-        const res = await request(app).get('/definitely-not-a-route')
+        const res = await client().get('/definitely-not-a-route')
 
         expect(res.status).toBe(404)
     })
