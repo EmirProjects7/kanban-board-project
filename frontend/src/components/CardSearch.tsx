@@ -30,23 +30,19 @@ export function CardSearch({query, onChange, matchCount, inputRef}: CardSearchPr
                     /
                 </kbd>
             )}
+            {/* No Clear of its own. The filter bar carries one that resets
+                every rule, and two buttons with the same word doing different
+                amounts was worse than the walk to reach it. Escape empties the
+                box, as does the control the browser puts in a search input.
+
+                Announced rather than only shown, so the board thinning out is
+                not silence for anyone who cannot see it. */}
             {searching && (
-                <>
-                    {/* Announced rather than only shown, so it is not silence
-                        for anyone who cannot see the board thin out. */}
-                    <span className="card-search-count" role="status">
-                        {matchCount === 0
-                            ? 'No cards match'
-                            : `${matchCount} card${matchCount === 1 ? '' : 's'}`}
-                    </span>
-                    <button
-                        type="button"
-                        className="card-search-clear"
-                        onClick={() => onChange('')}
-                    >
-                        Clear
-                    </button>
-                </>
+                <span className="card-search-count" role="status">
+                    {matchCount === 0
+                        ? 'No cards match'
+                        : `${matchCount} card${matchCount === 1 ? '' : 's'}`}
+                </span>
             )}
         </div>
     )

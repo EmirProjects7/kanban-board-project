@@ -9,6 +9,7 @@ import {useDragAndDrop} from './hooks/useDragDrop'
 import {LabelFilter} from './components/LabelFilter'
 import {CardSearch} from './components/CardSearch'
 import {countCards, visibleColumns as filterColumns} from './boardFilter'
+import {isBlankQuery} from './search'
 import Column from './components/Column'
 import AddColumnForm from './components/AddColumnForm'
 import {BoardSwitcher} from './components/BoardSwitcher'
@@ -209,9 +210,11 @@ function App() {
                 onToggle={toggleFilter}
                 overdueOnly={overdueOnly}
                 onToggleOverdue={() => setOverdueOnly((on) => !on)}
+                searching={!isBlankQuery(query)}
                 onClear={() => {
                     setFilterIds(new Set())
                     setOverdueOnly(false)
+                    setQuery('')
                 }}
             />
             <DndContext sensors={sensors} onDragStart={handleDragStart} onDragOver={handleDragOver}
