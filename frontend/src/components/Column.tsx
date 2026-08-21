@@ -131,7 +131,14 @@ function Column({
                             onCreateLabel={onCreateLabel}
                         />
                     ))}
-                    {column.cards.length === 0 && (<p className="empty-column">No cards yet</p>
+                    {column.cards.length === 0 && (
+                        /* "No cards yet" would be a lie while a filter is on:
+                           the column has cards, they are just not being shown.
+                           Saying which it is stops someone hunting for work
+                           they think has gone. */
+                        <p className="empty-column">
+                            {hiding ? 'No cards match' : 'No cards yet'}
+                        </p>
                     )}
                 </SortableContext>
             </div>

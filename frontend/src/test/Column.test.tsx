@@ -196,3 +196,40 @@ describe('the card count', () => {
         expect(renderWithTotal([column.cards[0]])).toHaveTextContent('1')
     })
 })
+
+describe('an empty column', () => {
+    function renderEmpty(totalCards?: number) {
+        const handlers = {
+            onAddCard: vi.fn(),
+            onDeleteCard: vi.fn(),
+            onEditCard: vi.fn(),
+            onDescribeCard: vi.fn(),
+            onSetCardDueDate: vi.fn(),
+            labels: [],
+            onToggleCardLabel: vi.fn(),
+            onCreateLabel: vi.fn(),
+            onEditColumn: vi.fn(),
+            onDeleteColumn: vi.fn(),
+        }
+        const {container} = render(
+            <DndContext>
+                <Column column={{...column, cards: []}} totalCards={totalCards} {...handlers} />
+            </DndContext>
+        )
+        return container.querySelector('.empty-column')
+    }
+
+    it('says the column has nothing in it yet', () => {
+        expect(renderEmpty()).toHaveTextContent('No cards yet')
+    })
+
+    it('says the same when the total agrees it is empty', () => {
+        expect(renderEmpty(0)).toHaveTextContent('No cards yet')
+    })
+
+    // The cards are still there, they are just not being shown. Saying "yet"
+    // would send someone looking for work they think has gone.
+    it('says nothing matched when a filter emptied it', () => {
+        expect(renderEmpty(4)).toHaveTextContent('No cards match')
+    })
+})
