@@ -274,7 +274,7 @@ describe('searching the board', () => {
         const input = await renderBoard()
         fireEvent.change(input, {target: {value: 'invoice'}})
 
-        fireEvent.click(screen.getByRole('button', {name: 'Clear'}))
+        fireEvent.change(input, {target: {value: ''}})
 
         expect(screen.getByText('Görüşme notları')).toBeInTheDocument()
     })
@@ -423,5 +423,50 @@ describe('column counts under a filter', () => {
         fireEvent.change(search, {target: {value: ''}})
 
         expect(count()).toBe('3')
+    })
+})
+
+describe('clearing filters from the board', () => {
+    const bug = {id: 'label-1', name: 'Bug', colour: 'red' as const}
+    const board = [
+        {
+            id: 'col-1',
+            title: 'Todo',
+            cards: [
+                {id: 'card-1', title: 'Bug card', labels: [{label: bug}]},
+                {id: 'card-2', title: 'Plain card'},
+            ],
+        },
+    ]
+
+    async function renderBoard() {
+        apiMock.getToken.mockReturnValue('a-token')
+        apiMock.fetchColumns.mockResolvedValue(board)
+        apiMock.fetchLabels.mockResolvedValue([bug])
+        render(<App />)
+        await screen.findByRole('heading', {name: 'Todo'})
+        return screen.getByLabelText('Search cards')
+    }
+
+    // Clear reset the labels and left the search running, so the board stayed
+    // narrowed with nothing left on screen saying why.
+    it('empties the search box too', async () => {
+        const search = await renderBoard()
+        fireEvent.change(search, {target: {value: 'bug'}})
+        fireEvent.click(screen.getByRole('button', {name: 'Bug'}))
+
+        fireEvent.click(screen.getByRole('button', {name: 'Clear'}))
+
+        expect(search).toHaveValue('')
+        expect(screen.getByText('Plain card')).toBeInTheDocument()
+        expect(screen.getByText('Bug card')).toBeInTheDocument()
+    })
+
+    it('offers Clear when the search is the only thing filtering', async () => {
+        const search = await renderBoard()
+
+        fireEvent.change(search, {target: {value: 'bug'}})
+
+        expect(screen.getByRole('button', {name: 'Clear'})).toBeInTheDocument()
     })
 })

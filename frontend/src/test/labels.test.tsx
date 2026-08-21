@@ -139,6 +139,7 @@ describe('the filter bar', () => {
                 onToggle={onToggle}
                 overdueOnly={overdueOnly}
                 onToggleOverdue={onToggleOverdue}
+                searching={false}
                 onClear={onClear}
             />
         )
@@ -155,6 +156,7 @@ describe('the filter bar', () => {
                 onToggle={vi.fn()}
                 overdueOnly={false}
                 onToggleOverdue={vi.fn()}
+                searching={false}
                 onClear={vi.fn()}
             />
         )
@@ -203,6 +205,7 @@ describe('the overdue toggle', () => {
                 onToggle={vi.fn()}
                 overdueOnly={overdueOnly}
                 onToggleOverdue={onToggleOverdue}
+                searching={false}
                 onClear={onClear}
             />
         )
@@ -235,5 +238,42 @@ describe('the overdue toggle', () => {
     it('leaves clear away when nothing is filtering', () => {
         renderBar(false)
         expect(screen.queryByRole('button', {name: 'Clear'})).not.toBeInTheDocument()
+    })
+})
+
+describe('clearing every filter at once', () => {
+    function renderBar(props: {activeIds?: Set<string>; overdueOnly?: boolean; searching?: boolean}) {
+        const onClear = vi.fn()
+        render(
+            <LabelFilter
+                labels={[bug, chore]}
+                activeIds={props.activeIds ?? new Set()}
+                onToggle={vi.fn()}
+                overdueOnly={props.overdueOnly ?? false}
+                onToggleOverdue={vi.fn()}
+                searching={props.searching ?? false}
+                onClear={onClear}
+            />
+        )
+        return {onClear, clear: () => screen.queryByRole('button', {name: 'Clear'})}
+    }
+
+    it('offers nothing to clear when nothing is filtering', () => {
+        expect(renderBar({}).clear()).not.toBeInTheDocument()
+    })
+
+    it('offers to clear a label', () => {
+        expect(renderBar({activeIds: new Set(['label-1'])}).clear()).toBeInTheDocument()
+    })
+
+    it('offers to clear the overdue toggle', () => {
+        expect(renderBar({overdueOnly: true}).clear()).toBeInTheDocument()
+    })
+
+    // Clear used to ignore the search, so pressing it reset the labels and left
+    // the board narrowed with nothing on screen to explain why, and it did not
+    // appear at all when the search was the only thing filtering.
+    it('offers to clear a search on its own', () => {
+        expect(renderBar({searching: true}).clear()).toBeInTheDocument()
     })
 })

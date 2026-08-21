@@ -21,11 +21,10 @@ describe('typing', () => {
 })
 
 describe('while there is nothing to search for', () => {
-    it('offers no count and no clear button', () => {
+    it('offers no count', () => {
         renderSearch()
 
         expect(screen.queryByRole('status')).not.toBeInTheDocument()
-        expect(screen.queryByRole('button', {name: 'Clear'})).not.toBeInTheDocument()
     })
 
     it('stays quiet for a query that is only spaces', () => {
@@ -58,12 +57,13 @@ describe('while searching', () => {
 })
 
 describe('getting back out', () => {
-    it('clears from the button', () => {
-        const {onChange} = renderSearch('invoice', 2)
+    // Deliberately no Clear button here. The filter bar has one that resets
+    // every rule, and two buttons reading Clear that did different amounts was
+    // the more confusing arrangement.
+    it('leaves clearing everything to the filter bar', () => {
+        renderSearch('invoice', 2)
 
-        fireEvent.click(screen.getByRole('button', {name: 'Clear'}))
-
-        expect(onChange).toHaveBeenCalledWith('')
+        expect(screen.queryByRole('button', {name: 'Clear'})).not.toBeInTheDocument()
     })
 
     // Escape leaves a search box everywhere else, so it should here.

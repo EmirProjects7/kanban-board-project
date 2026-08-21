@@ -6,6 +6,8 @@ type LabelFilterProps = {
     onToggle: (labelId: string) => void
     overdueOnly: boolean
     onToggleOverdue: () => void
+    /** True while the search box is also narrowing the board. */
+    searching: boolean
     onClear: () => void
 }
 
@@ -15,11 +17,17 @@ export function LabelFilter({
     onToggle,
     overdueOnly,
     onToggleOverdue,
+    searching,
     onClear,
 }: LabelFilterProps) {
     // The overdue toggle does not depend on the board having labels, so the bar
     // now earns its place either way.
-    const filtering = activeIds.size > 0 || overdueOnly
+    //
+    // The search counts towards this too. Clear used to reset the labels and
+    // the toggle and leave the search running, so the board stayed narrowed
+    // with nothing left on screen to explain it, and it did not appear at all
+    // when the search was the only thing filtering.
+    const filtering = activeIds.size > 0 || overdueOnly || searching
 
     return (
         <div className="label-filter" role="group" aria-label="Filter by label">
