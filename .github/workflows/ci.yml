@@ -41,6 +41,14 @@ jobs:
       - name: Test
         run: npm run test:coverage
 
+      # Handed to the badges job below, which is the only place the README
+      # number is written.
+      - name: Save the coverage summary
+        uses: actions/upload-artifact@v7
+        with:
+          name: coverage-backend
+          path: backend/coverage/coverage-summary.json
+
       - name: Build
         run: npm run build
 
@@ -66,6 +74,12 @@ jobs:
 
       - name: Test
         run: npm run test:coverage
+
+      - name: Save the coverage summary
+        uses: actions/upload-artifact@v7
+        with:
+          name: coverage-frontend
+          path: frontend/coverage/coverage-summary.json
 
       - name: Build
         run: npm run build
@@ -161,3 +175,43 @@ jobs:
           name: playwright-report
           path: playwright-report/
           retention-days: 7
+
+  badges:
+    name: Coverage badges
+    # Only on master, and only once both suites have reported. On a pull
+    # request there is nothing to write to yet.
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    needs: [backend, frontend]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+
+      # Back into the paths the script reads, so it behaves the same here as
+      # it does on a laptop.
+      - uses: actions/download-artifact@v7
+        with:
+          name: coverage-backend
+          path: backend/coverage
+
+      - uses: actions/download-artifact@v7
+        with:
+          name: coverage-frontend
+          path: frontend/coverage
+
+      - name: Rewrite the badges from the measurement
+        run: node scripts/coverage-badges.mjs --write
+
+      # A push made with GITHUB_TOKEN does not start another run, so this
+      # cannot loop back into itself.
+      - name: Commit the change, if there was one
+        run: |
+          if git diff --quiet README.md; then
+            echo "The badges already match the measurement."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "docs: update the coverage badges" README.md
+          git push
