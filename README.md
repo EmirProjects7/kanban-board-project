@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/EmirProjects7/kanban-board-project/actions/workflows/ci.yml/badge.svg)](https://github.com/EmirProjects7/kanban-board-project/actions/workflows/ci.yml)
 [![backend coverage](https://img.shields.io/badge/backend%20coverage-96%25-brightgreen)](#tests-and-coverage)
-[![frontend coverage](https://img.shields.io/badge/frontend%20coverage-87%25-brightgreen)](#tests-and-coverage)
+[![frontend coverage](https://img.shields.io/badge/frontend%20coverage-88%25-brightgreen)](#tests-and-coverage)
 
 A full-stack, real-time Kanban board with secure authentication and personal boards.
 
