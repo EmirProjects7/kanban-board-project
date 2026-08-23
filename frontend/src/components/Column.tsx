@@ -13,6 +13,9 @@ type ColumnProps = {
     onEditCard: (cardId: string, newTitle: string) => void
     onDescribeCard: (cardId: string, description: string) => void
     onSetCardDueDate: (cardId: string, day: string) => void
+    /** Every column on the board, for the move control in a card's detail. */
+    columns: {id: string; title: string}[]
+    onMoveCard: (cardId: string, columnId: string) => void
     labels: Label[]
     onToggleCardLabel: (cardId: string, labelId: string, attached: boolean) => void
     onCreateLabel: (name: string, colour: LabelColour) => void
@@ -29,6 +32,8 @@ function Column({
     onEditCard,
     onDescribeCard,
     onSetCardDueDate,
+    columns,
+    onMoveCard,
     labels,
     onToggleCardLabel,
     onCreateLabel,
@@ -126,6 +131,9 @@ function Column({
                             onEdit={onEditCard}
                             onDescribe={onDescribeCard}
                             onSetDueDate={onSetCardDueDate}
+                            columns={columns}
+                            columnId={column.id}
+                            onMove={onMoveCard}
                             labels={labels}
                             onToggleLabel={onToggleCardLabel}
                             onCreateLabel={onCreateLabel}

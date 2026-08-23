@@ -391,3 +391,72 @@ describe('retryLoad', () => {
         expect(result.current.error).toBeNull()
     })
 })
+
+describe('moving a card between columns', () => {
+    it('takes the card out of one column and puts it in the other', async () => {
+        apiMock.saveBoard.mockResolvedValue(undefined)
+        const {result} = renderHook(() => useBoard('board-1'))
+        await waitFor(() => expect(result.current.columns).toEqual(board))
+
+        await act(async () => {
+            await result.current.moveCard('card-1', 'col-2')
+        })
+
+        expect(result.current.columns[0].cards).toEqual([])
+        expect(result.current.columns[1].cards).toEqual([{id: 'card-1', title: 'Task'}])
+    })
+
+    // The whole board goes out, the same payload a drop sends, so the server
+    // reads position in the list as the new order either way.
+    it('saves the board the move produced', async () => {
+        apiMock.saveBoard.mockResolvedValue(undefined)
+        const {result} = renderHook(() => useBoard('board-1'))
+        await waitFor(() => expect(result.current.columns).toEqual(board))
+
+        await act(async () => {
+            await result.current.moveCard('card-1', 'col-2')
+        })
+
+        expect(apiMock.saveBoard).toHaveBeenCalledWith('board-1', [
+            {id: 'col-1', title: 'Todo', cards: []},
+            {id: 'col-2', title: 'Done', cards: [{id: 'card-1', title: 'Task'}]},
+        ])
+    })
+
+    it('does nothing when the card is already in that column', async () => {
+        const {result} = renderHook(() => useBoard('board-1'))
+        await waitFor(() => expect(result.current.columns).toEqual(board))
+
+        await act(async () => {
+            await result.current.moveCard('card-1', 'col-1')
+        })
+
+        expect(apiMock.saveBoard).not.toHaveBeenCalled()
+    })
+
+    it('ignores a card that is not on the board', async () => {
+        const {result} = renderHook(() => useBoard('board-1'))
+        await waitFor(() => expect(result.current.columns).toEqual(board))
+
+        await act(async () => {
+            await result.current.moveCard('missing', 'col-2')
+        })
+
+        expect(apiMock.saveBoard).not.toHaveBeenCalled()
+    })
+
+    // A rejected write is never broadcast, so nothing else would ever put the
+    // card back where the server still has it.
+    it('puts the card back when the save fails', async () => {
+        apiMock.saveBoard.mockRejectedValue(new Error('nope'))
+        const {result} = renderHook(() => useBoard('board-1'))
+        await waitFor(() => expect(result.current.columns).toEqual(board))
+
+        await act(async () => {
+            await result.current.moveCard('card-1', 'col-2')
+        })
+
+        expect(result.current.columns).toEqual(board)
+        expect(result.current.error).toBe('Could not move the card.')
+    })
+})

@@ -10,6 +10,9 @@ function renderCard(
         onDelete: (id: string) => void
         onEdit: (id: string, title: string) => void
         onDescribe: (id: string, description: string) => void
+        columns: {id: string; title: string}[]
+        columnId: string
+        onMove: (cardId: string, columnId: string) => void
     }> = {}
 ) {
     const props = {
@@ -18,6 +21,9 @@ function renderCard(
         onEdit: () => {},
         onDescribe: () => {},
         onSetDueDate: () => {},
+        columns: [],
+        columnId: 'column-1',
+        onMove: () => {},
         labels: [],
         onToggleLabel: () => {},
         onCreateLabel: () => {},
@@ -202,5 +208,41 @@ describe('opening the card', () => {
 
         expect(onDelete).toHaveBeenCalledWith('card-7')
         expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    })
+})
+
+describe('moving a card from the detail', () => {
+    const columns = [
+        {id: 'col-1', title: 'Todo'},
+        {id: 'col-2', title: 'Doing'},
+    ]
+
+    it('offers every column, with the one the card is in selected', () => {
+        renderCard({title: 'Task'}, {columns, columnId: 'col-2'})
+        fireEvent.click(screen.getByLabelText('Open Task'))
+
+        const picker = screen.getByLabelText('Column')
+        expect(picker).toHaveValue('col-2')
+        expect(screen.getByRole('option', {name: 'Todo'})).toBeInTheDocument()
+        expect(screen.getByRole('option', {name: 'Doing'})).toBeInTheDocument()
+    })
+
+    it('moves the card to the column that is picked', () => {
+        const onMove = vi.fn()
+        renderCard({id: 'card-7', title: 'Task'}, {columns, columnId: 'col-1', onMove})
+        fireEvent.click(screen.getByLabelText('Open Task'))
+
+        fireEvent.change(screen.getByLabelText('Column'), {target: {value: 'col-2'}})
+
+        expect(onMove).toHaveBeenCalledWith('card-7', 'col-2')
+    })
+
+    // Nowhere to move to, so the control would only be one more thing to
+    // read past.
+    it('leaves the picker out on a board with a single column', () => {
+        renderCard({title: 'Task'}, {columns: [columns[0]], columnId: 'col-1'})
+        fireEvent.click(screen.getByLabelText('Open Task'))
+
+        expect(screen.queryByLabelText('Column')).not.toBeInTheDocument()
     })
 })

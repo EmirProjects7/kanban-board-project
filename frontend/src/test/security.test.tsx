@@ -27,6 +27,9 @@ describe('stored XSS in card titles', () => {
                     onEdit={() => {}}
                     onDescribe={() => {}}
                     onSetDueDate={() => {}}
+                    columns={[]}
+                    columnId="col-1"
+                    onMove={() => {}}
                     labels={[]}
                     onToggleLabel={() => {}}
                     onCreateLabel={() => {}}
@@ -70,6 +73,8 @@ describe('stored XSS in column titles', () => {
                     onEditCard={() => {}}
                     onDescribeCard={() => {}}
                     onSetCardDueDate={() => {}}
+                    columns={[]}
+                    onMoveCard={() => {}}
                     labels={[]}
                     onToggleCardLabel={() => {}}
                     onCreateLabel={() => {}}

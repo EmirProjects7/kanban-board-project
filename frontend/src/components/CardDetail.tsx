@@ -7,6 +7,10 @@ import type {Card, Label, LabelColour} from '../types'
 type CardDetailProps = {
     card: Card
     labels: Label[]
+    /** Every column on the board, so the card can be sent to any of them. */
+    columns: {id: string; title: string}[]
+    columnId: string
+    onMove: (columnId: string) => void
     onSaveTitle: (title: string) => void
     onSaveDescription: (description: string) => void
     onSaveDueDate: (day: string) => void
@@ -19,6 +23,9 @@ type CardDetailProps = {
 export function CardDetail({
     card,
     labels,
+    columns,
+    columnId,
+    onMove,
     onSaveTitle,
     onSaveDescription,
     onSaveDueDate,
@@ -74,6 +81,30 @@ export function CardDetail({
                         ×
                     </button>
                 </div>
+
+                {columns.length > 1 && (
+                    <>
+                        <label className="detail-label" htmlFor="card-column">
+                            Column
+                        </label>
+                        {/* Dragging is the quick way and stays the quick way.
+                            This is the one that works on a touch screen, from
+                            the keyboard, and across a board too wide to drag
+                            over in one go. */}
+                        <select
+                            id="card-column"
+                            className="detail-column"
+                            value={columnId}
+                            onChange={(event) => onMove(event.target.value)}
+                        >
+                            {columns.map((column) => (
+                                <option key={column.id} value={column.id}>
+                                    {column.title}
+                                </option>
+                            ))}
+                        </select>
+                    </>
+                )}
 
                 <label className="detail-label" htmlFor="card-due-date">
                     Due date

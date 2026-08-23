@@ -40,6 +40,7 @@ function App() {
         editCard,
         describeCard,
         setCardDueDate,
+        moveCard,
         toggleCardLabel,
         addColumn,
         editColumn,
@@ -74,6 +75,13 @@ function App() {
     // position, since a filter never reorders but a drag does.
     const totalsById = useMemo(
         () => new Map(columns.map((column) => [column.id, column.cards.length])),
+        [columns]
+    )
+
+    // The move control offers every column, filtered out ones included: the
+    // filter says what is worth looking at, not where a card may go.
+    const columnChoices = useMemo(
+        () => columns.map((column) => ({id: column.id, title: column.title})),
         [columns]
     )
 
@@ -235,6 +243,7 @@ function App() {
                         {visibleColumns.map((column) => (
                             <Column key={column.id} column={column} onAddCard={addCard}
                                     onDeleteCard={deleteCard} onEditCard={editCard} onDescribeCard={describeCard} onSetCardDueDate={setCardDueDate}
+                                    columns={columnChoices} onMoveCard={moveCard}
                                     labels={labels} onToggleCardLabel={toggleCardLabel}
                                     onCreateLabel={addLabel}
                                     onEditColumn={editColumn} onDeleteColumn={deleteColumn}
