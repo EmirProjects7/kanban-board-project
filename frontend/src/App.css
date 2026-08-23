@@ -1037,6 +1037,11 @@ body {
        field that only looks like empty card. The size attribute carries the
        width; max-width stops a long title pushing past the card. */
     width: auto;
+    /* A flex item sized by its content refuses to shrink below it, so a long
+       title used to push the buttons beside it out through the card's right
+       edge. These two let the field give way instead. */
+    min-width: 0;
+    flex-shrink: 1;
     max-width: 100%;
     margin: 0;
     padding: 0;
