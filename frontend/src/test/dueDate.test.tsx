@@ -18,6 +18,9 @@ function renderCard(
                 onEdit={() => {}}
                 onDescribe={() => {}}
                 onSetDueDate={onSetDueDate}
+                columns={[]}
+                columnId="column-1"
+                onMove={() => {}}
                 onToggleLabel={() => {}}
                 onCreateLabel={() => {}}
             />

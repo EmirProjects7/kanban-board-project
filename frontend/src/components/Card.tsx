@@ -8,6 +8,9 @@ import type {Card as CardType, Label, LabelColour} from '../types'
 type CardProps = {
     card: CardType
     labels: Label[]
+    columns: {id: string; title: string}[]
+    columnId: string
+    onMove: (cardId: string, columnId: string) => void
     onDelete: (id: string) => void
     onEdit: (id: string, newTitle: string) => void
     onDescribe: (id: string, description: string) => void
@@ -19,6 +22,9 @@ type CardProps = {
 function Card({
     card,
     labels,
+    columns,
+    columnId,
+    onMove,
     onDelete,
     onEdit,
     onDescribe,
@@ -168,6 +174,9 @@ function Card({
                 <CardDetail
                     card={card}
                     labels={labels}
+                    columns={columns}
+                    columnId={columnId}
+                    onMove={(targetId) => onMove(card.id, targetId)}
                     onSaveTitle={(title) => onEdit(card.id, title)}
                     onSaveDescription={(description) => onDescribe(card.id, description)}
                     onSaveDueDate={(day) => onSetDueDate(card.id, day)}

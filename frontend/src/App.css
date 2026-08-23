@@ -844,6 +844,24 @@ body {
     border-color: color-mix(in srgb, var(--accent) 40%, transparent);
 }
 
+.detail-column {
+    width: 100%;
+    padding: 7px 10px;
+    font-family: inherit;
+    font-size: 14px;
+    color: var(--text);
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    outline: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.detail-column:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
 .detail-due {
     display: flex;
     align-items: center;

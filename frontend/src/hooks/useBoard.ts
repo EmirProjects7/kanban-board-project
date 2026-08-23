@@ -127,6 +127,42 @@ export function useBoard(boardId: string | null) {
         })
     }
 
+    // Dragging was the only way to move a card, which leaves a touch screen
+    // or a keyboard with no route at all. The whole board goes out, the same
+    // payload a drop sends, so both ways land on one ordering rule.
+    async function moveCard(cardId: string, targetColumnId: string) {
+        if (!boardId) return
+        const source = columns.find((column) =>
+            column.cards.some((card) => card.id === cardId)
+        )
+        const card = source?.cards.find((c) => c.id === cardId)
+        if (!source || !card || source.id === targetColumnId) return
+
+        const previous = columns
+        const moved = columns.map((column) => {
+            if (column.id === source.id) {
+                return {...column, cards: column.cards.filter((c) => c.id !== cardId)}
+            }
+            if (column.id === targetColumnId) {
+                return {...column, cards: [...column.cards, card]}
+            }
+            return column
+        })
+        setColumns(moved)
+
+        await attempt('Could not move the card.', async () => {
+            try {
+                await api.saveBoard(boardId, moved)
+            } catch (err) {
+                // Nothing else will correct this: a rejected write is never
+                // broadcast, so the card would sit in a column the server
+                // knows nothing about until the page is reloaded.
+                setColumns(previous)
+                throw err
+            }
+        })
+    }
+
     // Attaching changes what the card carries, so the board is reloaded from
     // the server rather than guessed at locally.
     async function toggleCardLabel(cardId: string, labelId: string, attached: boolean) {
@@ -187,6 +223,7 @@ export function useBoard(boardId: string | null) {
         editCard,
         describeCard,
         setCardDueDate,
+        moveCard,
         toggleCardLabel,
         addColumn,
         editColumn,
