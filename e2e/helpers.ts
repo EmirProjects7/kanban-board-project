@@ -51,6 +51,11 @@ export async function addCard(page: Page, columnTitle: string, cardTitle: string
     await input.fill(cardTitle)
     await input.press('Enter')
     await expect(card(page, columnTitle, cardTitle)).toBeVisible()
+    // A new card opens its own detail, since it arrives with nothing but a
+    // title. Everything below this helper works on the board, which the
+    // overlay covers until it is shut.
+    await page.keyboard.press('Escape')
+    await expect(page.locator('.detail')).toHaveCount(0)
 }
 
 // page.dragAndDrop does nothing here. dnd-kit's PointerSensor is configured
