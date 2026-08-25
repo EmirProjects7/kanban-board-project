@@ -102,7 +102,7 @@ describe('addCard', () => {
             (call) => call[0] === 'board:updated'
         )?.[1]
 
-        let adding!: Promise<void>
+        let adding!: Promise<string | null>
         act(() => {
             adding = result.current.addCard('col-1', 'New')
         })

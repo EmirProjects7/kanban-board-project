@@ -63,9 +63,13 @@ export function useBoard(boardId: string | null) {
         }
     }, [boardId])
 
-    async function addCard(columnId: string, title: string) {
+    // The id comes back so the caller can open the card it just made. Null
+    // when the write failed, since there is nothing to open then.
+    async function addCard(columnId: string, title: string): Promise<string | null> {
+        let created: string | null = null
         await attempt('Could not add the card.', async () => {
             const newCard: Card = await api.createCard(columnId, title)
+            created = newCard.id
             // The write is broadcast to this session too, and that message can
             // arrive before the response it came from. Appending either way
             // would put the same card in the column twice.
@@ -77,6 +81,7 @@ export function useBoard(boardId: string | null) {
                 })
             )
         })
+        return created
     }
 
     async function deleteCard(cardId: string) {
