@@ -845,7 +845,13 @@ body {
 }
 
 .detail-column {
-    width: 100%;
+    /* Sized to the longest column name rather than the dialog, which parked
+       the drop down arrow off at the far edge with the name stranded beside
+       it. The dialog is a flex column, so the field also has to be told not
+       to stretch. Matches the due date field next to it. */
+    width: auto;
+    align-self: flex-start;
+    max-width: 100%;
     padding: 7px 10px;
     font-family: inherit;
     font-size: 14px;
