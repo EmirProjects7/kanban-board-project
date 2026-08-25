@@ -460,3 +460,32 @@ describe('moving a card between columns', () => {
         expect(result.current.error).toBe('Could not move the card.')
     })
 })
+
+describe('what adding a card reports back', () => {
+    it('hands back the id of the card it made', async () => {
+        apiMock.createCard.mockResolvedValue({id: 'card-9', title: 'New'})
+        const {result} = renderHook(() => useBoard('board-1'))
+        await waitFor(() => expect(result.current.columns).toEqual(board))
+
+        let created: string | null = null
+        await act(async () => {
+            created = await result.current.addCard('col-1', 'New')
+        })
+
+        expect(created).toBe('card-9')
+    })
+
+    // Nothing was created, so there is nothing for the caller to open.
+    it('hands back nothing when the write fails', async () => {
+        apiMock.createCard.mockRejectedValue(new Error('nope'))
+        const {result} = renderHook(() => useBoard('board-1'))
+        await waitFor(() => expect(result.current.columns).toEqual(board))
+
+        let created: string | null = 'unset'
+        await act(async () => {
+            created = await result.current.addCard('col-1', 'New')
+        })
+
+        expect(created).toBeNull()
+    })
+})
