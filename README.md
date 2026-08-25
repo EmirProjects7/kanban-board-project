@@ -15,7 +15,7 @@ into place, and changes appear in any other open session straight away.
 
 - **Drag and drop** — reorder cards inside a column, move them between columns, drag whole columns into a new order, and reorder the boards themselves (dnd-kit). A card's detail also carries a column picker, for a touch screen, a keyboard, or a board too wide to drag across
 - **Inline editing** — double click a card title or a column title to rename it
-- **Card detail** — double click anywhere else on a card to open it, or use the button in its corner; write a description there, and cards carrying notes are marked on the board
+- **Card detail** — double click anywhere else on a card to open it, or use the button in its corner; write a description there, and cards carrying notes are marked on the board. A card you have just added opens by itself, since a new card starts with nothing but a title
 - **Search** — press `/` to jump to it, then narrow the board by a word in a card's title or description; accents are optional, so `gorusme` finds `Görüşme`. Filtered columns show how much they are hiding, as `1 / 4`, and say so rather than claiming to be empty. One Clear resets every filter at once
 - **Labels** — colour them, pin them onto cards, and narrow the board to the ones you pick
 - **Due dates** — give a card a day; late ones turn red, today stands out, and one toggle narrows the board to what is overdue
