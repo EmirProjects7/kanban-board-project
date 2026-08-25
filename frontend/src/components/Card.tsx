@@ -11,6 +11,9 @@ type CardProps = {
     columns: {id: string; title: string}[]
     columnId: string
     onMove: (cardId: string, columnId: string) => void
+    /** Set on a card that was just added, so its detail opens by itself. */
+    autoOpen?: boolean
+    onDetailClosed?: () => void
     onDelete: (id: string) => void
     onEdit: (id: string, newTitle: string) => void
     onDescribe: (id: string, description: string) => void
@@ -25,6 +28,8 @@ function Card({
     columns,
     columnId,
     onMove,
+    autoOpen,
+    onDetailClosed,
     onDelete,
     onEdit,
     onDescribe,
@@ -40,6 +45,18 @@ function Card({
     const [isEditing, setIsEditing] = useState(false)
     const [editValue, setEditValue] = useState(card.title)
     const [isOpen, setIsOpen] = useState(false)
+
+    // Either the card was opened here, or the board is saying this is the one
+    // that was just added. Read during the render rather than copied into
+    // state in an effect, which would open it a frame late.
+    const showDetail = isOpen || Boolean(autoOpen)
+
+    // Closing has to tell the board too, otherwise a card that was auto opened
+    // would spring back open the moment anything remounted it.
+    function closeDetail() {
+        setIsOpen(false)
+        onDetailClosed?.()
+    }
 
     const style = {
         transform: CSS.Transform.toString(transform),
@@ -170,7 +187,7 @@ function Card({
                 </div>
             </div>
 
-            {isOpen && (
+            {showDetail && (
                 <CardDetail
                     card={card}
                     labels={labels}
@@ -185,10 +202,10 @@ function Card({
                     }
                     onCreateLabel={onCreateLabel}
                     onDelete={() => {
-                        setIsOpen(false)
+                        closeDetail()
                         onDelete(card.id)
                     }}
-                    onClose={() => setIsOpen(false)}
+                    onClose={closeDetail}
                 />
             )}
         </>

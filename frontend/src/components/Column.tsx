@@ -16,6 +16,9 @@ type ColumnProps = {
     /** Every column on the board, for the move control in a card's detail. */
     columns: {id: string; title: string}[]
     onMoveCard: (cardId: string, columnId: string) => void
+    /** The card that was just added, whose detail should open by itself. */
+    openCardId?: string | null
+    onCardDetailClosed?: () => void
     labels: Label[]
     onToggleCardLabel: (cardId: string, labelId: string, attached: boolean) => void
     onCreateLabel: (name: string, colour: LabelColour) => void
@@ -34,6 +37,8 @@ function Column({
     onSetCardDueDate,
     columns,
     onMoveCard,
+    openCardId,
+    onCardDetailClosed,
     labels,
     onToggleCardLabel,
     onCreateLabel,
@@ -134,6 +139,8 @@ function Column({
                             columns={columns}
                             columnId={column.id}
                             onMove={onMoveCard}
+                            autoOpen={card.id === openCardId}
+                            onDetailClosed={onCardDetailClosed}
                             labels={labels}
                             onToggleLabel={onToggleCardLabel}
                             onCreateLabel={onCreateLabel}

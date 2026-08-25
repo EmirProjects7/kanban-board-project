@@ -1,5 +1,5 @@
 import './App.css'
-import {useState, useEffect, useMemo, useRef} from 'react'
+import {useState, useEffect, useMemo, useRef, useCallback} from 'react'
 import {DndContext, DragOverlay, PointerSensor, KeyboardSensor, useSensor, useSensors} from '@dnd-kit/core'
 import {SortableContext, horizontalListSortingStrategy, sortableKeyboardCoordinates} from '@dnd-kit/sortable'
 import {useBoard} from './hooks/useBoard'
@@ -77,6 +77,18 @@ function App() {
         () => new Map(columns.map((column) => [column.id, column.cards.length])),
         [columns]
     )
+
+    // A card is added with a title and nothing else, so the detail opens on
+    // top of it: that is where the due date, the labels and the description
+    // are. Escape closes it, which leaves adding cards in a row as quick as
+    // it was.
+    const [newCardId, setNewCardId] = useState<string | null>(null)
+
+    async function handleAddCard(columnId: string, title: string) {
+        setNewCardId(await addCard(columnId, title))
+    }
+
+    const forgetNewCard = useCallback(() => setNewCardId(null), [])
 
     // The move control offers every column, filtered out ones included: the
     // filter says what is worth looking at, not where a card may go.
@@ -241,9 +253,10 @@ function App() {
                     {/* function to map a column to its visualization, react requires a key*/}
                     <SortableContext items={columnIds} strategy={horizontalListSortingStrategy}>
                         {visibleColumns.map((column) => (
-                            <Column key={column.id} column={column} onAddCard={addCard}
+                            <Column key={column.id} column={column} onAddCard={handleAddCard}
                                     onDeleteCard={deleteCard} onEditCard={editCard} onDescribeCard={describeCard} onSetCardDueDate={setCardDueDate}
                                     columns={columnChoices} onMoveCard={moveCard}
+                                    openCardId={newCardId} onCardDetailClosed={forgetNewCard}
                                     labels={labels} onToggleCardLabel={toggleCardLabel}
                                     onCreateLabel={addLabel}
                                     onEditColumn={editColumn} onDeleteColumn={deleteColumn}

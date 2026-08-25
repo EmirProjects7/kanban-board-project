@@ -7,6 +7,8 @@ import type {Card as CardType} from '../types'
 function renderCard(
     card: Partial<CardType> = {},
     handlers: Partial<{
+        autoOpen: boolean
+        onDetailClosed: () => void
         onDelete: (id: string) => void
         onEdit: (id: string, title: string) => void
         onDescribe: (id: string, description: string) => void
@@ -244,5 +246,30 @@ describe('moving a card from the detail', () => {
         fireEvent.click(screen.getByLabelText('Open Task'))
 
         expect(screen.queryByLabelText('Column')).not.toBeInTheDocument()
+    })
+})
+
+describe('a card that was just added', () => {
+    it('opens its detail without being asked', () => {
+        renderCard({title: 'Task'}, {autoOpen: true})
+
+        expect(screen.getByRole('dialog')).toBeInTheDocument()
+    })
+
+    it('leaves the detail shut on every other card', () => {
+        renderCard({title: 'Task'})
+
+        expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    })
+
+    // Otherwise the board would still be pointing at this card, and anything
+    // that remounted it would open the detail all over again.
+    it('tells the board when the detail is closed', () => {
+        const onDetailClosed = vi.fn()
+        renderCard({title: 'Task'}, {autoOpen: true, onDetailClosed})
+
+        fireEvent.click(screen.getByLabelText('Close card'))
+
+        expect(onDetailClosed).toHaveBeenCalled()
     })
 })
