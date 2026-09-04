@@ -54,6 +54,17 @@ export async function addCard(page: Page, columnTitle: string, cardTitle: string
     // A new card opens its own detail, since it arrives with nothing but a
     // title. Everything below this helper works on the board, which the
     // overlay covers until it is shut.
+    await closeCard(page)
+}
+
+// The board is behind a portal-rendered dialog once a card is open, so the
+// tests that need one go through here rather than each finding their own way in.
+export async function openCard(page: Page, columnTitle: string, cardTitle: string) {
+    await card(page, columnTitle, cardTitle).getByRole('button', {name: `Open ${cardTitle}`}).click()
+    await expect(page.getByRole('dialog')).toBeVisible()
+}
+
+export async function closeCard(page: Page) {
     await page.keyboard.press('Escape')
     await expect(page.locator('.detail')).toHaveCount(0)
 }
