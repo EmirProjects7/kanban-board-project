@@ -58,6 +58,16 @@ export async function addCard(page: Page, columnTitle: string, cardTitle: string
     await expect(page.locator('.detail')).toHaveCount(0)
 }
 
+export async function signOut(page: Page) {
+    await page.getByRole('button', {name: 'Logout'}).click()
+    await expect(page.getByRole('heading', {name: 'Login'})).toBeVisible()
+}
+
+/** The session token this browser is holding, for talking to the API directly. */
+export function tokenFrom(page: Page) {
+    return page.evaluate(() => localStorage.getItem('token'))
+}
+
 // page.dragAndDrop does nothing here. dnd-kit's PointerSensor is configured
 // with an activation distance of five pixels, and it works the drop target out
 // from the moves along the way rather than from where the pointer ends up, so
