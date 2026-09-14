@@ -10,8 +10,8 @@
     "coverage:badges": "node scripts/coverage-badges.mjs"
   },
   "devDependencies": {
-    "@playwright/test": "^1.62.1",
-    "concurrently": "^10.0.4",
-    "tsx": "^4.23.12"
+    "@playwright/test": "^1.63.0",
+    "concurrently": "^10.0.5",
+    "tsx": "^4.23.13"
   }
 }
