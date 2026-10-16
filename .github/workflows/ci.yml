@@ -190,12 +190,12 @@ jobs:
 
       # Back into the paths the script reads, so it behaves the same here as
       # it does on a laptop.
-      - uses: actions/download-artifact@v7
+      - uses: actions/download-artifact@v8
         with:
           name: coverage-backend
           path: backend/coverage
 
-      - uses: actions/download-artifact@v7
+      - uses: actions/download-artifact@v8
         with:
           name: coverage-frontend
           path: frontend/coverage
